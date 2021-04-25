@@ -4,4 +4,4 @@ phases:
     commands:
       - echo Building...
       - zip -r $TASK_TYPE.zip $TASK_TYPE
-      - aws s3 cp $TASK_TYPE.zip s3://$BUCKET/$TASK_TYPE
+      - aws s3 cp $TASK_TYPE.zip s3://$BUCKET/$TASK_TYPE/$TASK_TYPE.zip
