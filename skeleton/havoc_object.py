@@ -10,5 +10,24 @@ class call_object:
         self.host_info = [attack_ip, hostname, local_ip]
         return True
 
-    def example_command(self):
-        pass
+    def echo(self):
+        match = {
+            'foo': 'bar',
+            'bar': 'baz',
+            'ping': 'pong',
+            'and then': 'no more and then',
+            'pen testing is dead': 'long live pen testing',
+            'never gonna give you up': 'never gonna let you down, never gonna run around and desert you',
+            'never gonna make you cry': 'never gonna say goodbye, never gonna tell a lie and hurt you'
+        }
+
+        if 'echo' in self.args:
+            echo = self.args['echo']
+            if echo in match:
+                output = {'outcome': 'success', 'echo': match[echo], 'forward_log': 'False'}
+            else:
+                output = {'outcome': 'success', 'echo': 'OK', 'forward_log': 'False'}
+        else:
+            output = {'outcome': 'success', 'echo': 'OK', 'forward_log': 'False'}
+
+        return output

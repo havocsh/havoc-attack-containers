@@ -282,7 +282,8 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                         'session_read': metasploit[instruct_instance].session_read,
                         'detach_session': metasploit[instruct_instance].detach_session,
                         'kill_session': metasploit[instruct_instance].kill_session,
-                        'kill_job': metasploit[instruct_instance].kill_job
+                        'kill_job': metasploit[instruct_instance].kill_job,
+                        'echo': metasploit[instruct_instance].echo
                     }
                     if instruct_command in metasploit_functions:
                         metasploit[instruct_instance].set_args(instruct_args, attack_ip, hostname, local_ip)

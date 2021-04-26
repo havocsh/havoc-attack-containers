@@ -244,7 +244,8 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                     nmap_functions = {
                         'run_scan': nmap[instruct_instance].run_scan,
                         'get_scan_info': nmap[instruct_instance].get_scan_info,
-                        'get_scan_results': nmap[instruct_instance].get_scan_results
+                        'get_scan_results': nmap[instruct_instance].get_scan_results,
+                        'echo': nmap[instruct_instance].echo
                     }
                     if instruct_command in nmap_functions:
                         nmap[instruct_instance].set_args(instruct_args, attack_ip, hostname, local_ip)

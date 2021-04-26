@@ -52,3 +52,25 @@ class call_nmap:
             output = {'outcome': 'failed', 'message': 'run_nmap must be run before get_scan_results',
                       'forward_log': 'False'}
         return output
+
+    def echo(self):
+        match = {
+            'foo': 'bar',
+            'bar': 'baz',
+            'ping': 'pong',
+            'and then': 'no more and then',
+            'pen testing is dead': 'long live pen testing',
+            'never gonna give you up': 'never gonna let you down, never gonna run around and desert you',
+            'never gonna make you cry': 'never gonna say goodbye, never gonna tell a lie and hurt you'
+        }
+
+        if 'echo' in self.args:
+            echo = self.args['echo']
+            if echo in match:
+                output = {'outcome': 'success', 'echo': match[echo], 'forward_log': 'False'}
+            else:
+                output = {'outcome': 'success', 'echo': 'OK', 'forward_log': 'False'}
+        else:
+            output = {'outcome': 'success', 'echo': 'OK', 'forward_log': 'False'}
+
+        return output

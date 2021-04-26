@@ -242,7 +242,7 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                     local_instruct_instance[instruct_instance] = havoc_object.call_object()
                 if instruct_instance in local_instruct_instance:
                     object_functions = {
-                        'example_command': local_instruct_instance[instruct_instance].example_command
+                        'echo': local_instruct_instance[instruct_instance].echo
                     }
                     if instruct_command in object_functions:
                         local_instruct_instance[instruct_instance].set_args(instruct_args, attack_ip, hostname,
