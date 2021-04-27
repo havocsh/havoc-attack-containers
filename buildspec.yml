@@ -3,5 +3,9 @@ phases:
   build:
     commands:
       - echo Building...
-      - zip -r $TASK_TYPE.zip $TASK_TYPE
-      - aws s3 cp $TASK_TYPE.zip s3://$BUCKET/$TASK_TYPE/$TASK_TYPE.zip
+      - zip -r havoc_files.zip havoc_*
+      - aws s3 cp buildspec.yml s3://$BUCKET/$TASK_TYPE/buildspec.yml
+      - aws s3 cp dockerfile s3://$BUCKET/$TASK_TYPE/dockerfile
+      - aws s3 cp havoc_files.zip s3://$BUCKET/$TASK_TYPE/havoc_files.zip
+      - aws s3 cp link.py s3://$BUCKET/$TASK_TYPE/link.py
+      - aws s3 cp supervisord.conf s3://$BUCKET/$TASK_TYPE/supervisord.conf
