@@ -352,8 +352,8 @@ def main():
     # Get public IP
     r = requests.get('http://checkip.amazonaws.com/')
     attack_ip = r.text.rstrip()
+    hostname = socket.gethostname()
     local_ip = get_ip()
-
 
     # Setup coroutine resources
     command_list = []
