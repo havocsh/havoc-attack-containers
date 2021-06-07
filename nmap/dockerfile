@@ -28,4 +28,3 @@ COPY ./havoc_nmap.py /opt/havoc/havoc_nmap.py
 # Copy repo version of link.py into build
 COPY ./link.py /opt/havoc/link.py
 RUN chmod +x /opt/havoc/link.py
-RUN hostnamectl set-hostname nmap
