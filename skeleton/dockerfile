@@ -12,8 +12,8 @@ RUN pip3 install requests
 RUN pip3 install awscli
 
 # Install custom dependencies and modules
-apt install -y <package-name>
-pip3 install <module-name>
+RUN apt install -y <package-name>
+RUN pip3 install <module-name>
 
 # Setup supervisord
 COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
@@ -28,3 +28,4 @@ COPY ./havoc_object.py /opt/havoc/havoc_object.py
 # Copy repo version of link.py into build
 COPY ./link.py /opt/havoc/link.py
 RUN chmod +x /opt/havoc/link.py
+RUN hostnamectl set-hostname <new_host_name>
