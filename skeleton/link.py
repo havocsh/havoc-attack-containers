@@ -265,9 +265,9 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
 
                 forward_log = call_function['forward_log']
                 del call_function['forward_log']
-                build_output = build_response(call_function, forward_log, user_id, task_name, task_type,
-                                              task_context, instruct_user_id, instruct_instance, instruct_command,
-                                              instruct_args, attack_ip, end_time)
+                build_output = build_response(call_function, forward_log, user_id, task_name, task_context, task_type,
+                                              instruct_user_id, instruct_instance, instruct_command, instruct_args,
+                                              attack_ip, end_time)
                 if rt.check:
                     post_response_http(rt, build_output)
                 else:
