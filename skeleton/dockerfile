@@ -10,6 +10,7 @@ RUN pip3 install service_identity
 RUN pip3 install Twisted
 RUN pip3 install requests
 RUN pip3 install awscli
+RUN pip3 install havoc.sh
 
 # Install custom dependencies and modules
 RUN apt install -y <package-name>
