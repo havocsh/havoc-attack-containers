@@ -10,7 +10,7 @@ RUN pip3 install service_identity
 RUN pip3 install Twisted
 RUN pip3 install requests
 RUN pip3 install awscli
-RUN pip3 install havoc.sh
+RUN pip3 install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple havoc
 
 # Install msf and pymetasploit3
 RUN curl https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb > msfinstall && chmod 755 msfinstall && ./msfinstall

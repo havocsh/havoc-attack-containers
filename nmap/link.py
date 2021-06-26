@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from twisted.python import log
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks, Deferred
-from havoc.sh import havoc
+import havoc
 
 # Havoc Imports
 import havoc_nmap

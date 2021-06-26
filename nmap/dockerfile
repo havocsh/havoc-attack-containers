@@ -10,7 +10,7 @@ RUN pip3 install service_identity
 RUN pip3 install Twisted
 RUN pip3 install requests
 RUN pip3 install awscli
-RUN pip3 install havoc.sh
+RUN pip3 install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple havoc
 
 # Install nmap and python-nmap
 RUN apt -y install nmap
