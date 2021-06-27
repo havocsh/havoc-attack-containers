@@ -34,5 +34,5 @@ RUN chmod +x /opt/havoc/link.py
 # Initialize the metasploit database
 USER msf
 ENV LANG=en_US.UTF-8 HOME="/home/msf" USER="msf"
-RUN /opt/metasploit-framework/bin/msfdb init --user msf --pass 1msf_secured2
+RUN /opt/metasploit-framework/bin/msfdb init --component database --user msf --pass 1msf_secured2
 USER root
