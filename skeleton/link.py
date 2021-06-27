@@ -122,16 +122,21 @@ def sync_workspace_http(rt, sync_direction):
     return sync_workspace_response
 
 
-def build_response(task_response, forward_log, user_id, task_name, task_context, task_type, instruct_user_id,
+def send_response(rt, task_response, forward_log, user_id, task_name, task_context, task_type, instruct_user_id,
                    instruct_instance, instruct_command, instruct_args, attack_ip, local_ip, end_time):
     stime = datetime.now(timezone.utc).strftime('%s')
+    if not rt.check:
+        local_ip = 'None'
     output = {
         'task_response': task_response, 'user_id': user_id, 'task_name': task_name, 'task_context': task_context,
         'task_type': task_type, 'instruct_user_id': instruct_user_id, 'instruct_instance': instruct_instance,
         'instruct_command': instruct_command, 'instruct_args': instruct_args, 'attack_ip': attack_ip,
         'local_ip': local_ip, 'end_time': end_time, 'forward_log': forward_log, 'timestamp': stime
     }
-    return output
+    if rt.check:
+        post_response_http(rt, output)
+    else:
+        print(output)
 
 
 @inlineCallbacks
@@ -171,14 +176,9 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                     response_kv = ['status', 'ready']
                 else:
                     response_kv = ['outcome', 'success']
-                build_output = build_response({response_kv[0]: response_kv[1], 'local_directory_contents': file_list},
-                                              'True', user_id, task_name, task_context, task_type, instruct_user_id,
-                                              instruct_instance, instruct_command, instruct_args,
-                                              attack_ip, local_ip, end_time)
-                if rt.check:
-                    post_response_http(rt, build_output)
-                else:
-                    print(build_output)
+                send_response(rt, {response_kv[0]: response_kv[1], 'local_directory_contents': file_list}, 'True',
+                              user_id, task_name, task_context, task_type, instruct_user_id, instruct_instance,
+                              instruct_command, instruct_args, attack_ip, local_ip, end_time)
             elif instruct_command == 'sync_to_workspace':
                 if not rt.check:
                     file_list = []
@@ -191,22 +191,13 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                             file_list.append(relative_path)
                 else:
                     file_list = sync_workspace_http(rt, 'sync_to_workspace')
-                build_output = build_response({'outcome': 'success', 'local_directory_contents': file_list}, 'False',
-                                              user_id, task_name, task_context, task_type, instruct_user_id,
-                                              instruct_instance, instruct_command, instruct_args, attack_ip,
-                                              local_ip, end_time)
-                if rt.check:
-                    post_response_http(rt, build_output)
-                else:
-                    print(build_output)
+                send_response(rt, {'outcome': 'success', 'local_directory_contents': file_list}, 'False', user_id,
+                              task_name, task_context, task_type, instruct_user_id, instruct_instance, instruct_command,
+                              instruct_args, attack_ip, local_ip, end_time)
             elif instruct_command == 'terminate' or shutdown:
-                build_output = build_response({'status': 'terminating'}, 'True', user_id, task_name,
-                                              task_context, task_type, instruct_user_id, instruct_instance,
-                                              instruct_command, instruct_args, attack_ip, local_ip, end_time)
-                if rt.check:
-                    post_response_http(rt, build_output)
-                else:
-                    print(build_output)
+                send_response(rt, {'status': 'terminating'}, 'True', user_id, task_name, task_context, task_type,
+                              instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip, local_ip,
+                              end_time)
                 subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
             else:
                 if instruct_instance not in local_instruct_instance:
@@ -228,13 +219,9 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
 
                 forward_log = call_function['forward_log']
                 del call_function['forward_log']
-                build_output = build_response(call_function, forward_log, user_id, task_name, task_context, task_type,
-                                              instruct_user_id, instruct_instance, instruct_command, instruct_args,
-                                              attack_ip, local_ip, end_time)
-                if rt.check:
-                    post_response_http(rt, build_output)
-                else:
-                    print(build_output)
+                send_response(rt, call_function, forward_log, user_id, task_name, task_context, task_type,
+                              instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip, local_ip,
+                              end_time)
             command_list.remove(c)
         yield sleep(1)
 
