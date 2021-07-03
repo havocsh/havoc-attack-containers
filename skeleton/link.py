@@ -261,7 +261,7 @@ def main():
         remote_task_values = {
             'API_KEY': api_key, 'SECRET': secret, 'API_DOMAIN_NAME': api_domain_name, 'API_REGION': api_region
         }
-        for k, v in remote_task_values:
+        for k, v in remote_task_values.items():
             if not v:
                 print(f'Error: value for {k} cannot be empty')
                 subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
