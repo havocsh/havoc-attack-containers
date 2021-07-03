@@ -148,10 +148,11 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
             instruct_instance = c['instruct_instance']
             instruct_command = c['instruct_command']
             instruct_args = c['instruct_args']
-            if 'end_time' in c:
-                end_time = c['end_time']
             shutdown = None
             if end_time != 'None':
+                shutdown = shutdown_timer(end_time)
+            if c['end_time'] != 'None':
+                end_time = c['end_time']
                 shutdown = shutdown_timer(end_time)
             if instruct_command == 'Initialize' or instruct_command == 'sync_from_workspace':
                 if not rt.check:
@@ -237,7 +238,6 @@ def main():
     log.startLogging(sys.stdout)
     task_type = '<custom_task_type>'
     region = None
-    end_time = None
     api_key = None
     secret = None
     api_domain_name = None
@@ -268,6 +268,8 @@ def main():
         region = os.environ['REGION']
     if 'END_TIME' in os.environ:
         end_time = os.environ['END_TIME']
+    else:
+        end_time = 'None'
 
     # Instantiate Remote to serve key_pair as a property if task is a remote task
     rt = Remote(api_key, secret, api_domain_name, api_region)
