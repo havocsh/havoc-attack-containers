@@ -254,11 +254,17 @@ def main():
             print('Error: API_KEY, SECRET, API_DOMAIN_NAME and API_REGION environment variables must be set to run'
                   ' a remote task')
             subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
-        else:
-            api_key = os.environ['API_KEY']
-            secret = os.environ['SECRET_KEY']
-            api_domain_name = os.environ['API_DOMAIN_NAME']
-            api_region = os.environ['API_REGION']
+        api_key = os.environ['API_KEY']
+        secret = os.environ['SECRET']
+        api_domain_name = os.environ['API_DOMAIN_NAME']
+        api_region = os.environ['API_REGION']
+        remote_task_values = {
+            'API_KEY': api_key, 'SECRET': secret, 'API_DOMAIN_NAME': api_domain_name, 'API_REGION': api_region
+        }
+        for k, v in remote_task_values:
+            if not v:
+                print(f'Error: value for {k} cannot be empty')
+                subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
     else:
         region = os.environ['REGION']
     if 'END_TIME' in os.environ:
