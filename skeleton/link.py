@@ -25,19 +25,12 @@ class Remote:
         self.api_domain_name = api_domain_name
         self.api_region = api_region
         self.__check = None
-        self.__havoc_connection = None
 
     @property
     def check(self):
         if self.api_key and self.secret and self.api_domain_name and self.api_region:
             self.__check = True
         return self.__check
-
-    @property
-    def havoc_connection(self):
-        if self.api_key and self.secret and self.api_domain_name and self.api_region:
-            self.__havoc_connection = havoc.Connect(self.api_region, self.api_domain_name, self.api_key, self.secret)
-        return self.__havoc_connection
 
 
 def sleep(delay):
@@ -95,7 +88,7 @@ def get_commands_s3(client, campaign_id, task_name, command_list):
 
 
 def get_commands_http(rt, task_name, command_list):
-    h = rt.havoc_connection()
+    h = havoc.Connect(rt.api_region, rt.api_domain_name, rt.api_key, rt.secret)
     commands_response = h.get_commands(task_name)
     if not commands_response:
         print(f"get_commands_http failed for task {task_name}")
@@ -106,7 +99,7 @@ def get_commands_http(rt, task_name, command_list):
 
 
 def post_response_http(rt, results):
-    h = rt.havoc_connection()
+    h = havoc.Connect(rt.api_region, rt.api_domain_name, rt.api_key, rt.secret)
     post_response = h.post_response(results)
     if not post_response:
         print(f"post_response_http failed for results {results}")
@@ -114,7 +107,7 @@ def post_response_http(rt, results):
 
 
 def sync_workspace_http(rt, sync_direction):
-    h = rt.havoc_connection()
+    h = havoc.Connect(rt.api_region, rt.api_domain_name, rt.api_key, rt.secret)
     sync_workspace_response = h.sync_workspace(sync_direction, '/opt/havoc/shared')
     if not sync_workspace_response:
         print(f"sync_workspace_http failed for sync_direction {sync_direction}")
