@@ -109,9 +109,6 @@ def post_response_http(rt, results):
 def sync_workspace_http(rt, sync_direction):
     h = havoc.Connect(rt.api_region, rt.api_domain_name, rt.api_key, rt.secret)
     sync_workspace_response = h.sync_workspace(sync_direction, '/opt/havoc/shared')
-    if not sync_workspace_response:
-        print(f"sync_workspace_http failed for sync_direction {sync_direction}")
-        subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
     return sync_workspace_response
 
 
