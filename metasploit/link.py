@@ -78,7 +78,6 @@ def get_commands_s3(client, campaign_id, task_name, command_list):
             )
             assert get_object_response, f'get_object failed for task_name {task_name}, key {file_entry}'
             interaction = json.loads(get_object_response['Body'].read().decode('utf-8'))
-            interaction['timestamp'] = datetime.now()
             command_list.append(interaction)
             delete_object_response = client.delete_object(
                 Bucket=f'{campaign_id}-workspace',
