@@ -94,7 +94,7 @@ def get_commands_http(rt, task_name, command_list):
         print(f"get_commands_http failed for task {task_name}")
         subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
 
-    if 'commands' in commands_response:
+    if commands_response:
         for command in commands_response['commands']:
             command_list.append(command)
 
@@ -311,6 +311,14 @@ def main():
     attack_ip = r.text.rstrip()
     hostname = socket.gethostname()
     local_ip = get_ip()
+
+    # If this is a remote task, register it as such
+    if rt.check:
+        h = havoc.Connect(rt.api_region, rt.api_domain_name, rt.api_key, rt.secret)
+        task_registration = h.register_task(task_name, task_context, task_type, attack_ip, local_ip)
+        if not task_registration:
+            print('Remote task registration failed. Exiting...')
+            subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
 
     # Setup coroutine resources
     command_list = []
