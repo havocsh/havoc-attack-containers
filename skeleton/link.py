@@ -93,7 +93,7 @@ def get_commands_http(rt, task_name, command_list):
         print(f"get_commands_http failed for task {task_name}")
         subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
 
-    if commands_response:
+    if 'commands' in commands_response:
         for command in commands_response['commands']:
             command_list.append(command)
 
