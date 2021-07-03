@@ -118,10 +118,11 @@ def send_response(rt, task_response, forward_log, user_id, task_name, task_conte
     if not rt.check:
         local_ip = 'None'
     output = {
-        'task_response': task_response, 'user_id': user_id, 'task_name': task_name, 'task_context': task_context,
-        'task_type': task_type, 'instruct_user_id': instruct_user_id, 'instruct_instance': instruct_instance,
-        'instruct_command': instruct_command, 'instruct_args': instruct_args, 'attack_ip': attack_ip,
-        'local_ip': local_ip, 'end_time': end_time, 'forward_log': forward_log, 'timestamp': stime
+        'instruct_command_output': task_response, 'user_id': user_id, 'task_name': task_name,
+        'task_context': task_context, 'task_type': task_type, 'instruct_user_id': instruct_user_id,
+        'instruct_instance': instruct_instance, 'instruct_command': instruct_command, 'instruct_args': instruct_args,
+        'attack_ip': attack_ip, 'local_ip': local_ip, 'end_time': end_time, 'forward_log': forward_log,
+        'timestamp': stime
     }
     if rt.check:
         post_response_http(rt, output)
