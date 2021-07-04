@@ -240,6 +240,7 @@ def main():
     secret = None
     api_domain_name = None
     api_region = None
+    attack_ip = None
 
     # Setup vars
     campaign_id = os.environ['CAMPAIGN_ID']
@@ -247,7 +248,7 @@ def main():
     task_name = os.environ['TASK_NAME']
     task_context = os.environ['TASK_CONTEXT']
     if 'REMOTE_TASK' in os.environ:
-        if not os.environ.keys() >= {'API_KEY', 'SECRET', 'API_DOMAIN_NAME', 'API_REGION'}:
+        if not os.environ.keys() >= {'API_KEY', 'SECRET', 'API_DOMAIN_NAME', 'API_REGION', 'LOCAL_IP'}:
             print('Error: API_KEY, SECRET, API_DOMAIN_NAME and API_REGION environment variables must be set to run'
                   ' a remote task')
             subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
@@ -255,8 +256,13 @@ def main():
         secret = os.environ['SECRET']
         api_domain_name = os.environ['API_DOMAIN_NAME']
         api_region = os.environ['API_REGION']
+        local_ip = os.environ['LOCAL_IP'].split()
         remote_task_values = {
-            'API_KEY': api_key, 'SECRET': secret, 'API_DOMAIN_NAME': api_domain_name, 'API_REGION': api_region
+            'API_KEY': api_key,
+            'SECRET': secret,
+            'API_DOMAIN_NAME': api_domain_name,
+            'API_REGION': api_region,
+            'LOCAL_IP': local_ip
         }
         for k, v in remote_task_values.items():
             if not v:
@@ -264,6 +270,7 @@ def main():
                 subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
     else:
         region = os.environ['REGION']
+        local_ip = ['None']
     if 'END_TIME' in os.environ:
         end_time = os.environ['END_TIME']
     else:
@@ -273,10 +280,13 @@ def main():
     rt = Remote(api_key, secret, api_domain_name, api_region)
 
     # Get public IP
-    r = requests.get('http://checkip.amazonaws.com/')
-    attack_ip = r.text.rstrip()
+    try:
+        r = requests.get('http://checkip.amazonaws.com/', timeout=10)
+        attack_ip = r.text.rstrip()
+    except requests.ConnectionError:
+        print('Public IP check failed. Exiting...')
+        subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
     hostname = socket.gethostname()
-    local_ip = get_ip()
 
     # If this is a remote task, register it as such
     if rt.check:

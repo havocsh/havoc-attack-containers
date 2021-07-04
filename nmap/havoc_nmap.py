@@ -10,7 +10,7 @@ class call_nmap:
 
     def set_args(self, args, attack_ip, hostname, local_ip):
         self.args = args
-        self.host_info = [attack_ip, hostname, local_ip]
+        self.host_info = [attack_ip, hostname] + local_ip
         return True
 
     def run_scan(self):
