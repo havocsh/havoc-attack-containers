@@ -102,8 +102,6 @@ def sync_workspace_http(rt, sync_direction):
 def send_response(rt, task_response, forward_log, user_id, task_name, task_context, task_type, instruct_user_id,
                    instruct_instance, instruct_command, instruct_args, attack_ip, local_ip, end_time):
     stime = datetime.now(timezone.utc).strftime('%s')
-    if not rt.check:
-        local_ip = 'None'
     output = {
         'instruct_command_output': task_response, 'user_id': user_id, 'task_name': task_name,
         'task_context': task_context, 'task_type': task_type, 'instruct_user_id': instruct_user_id,
