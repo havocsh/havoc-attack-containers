@@ -178,7 +178,7 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                 subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
             else:
                 if instruct_instance not in metasploit:
-                    metasploit[instruct_instance] = havoc_metasploit.call_msf()
+                    metasploit[instruct_instance] = havoc_metasploit.call_msf(campaign_id)
                 if instruct_instance in metasploit:
                     metasploit_functions = {
                         'list_exploits': metasploit[instruct_instance].list_exploits,

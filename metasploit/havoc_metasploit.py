@@ -3,7 +3,8 @@ from pymetasploit3.msfrpc import *
 
 class call_msf:
 
-    def __init__(self):
+    def __init__(self, campaign_id):
+        self.campaign_id = campaign_id
         self.args = None
         self.host_info = None
         self.__msf_client = None
@@ -18,7 +19,7 @@ class call_msf:
     def msf_client(self):
         """Returns the MsfRpcClient session (establishes one automatically if one does not already exist)"""
         if self.__msf_client is None:
-            self.__msf_client = MsfRpcClient('1msf_secured2', ssl=True)
+            self.__msf_client = MsfRpcClient(self.campaign_id, ssl=True)
         return self.__msf_client
 
     def set_args(self, args, attack_ip, hostname, local_ip):
