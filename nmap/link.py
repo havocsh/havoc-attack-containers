@@ -233,7 +233,7 @@ def get_command_obj(region, campaign_id, task_name, rt, command_list):
     else:
         client = None
     while True:
-        yield sleep(12)
+        yield sleep(6)
         if rt.check:
             get_commands_http(rt, task_name, command_list)
         else:
