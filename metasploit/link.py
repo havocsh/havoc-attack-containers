@@ -236,7 +236,9 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
 
                 forward_log = call_function['forward_log']
                 del call_function['forward_log']
-                send_response(rt, call_function, forward_log, user_id, task_name, task_context, task_type,
+                m = havoc_metasploit.MetasploitParser(call_function)
+                task_response = m.metasploit_parser()
+                send_response(rt, task_response, forward_log, user_id, task_name, task_context, task_type,
                               instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip, local_ip,
                               end_time)
             command_list.remove(c)

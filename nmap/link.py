@@ -198,23 +198,13 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                 forward_log = call_function['forward_log']
                 del call_function['forward_log']
                 if instruct_command == 'run_scan':
-                    task_response = {'outcome': call_function['outcome']}
                     scan = call_function['scan']
-                    for k,v in scan.items():
-                        task_response['scan'] = v
-                        task_response['target_ip'] = v['addresses']['ipv4']
-                        if 'tcp' in v:
-                            tcp = v['tcp']
-                            tcp_iter = iter(tcp)
-                            port = next(tcp_iter)
-                            task_response['ip_protocol'] = 'tcp'
-                            task_response['target_port'] = port
-                        if 'udp' in v:
-                            udp = v['udp']
-                            udp_iter = iter(udp)
-                            port = next(udp_iter)
-                            task_response['ip_protocol'] = 'udp'
-                            task_response['target_port'] = port
+                    n = havoc_nmap.NmapParser(scan)
+                    nmap_events = n.nmap_parser()
+                    for event in nmap_events:
+                        task_response = {'outcome': call_function['outcome']}
+                        for k, v in event.items():
+                            task_response[k] = v
                         send_response(rt, task_response, forward_log, user_id, task_name, task_context, task_type,
                                       instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip,
                                       local_ip, end_time)

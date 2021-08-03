@@ -1,3 +1,4 @@
+import re
 from pymetasploit3.msfrpc import *
 
 
@@ -679,3 +680,30 @@ class call_msf:
             output = {'outcome': 'success', 'echo': 'OK', 'forward_log': 'False'}
 
         return output
+
+
+class MetasploitParser:
+
+    def __init__(self, event):
+        self.event = event
+
+    def metasploit_parser(self):
+        if 'exploit_options' in self.event:
+            if 'RHOSTS' in self.event['exploit_options']:
+                re.search('\d+\.\d+\.\d+\.\d+', self.event['exploit_options']['RHOSTS'])
+                if re.search:
+                    self.event['target_ip'] = self.event['exploit_options']['RHOSTS']
+                else:
+                    self.event['target_hostnames'] = [self.event['exploit_options']['RHOSTS']]
+            if 'RPORT' in self.event['exploit_options']:
+                self.event['target_port'] = self.event['exploit_options']['RPORT']
+        if 'payload_options' in self.event:
+            if 'LHOST' in self.event['payload_options']:
+                re.search('\d+\.\d+\.\d+\.\d+', self.event['payload_options']['LHOST'])
+                if re.search:
+                    self.event['callback_ip'] = self.event['payload_options']['LHOST']
+                else:
+                    self.event['callback_hostname'] = self.event['payload_options']['LHOST']
+            if 'LPORT' in self.event['payload_options']:
+                self.event['callback_port'] = self.event['payload_options']['LPORT']
+        return self.event

@@ -74,3 +74,59 @@ class call_nmap:
             output = {'outcome': 'success', 'echo': 'OK', 'forward_log': 'False'}
 
         return output
+
+
+class NmapParser:
+
+    def __init__(self, event):
+        self.event = event
+
+    def nmap_parser(self):
+        parsed_events = []
+        for k, v in self.event.items():
+            if 'tcp' in v:
+                tcp = v['tcp']
+                for port in tcp:
+                    new_event = {
+                        'target_ip': v['addresses']['ipv4'],
+                        'target_hostnames': v['hostnames'],
+                        'target_vendor': v['vendor'],
+                        'status': v['status'],
+                        'ip_protocol': 'tcp',
+                        'target_port': port,
+                        'target_port_name': port['name'],
+                        'target_port_application': port['product'],
+                        'target_port_application_version': port['version'],
+                        'target_port_state': port['state'],
+                        'target_port_state_reason': port['reason'],
+                        'target_port_extrainfo': port['extrainfo'],
+                        'target_scripts_output': []
+                    }
+                    if 'script' in port:
+                        for script_k, script_v in port['script'].items():
+                            new_event['target_scripts_output'].append({script_k: script_v})
+                    parsed_events.append(new_event)
+            if 'udp' in v:
+                udp = v['udp']
+                for port in udp:
+                    new_event = {
+                        'target_ip': v['addresses']['ipv4'],
+                        'target_hostnames': v['hostnames'],
+                        'target_vendor': v['vendor'],
+                        'status': v['status'],
+                        'ip_protocol': 'udp',
+                        'target_port': port,
+                        'target_port_name': port['name'],
+                        'target_port_application': port['product'],
+                        'target_port_application_version': port['version'],
+                        'target_port_state': port['state'],
+                        'target_port_state_reason': port['reason'],
+                        'target_port_extrainfo': port['extrainfo'],
+                        'target_scripts_output': []
+                    }
+                    if 'script' in port:
+                        for script_k, script_v in port['script'].items():
+                            new_event['target_scripts_output'].append({script_k: script_v})
+                    parsed_events.append(new_event)
+
+        return parsed_events
