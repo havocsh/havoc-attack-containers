@@ -28,12 +28,12 @@ RUN chmod +x /opt/havoc/link.py
 
 # Install custom dependencies and modules
 # Install python3 as python so that poetry can print
-RUN sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 10
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10
 WORKDIR /opt
 RUN git clone --recursive https://github.com/BC-SECURITY/Empire.git
 WORKDIR Empire
 # Disable poetry virtualenvs.create in the Empire setup/install.sh script
-RUN sed -i "s/poetry install/sudo poetry config virtualenvs.create false && sudo poetry install/g" empire/server/server.py
+RUN sed -i "s/poetry install/poetry config virtualenvs.create false && poetry install/g" empire/server/server.py
 RUN printf "y\ny\ny\ny\n" | ./setup/install.sh
 # Rewrite path to empire.db in the Empire build
 RUN sed -i "s/data\/empire.db/empire\/server\/data\/empire.db/g" empire/server/server.py
