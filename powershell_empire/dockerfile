@@ -27,6 +27,8 @@ COPY ./link.py /opt/havoc/link.py
 RUN chmod +x /opt/havoc/link.py
 
 # Install custom dependencies and modules
+# Install python3 as python so that poetry can print
+RUN sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 10
 WORKDIR /opt
 RUN git clone --recursive https://github.com/BC-SECURITY/Empire.git
 WORKDIR Empire
