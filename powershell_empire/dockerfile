@@ -12,14 +12,6 @@ RUN pip3 install requests
 RUN pip3 install awscli
 RUN pip3 install havoc
 
-# Install custom dependencies and modules
-RUN git clone --recursive https://github.com/BC-SECURITY/Empire.git
-RUN cd Empire
-RUN printf "y\ny\ny\ny\n" | ./setup/install.sh
-RUN poetry install
-# Fix a bug in the Powershell Empire build
-RUN sed -i "s/data\/empire.db/empire\/server\/data\/empire.db/g" empire/server/server.py
-
 # Setup supervisord
 COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
@@ -33,3 +25,12 @@ COPY ./havoc_powershell_empire.py /opt/havoc/havoc_powershell_empire.py
 # Copy repo version of link.py into build
 COPY ./link.py /opt/havoc/link.py
 RUN chmod +x /opt/havoc/link.py
+
+# Install custom dependencies and modules
+WORKDIR /opt
+RUN git clone --recursive https://github.com/BC-SECURITY/Empire.git
+WORKDIR Empire
+RUN printf "y\ny\ny\ny\n" | ./setup/install.sh
+RUN poetry install
+# Rewrite path to empire.db in the Empire build
+RUN sed -i "s/data\/empire.db/empire\/server\/data\/empire.db/g" empire/server/server.py
