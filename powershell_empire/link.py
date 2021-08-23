@@ -8,14 +8,15 @@ import boto3
 import socket
 import requests
 import subprocess
+from pathlib import Path
 from datetime import datetime, timezone
 from twisted.python import log
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks, Deferred
 import havoc
 
-# Havoc Imports
-import havoc_metasploit
+# Havoc imports
+import havoc_powershell_empire
 
 
 class Remote:
@@ -45,7 +46,20 @@ def shutdown_timer(end_time):
         return True
 
 
-def get_commands_s3(client, campaign_id, task_name, command_list):
+def get_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # doesn't even have to be reachable
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+    except Exception:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
+
+
+def get_commands_s3(client, campaign_id, task_name, command_list, user_id):
     list_objects_response = client.list_objects_v2(
         Bucket=f'{campaign_id}-workspace',
         Prefix=task_name + '/'
@@ -71,18 +85,35 @@ def get_commands_s3(client, campaign_id, task_name, command_list):
                 Key=file_entry
             )
             assert delete_object_response, f"delete_object failed for task {task_name}, key {file_entry}"
+    else:
+        command_list.append(
+            {
+                'instruct_user_id': user_id,
+                'instruct_instance': 'agent_status_monitor',
+                'instruct_command': 'agent_status_monitor',
+                'instruct_args': None
+            }
+        )
 
 
-def get_commands_http(rt, task_name, command_list):
+def get_commands_http(rt, task_name, command_list, user_id):
     h = havoc.Connect(rt.api_region, rt.api_domain_name, rt.api_key, rt.secret)
     commands_response = h.get_commands(task_name)
     if not commands_response:
         print(f"get_commands_http failed for task {task_name}")
-        subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
 
     if 'commands' in commands_response:
         for command in commands_response['commands']:
             command_list.append(command)
+    else:
+        command_list.append(
+            {
+                'instruct_user_id': user_id,
+                'instruct_instance': 'agent_status_monitor',
+                'instruct_command': 'agent_status_monitor',
+                'instruct_args': None
+            }
+        )
 
 
 def post_response_http(rt, results):
@@ -90,7 +121,6 @@ def post_response_http(rt, results):
     post_response = h.post_response(results)
     if not post_response:
         print(f"post_response_http failed for results {results}")
-        subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
 
 
 def sync_workspace_http(rt, sync_direction):
@@ -134,12 +164,10 @@ def send_response(rt, task_response, forward_log, user_id, task_name, task_conte
 @inlineCallbacks
 def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_time, command_list, attack_ip, hostname,
            local_ip):
-    call_function = None
-    metasploit = {}
-    current_sessions = []
+    powershell_empire = {}
+    current_agents = []
 
     while True:
-
         def sortFunc(e):
             return e['timestamp']
 
@@ -171,8 +199,8 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                     response_kv = ['status', 'ready']
                 else:
                     response_kv = ['outcome', 'success']
-                send_response(rt, {response_kv[0]: response_kv[1], 'local_directory_contents': file_list},
-                              'True', user_id, task_name, task_context, task_type, instruct_user_id, instruct_instance,
+                send_response(rt, {response_kv[0]: response_kv[1], 'local_directory_contents': file_list}, 'True',
+                              user_id, task_name, task_context, task_type, instruct_user_id, instruct_instance,
                               instruct_command, instruct_args, attack_ip, local_ip, end_time)
             elif instruct_command == 'sync_to_workspace':
                 if not rt.check:
@@ -236,100 +264,79 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                     send_response(rt, {'outcome': 'failed', 'message': 'Missing filename'}, 'False', user_id, task_name,
                                   task_context, task_type, instruct_user_id, instruct_instance, instruct_command,
                                   instruct_args, attack_ip, local_ip, end_time)
-            elif instruct_command == 'session_status_monitor':
-                metasploit[instruct_instance] = havoc_metasploit.call_msf(campaign_id)
-                instruct_args = {'current_sessions': current_sessions}
-                metasploit[instruct_instance].set_args(instruct_args, attack_ip, hostname, local_ip)
-                call_session_status_monitor = metasploit[instruct_instance].session_status_monitor()
-                new_sessions = call_session_status_monitor['new_sessions']
-                dead_sessions = call_session_status_monitor['dead_sessions']
-                for new_session in new_sessions:
-                    current_sessions.append(new_session)
-                    m = havoc_metasploit.MetasploitParser(new_session)
-                    new_session_parsed = m.metasploit_parser()
-                    new_session_response = {'outcome': 'success', 'session_connected': 'True'}
-                    for k, v in new_session_parsed.items():
-                        new_session_response[k] = v
-                    send_response(rt, new_session_response, 'True', user_id, task_name, task_context, task_type,
+            elif instruct_command == 'agent_status_monitor':
+                powershell_empire[instruct_instance] = havoc_powershell_empire.call_powershell_empire()
+                instruct_args = {'current_agents': current_agents}
+                powershell_empire[instruct_instance].set_args(instruct_args, attack_ip, hostname, local_ip)
+                call_agent_status_monitor = powershell_empire[instruct_instance].agent_status_monitor()
+                new_agents = call_agent_status_monitor['new_agents']
+                dead_agents = call_agent_status_monitor['dead_agents']
+                for new_agent in new_agents:
+                    current_agents.append(new_agent)
+                    p = havoc_powershell_empire.PowershellEmpireParser(new_agent, True)
+                    new_agent_parsed = p.powershell_empire_parser()
+                    new_agent_response = {'outcome': 'success', 'agent_connected': 'True'}
+                    for k, v in new_agent_parsed.items():
+                        new_agent_response[k] = v
+                    send_response(rt, new_agent_response, 'True', user_id, task_name, task_context, task_type,
                                   instruct_user_id, instruct_instance, instruct_command, {'no_args': 'True'}, attack_ip,
                                   local_ip, end_time)
-                for dead_session in dead_sessions:
-                    m = havoc_metasploit.MetasploitParser(dead_session)
-                    dead_session_parsed = m.metasploit_parser()
-                    dead_session_response = {'outcome': 'success', 'session_killed': 'True'}
-                    for k, v in dead_session_parsed.items():
-                        dead_session_response[k] = v
-                    send_response(rt, dead_session_response, 'True', user_id, task_name, task_context, task_type,
+                for dead_agent in dead_agents:
+                    p = havoc_powershell_empire.PowershellEmpireParser(dead_agent, True)
+                    dead_agent_parsed = p.powershell_empire_parser()
+                    dead_agent_response = {'outcome': 'success', 'agent_killed': 'True'}
+                    for k, v in dead_agent_parsed.items():
+                        dead_agent_response[k] = v
+                    send_response(rt, dead_agent_response, 'True', user_id, task_name, task_context, task_type,
                                   instruct_user_id, instruct_instance, instruct_command, {'no_args': 'True'}, attack_ip,
                                   local_ip, end_time)
-                    current_sessions=[x for x in current_sessions if x['session_id'] not in dead_session['session_id']]
+                    current_agents=[x for x in current_agents if x['ID'] not in dead_agent['ID']]
             elif instruct_command == 'terminate' or shutdown:
                 send_response(rt, {'status': 'terminating'}, 'True', user_id, task_name, task_context, task_type,
                               instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip, local_ip,
                               end_time)
                 subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
             else:
-                if instruct_instance not in metasploit:
-                    metasploit[instruct_instance] = havoc_metasploit.call_msf(campaign_id)
-                if instruct_instance in metasploit:
-                    metasploit_functions = {
-                        'list_exploits': metasploit[instruct_instance].list_exploits,
-                        'list_payloads': metasploit[instruct_instance].list_payloads,
-                        'list_jobs': metasploit[instruct_instance].list_jobs,
-                        'list_sessions': metasploit[instruct_instance].list_sessions,
-                        'set_exploit_module': metasploit[instruct_instance].set_exploit_module,
-                        'set_exploit_options': metasploit[instruct_instance].set_exploit_options,
-                        'set_exploit_target': metasploit[instruct_instance].set_exploit_target,
-                        'set_payload_module': metasploit[instruct_instance].set_payload_module,
-                        'set_payload_options': metasploit[instruct_instance].set_payload_options,
-                        'show_exploit': metasploit[instruct_instance].show_exploit,
-                        'show_exploit_options': metasploit[instruct_instance].show_exploit_options,
-                        'show_exploit_option_info': metasploit[instruct_instance].show_exploit_option_info,
-                        'show_exploit_targets': metasploit[instruct_instance].show_exploit_targets,
-                        'show_exploit_evasion': metasploit[instruct_instance].show_exploit_evasion,
-                        'show_exploit_payloads': metasploit[instruct_instance].show_exploit_payloads,
-                        'show_configured_exploit_options': metasploit[instruct_instance].show_configured_exploit_options,
-                        'show_exploit_requirements': metasploit[instruct_instance].show_exploit_requirements,
-                        'show_missing_exploit_requirements': metasploit[instruct_instance].show_missing_exploit_requirements,
-                        'show_last_exploit_results': metasploit[instruct_instance].show_last_exploit_results,
-                        'show_payload': metasploit[instruct_instance].show_payload,
-                        'show_payload_options': metasploit[instruct_instance].show_payload_options,
-                        'show_payload_option_info': metasploit[instruct_instance].show_payload_option_info,
-                        'show_configured_payload_options': metasploit[instruct_instance].show_configured_payload_options,
-                        'show_payload_requirements': metasploit[instruct_instance].show_payload_requirements,
-                        'show_missing_payload_requirements': metasploit[instruct_instance].show_missing_payload_requirements,
-                        'show_job_info': metasploit[instruct_instance].show_job_info,
-                        'show_session_info': metasploit[instruct_instance].show_session_info,
-                        'execute_exploit': metasploit[instruct_instance].execute_exploit,
-                        'generate_payload': metasploit[instruct_instance].generate_payload,
-                        'run_session_command': metasploit[instruct_instance].run_session_command,
-                        'run_session_shell_command': metasploit[instruct_instance].run_session_shell_command,
-                        'session_tabs': metasploit[instruct_instance].session_tabs,
-                        'load_session_plugin': metasploit[instruct_instance].load_session_plugin,
-                        'session_import_psh': metasploit[instruct_instance].session_import_psh,
-                        'session_run_psh_cmd': metasploit[instruct_instance].session_run_psh_cmd,
-                        'run_session_script': metasploit[instruct_instance].run_session_script,
-                        'get_session_writeable_dir': metasploit[instruct_instance].get_session_writeable_dir,
-                        'session_read': metasploit[instruct_instance].session_read,
-                        'detach_session': metasploit[instruct_instance].detach_session,
-                        'kill_session': metasploit[instruct_instance].kill_session,
-                        'kill_job': metasploit[instruct_instance].kill_job,
-                        'echo': metasploit[instruct_instance].echo
+                if instruct_instance not in powershell_empire:
+                    powershell_empire[instruct_instance] = havoc_powershell_empire.call_powershell_empire()
+                powershell_empire_functions = {
+                    'get_listeners': powershell_empire[instruct_instance].get_listeners,
+                    'get_listener_options': powershell_empire[instruct_instance].get_listener_options,
+                    'create_listener': powershell_empire[instruct_instance].create_listener,
+                    'kill_listener': powershell_empire[instruct_instance].kill_listener,
+                    'kill_all_listeners': powershell_empire[instruct_instance].kill_all_listeners,
+                    'get_stagers': powershell_empire[instruct_instance].get_stagers,
+                    'create_stager': powershell_empire[instruct_instance].create_stager,
+                    'get_agents': powershell_empire[instruct_instance].get_agents,
+                    'get_stale_agents': powershell_empire[instruct_instance].get_stale_agents,
+                    'remove_agent': powershell_empire[instruct_instance].remove_agent,
+                    'remove_stale_agents': powershell_empire[instruct_instance].remove_stale_agents,
+                    'agent_shell_command': powershell_empire[instruct_instance].agent_shell_command,
+                    'clear_queued_shell_commands': powershell_empire[instruct_instance].clear_queued_shell_commands,
+                    'rename_agent': powershell_empire[instruct_instance].rename_agent,
+                    'kill_agent': powershell_empire[instruct_instance].kill_agent,
+                    'kill_all_agents': powershell_empire[instruct_instance].kill_all_agents,
+                    'get_modules': powershell_empire[instruct_instance].get_modules,
+                    'search_modules': powershell_empire[instruct_instance].search_modules,
+                    'execute_module': powershell_empire[instruct_instance].execute_module,
+                    'get_stored_credentials': powershell_empire[instruct_instance].get_stored_credentials,
+                    'get_logged_events': powershell_empire[instruct_instance].get_logged_events,
+                    'echo': powershell_empire[instruct_instance].echo
+                }
+                if instruct_command in powershell_empire_functions:
+                    powershell_empire[instruct_instance].set_args(instruct_args, attack_ip, hostname, local_ip)
+                    call_function = powershell_empire_functions[instruct_command]()
+                else:
+                    call_function = {
+                        'outcome': 'failed',
+                        'message': f'Invalid instruct_command: {instruct_command}',
+                        'forward_log': 'False'
                     }
-                    if instruct_command in metasploit_functions:
-                        metasploit[instruct_instance].set_args(instruct_args, attack_ip, hostname, local_ip)
-                        call_function = metasploit_functions[instruct_command]()
-                    else:
-                        call_function = {
-                            'outcome': 'failed',
-                            'message': f'Invalid instruct_command: {instruct_command}',
-                            'forward_log': 'False'
-                        }
 
                 forward_log = call_function['forward_log']
                 del call_function['forward_log']
-                m = havoc_metasploit.MetasploitParser(call_function)
-                task_response = m.metasploit_parser()
+                p = havoc_powershell_empire.PowershellEmpireParser(call_function)
+                task_response = p.powershell_empire_parser()
                 send_response(rt, task_response, forward_log, user_id, task_name, task_context, task_type,
                               instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip, local_ip,
                               end_time)
@@ -338,7 +345,7 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
 
 
 @inlineCallbacks
-def get_command_obj(region, campaign_id, task_name, rt, command_list):
+def get_command_obj(region, campaign_id, task_name, rt, command_list, user_id):
     if not rt.check:
         client = boto3.client('s3', region_name=region)
     else:
@@ -346,14 +353,14 @@ def get_command_obj(region, campaign_id, task_name, rt, command_list):
     while True:
         yield sleep(6)
         if rt.check:
-            get_commands_http(rt, task_name, command_list)
+            get_commands_http(rt, task_name, command_list, user_id)
         else:
-            get_commands_s3(client, campaign_id, task_name, command_list)
+            get_commands_s3(client, campaign_id, task_name, command_list, user_id)
 
 
 def main():
     log.startLogging(sys.stdout)
-    task_type = 'metasploit'
+    task_type = '<custom_task_type>'
     region = None
     api_key = None
     secret = None
@@ -419,7 +426,7 @@ def main():
     command_list = []
 
     # Setup coroutines
-    get_command_obj(region, campaign_id, task_name, rt, command_list)
+    get_command_obj(region, campaign_id, task_name, rt, command_list, user_id)
     action(campaign_id, user_id, task_type, task_name, task_context, rt, end_time, command_list, attack_ip, hostname,
            local_ip)
 

@@ -328,7 +328,7 @@ class call_msf:
         job_list = self.msf_client.jobs.list
         if job_id in job_list:
             job_info = self.msf_client.jobs.info(job_id)
-            output = {'job_info': job_info, 'forward_log': 'False'}
+            output = {'job_id': job_id, 'job_info': job_info, 'forward_log': 'False'}
         else:
             output = {'message': 'job_id not found', 'forward_log': 'False'}
         return output
@@ -342,7 +342,7 @@ class call_msf:
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             session_info = self.msf_client.sessions.session(session_id).info
-            output = {'session_info': session_info, 'forward_log': 'False'}
+            output = {'session_id': session_id, 'session_info': session_info, 'forward_log': 'False'}
         else:
             output = {'message': 'session_id not found', 'forward_log': 'False'}
         return output
@@ -472,8 +472,9 @@ class call_msf:
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             try:
+                session_info = self.msf_client.sessions.session(session_id).info
                 session_tabs_output = self.msf_client.sessions.session(session_id).tabs(session_command)
-                output = {'session_tabs_output': session_tabs_output, 'forward_log': 'False'}
+                output = {'session_tabs_output': session_tabs_output, 'session_in': session_id, 'session_info': session_info, 'forward_log': 'False'}
             except:
                 output = {'message': 'Invalid session_command', 'forward_log': 'False'}
         else:
@@ -494,8 +495,9 @@ class call_msf:
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             try:
+                session_info = self.msf_client.sessions.session(session_id).info
                 load_session_plugin_output = self.msf_client.sessions.session(session_id).load_plugin(plugin_name)
-                output = {'outcome': 'success', 'load_session_plugin_output': load_session_plugin_output, 'forward_log': 'False'}
+                output = {'outcome': 'success', 'load_session_plugin_output': load_session_plugin_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'False'}
             except:
                 output = {'outcome': 'failed', 'message': 'Invalid plugin_name', 'forward_log': 'False'}
         else:
@@ -598,8 +600,9 @@ class call_msf:
             return output
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
+            session_info = self.msf_client.sessions.session(session_id).info
             session_read_output = self.msf_client.sessions.session(session_id).read()
-            output = {'outcome': 'success', 'session_read_output': session_read_output, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'session_read_output': session_read_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
@@ -659,6 +662,30 @@ class call_msf:
             output = {'outcome': 'failed', 'message': 'job_id not found', 'forward_log': 'False'}
         return output
 
+    def session_status_monitor(self):
+        current_sessions = self.args['current_sessions']
+        list_sessions = self.list_sessions()
+        if 'sessions' in list_sessions:
+            sessions_status = list_sessions['sessions']
+            current_sessions_id = []
+            for current in current_sessions:
+                current_sessions_id.append(current)
+            temp_sessions_id = []
+            for session in sessions_status:
+                temp_sessions_id.append(session)
+            new_sessions = []
+            dead_sessions = []
+            for session in sessions_status:
+                if session not in current_sessions_id:
+                    sessions_status[session]['session_id'] = session
+                    new_sessions.append(sessions_status[session])
+            for current in current_sessions:
+                if current not in temp_sessions_id:
+                    current_sessions[current]['session_id'] = current
+                    dead_sessions.append(current_sessions[current])
+            sessions = {'new_sessions': new_sessions, 'dead_sessions': dead_sessions}
+            return sessions
+
     def echo(self):
         match = {
             'foo': 'bar',
@@ -690,8 +717,8 @@ class MetasploitParser:
     def metasploit_parser(self):
         if 'exploit_options' in self.event:
             if 'RHOSTS' in self.event['exploit_options']:
-                re.search('\d+\.\d+\.\d+\.\d+', self.event['exploit_options']['RHOSTS'])
-                if re.search:
+                rhost_match = re.search('\d+\.\d+\.\d+\.\d+', self.event['exploit_options']['RHOSTS'])
+                if rhost_match:
                     self.event['target_ip'] = self.event['exploit_options']['RHOSTS']
                 else:
                     self.event['target_hostnames'] = [self.event['exploit_options']['RHOSTS']]
@@ -699,11 +726,20 @@ class MetasploitParser:
                 self.event['target_port'] = self.event['exploit_options']['RPORT']
         if 'payload_options' in self.event:
             if 'LHOST' in self.event['payload_options']:
-                re.search('\d+\.\d+\.\d+\.\d+', self.event['payload_options']['LHOST'])
-                if re.search:
+                lhost_match = re.search('\d+\.\d+\.\d+\.\d+', self.event['payload_options']['LHOST'])
+                if lhost_match:
                     self.event['callback_ip'] = self.event['payload_options']['LHOST']
                 else:
                     self.event['callback_hostname'] = self.event['payload_options']['LHOST']
             if 'LPORT' in self.event['payload_options']:
                 self.event['callback_port'] = self.event['payload_options']['LPORT']
+        if 'session_info' in self.event and 'exploit_options' not in self.event and 'payload_options' not in self.event:
+            if 'target_host' in self.event['session_info']:
+                target_host_match = re.search('\d+\.\d+\.\d+\.\d+', self.event['session_info']['target_host'])
+                if target_host_match:
+                    self.event['target_ip'] = self.event['session_info']['target_host']
+                else:
+                    self.event['target_hostnames'] = [self.event['session_info']['target_host']]
+            if 'session_port' in self.event['session_info']:
+                self.event['target_port'] = self.event['session_info']['session_port']
         return self.event

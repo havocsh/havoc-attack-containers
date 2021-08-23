@@ -112,6 +112,22 @@ def sync_workspace_http(rt, sync_direction):
     return sync_workspace_response
 
 
+def file_transfer_http(rt, sync_direction, file_name):
+    success = False
+    h = havoc.Connect(rt.api_region, rt.api_domain_name, rt.api_key, rt.secret)
+    if sync_direction == 'download_from_workspace':
+        file_transfer_response = h.get_file(file_name)
+        if file_transfer_response:
+            with open(f'/opt/havoc/share/{file_name}', 'wb') as w:
+                w.write(file_transfer_response['file_contents'])
+            success = True
+    if sync_direction == 'upload_to_workspace':
+        with open (f'opt/havoc/shared/{file_name}', 'rb') as raw_file:
+            h.create_file(file_name, raw_file.read())
+        success = True
+    return success
+
+
 def send_response(rt, task_response, forward_log, user_id, task_name, task_context, task_type, instruct_user_id,
                    instruct_instance, instruct_command, instruct_args, attack_ip, local_ip, end_time):
     stime = datetime.now(timezone.utc).strftime('%s')
@@ -153,8 +169,8 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
             if instruct_command == 'Initialize' or instruct_command == 'sync_from_workspace':
                 if not rt.check:
                     file_list = []
-                    subprocess.call(["aws", "--quiet", "--no-paginate", "--no-progress", "s3", "sync",
-                                     f"s3://{campaign_id}-workspace/shared", "/opt/havoc/shared/"])
+                    subprocess.call(["aws", "--quiet", "--no-paginate", "--no-progress", "--no-guess-mime-type", "s3",
+                                     "sync", f"s3://{campaign_id}-workspace/shared", "/opt/havoc/shared/"])
                     for root, subdirs, files in os.walk('/opt/havoc/shared'):
                         for filename in files:
                             corrected_root = re.match('/opt/havoc/shared/(.*)', root).group(1)
@@ -172,8 +188,8 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
             elif instruct_command == 'sync_to_workspace':
                 if not rt.check:
                     file_list = []
-                    subprocess.call(["aws", "--quiet", "--no-paginate", "--no-progress", "s3", "sync",
-                                     "/opt/havoc/shared/", f"s3://{campaign_id}-workspace/shared"])
+                    subprocess.call(["aws", "--quiet", "--no-paginate", "--no-progress", "--no-guess-mime-type", "s3",
+                                     "sync", "/opt/havoc/shared/", f"s3://{campaign_id}-workspace/shared"])
                     for root, subdirs, files in os.walk('/opt/havoc/shared'):
                         for filename in files:
                             corrected_root = re.match('/opt/havoc/shared/(.*)', root).group(1)
@@ -184,6 +200,53 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                 send_response(rt, {'outcome': 'success', 'local_directory_contents': file_list}, 'False', user_id,
                               task_name, task_context, task_type, instruct_user_id, instruct_instance, instruct_command,
                               instruct_args, attack_ip, local_ip, end_time)
+            elif instruct_command == 'upload_to_workspace':
+                if 'filename' in instruct_args:
+                    file_name = instruct_args['filename']
+                    if file_name.is_file():
+                        if not rt.check:
+                            subprocess.call(["aws", "--quiet", "--no-paginate", "--no-progress", "--no-guess-mime-type",
+                                             "s3", "cp", f"/opt/havoc/shared/{file_name}",
+                                             f"s3://{campaign_id}-workspace/shared/{file_name}"])
+                        else:
+                            file_transfer_http(rt, 'upload_to_workspace', file_name)
+                        send_response(rt, {'outcome': 'success'}, 'True', user_id, task_name, task_context, task_type,
+                                      instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip,
+                                      local_ip, end_time)
+                    else:
+                        send_response(rt, {'outcome': 'failed', 'message': 'File not found'}, 'False', user_id,
+                                      task_name, task_context, task_type, instruct_user_id, instruct_instance,
+                                      instruct_command, instruct_args, attack_ip, local_ip, end_time)
+                else:
+                    send_response(rt, {'outcome': 'failed', 'message': 'Missing filename'}, 'False',
+                                  user_id, task_name, task_context, task_type, instruct_user_id, instruct_instance,
+                                  instruct_command, instruct_args, attack_ip, local_ip, end_time)
+            elif instruct_command == 'download_from_workspace':
+                if 'file_name' in instruct_args:
+                    file_name = instruct_args['file_name']
+                    file_not_found = False
+                    if not rt.check:
+                        s = subprocess.call(["aws", "--quiet", "--no-paginate", "--no-progress", "--no-guess-mime-type",
+                                         "s3", "cp", f"s3://{campaign_id}-workspace/shared/{file_name}",
+                                         f"/opt/havoc/shared/{file_name}"])
+                        if s == 1:
+                            file_not_found = True
+                    else:
+                        file_download = file_transfer_http(rt,'download_from_workspace', file_name)
+                        if not file_download:
+                            file_not_found = True
+                    if file_not_found:
+                        send_response(rt, {'outcome': 'failed', 'message': 'File not found'}, 'False', user_id,
+                                      task_name, task_context, task_type, instruct_user_id, instruct_instance,
+                                      instruct_command, instruct_args, attack_ip, local_ip, end_time)
+                    else:
+                        send_response(rt, {'outcome': 'success'}, 'True', user_id, task_name, task_context, task_type,
+                                      instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip,
+                                      local_ip, end_time)
+                else:
+                    send_response(rt, {'outcome': 'failed', 'message': 'Missing filename'}, 'False', user_id, task_name,
+                                  task_context, task_type, instruct_user_id, instruct_instance, instruct_command,
+                                  instruct_args, attack_ip, local_ip, end_time)
             elif instruct_command == 'terminate' or shutdown:
                 send_response(rt, {'status': 'terminating'}, 'True', user_id, task_name, task_context, task_type,
                               instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip, local_ip,
