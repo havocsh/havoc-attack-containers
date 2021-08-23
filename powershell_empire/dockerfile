@@ -30,7 +30,8 @@ RUN chmod +x /opt/havoc/link.py
 WORKDIR /opt
 RUN git clone --recursive https://github.com/BC-SECURITY/Empire.git
 WORKDIR Empire
+# Disable poetry virtualenvs.create in the Empire setup/install.sh script
+RUN sed -i "s/poetry install/poetry config virtualenvs.create false && poetry install/g" empire/server/server.py
 RUN printf "y\ny\ny\ny\n" | ./setup/install.sh
-RUN poetry install
 # Rewrite path to empire.db in the Empire build
 RUN sed -i "s/data\/empire.db/empire\/server\/data\/empire.db/g" empire/server/server.py
