@@ -91,7 +91,6 @@ def get_commands_http(rt, task_name, command_list):
     commands_response = h.get_commands(task_name)
     if not commands_response:
         print(f"get_commands_http failed for task {task_name}")
-        subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
 
     if 'commands' in commands_response:
         for command in commands_response['commands']:
@@ -103,7 +102,6 @@ def post_response_http(rt, results):
     post_response = h.post_response(results)
     if not post_response:
         print(f"post_response_http failed for results {results}")
-        subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
 
 
 def sync_workspace_http(rt, sync_direction):
