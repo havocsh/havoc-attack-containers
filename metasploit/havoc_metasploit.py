@@ -450,7 +450,7 @@ class call_msf:
         if session_id in session_list:
             try:
                 session_info = self.msf_client.sessions.session(session_id).info
-                run_session_shell_command_output = self.msf_client.sessions.session(session_id).run_with_output(session_shell_command, end_strings)
+                run_session_shell_command_output = self.msf_client.sessions.session(session_id).run_shell_cmd_with_output(session_shell_command, end_strings)
                 output = {'outcome': 'success', 'run_session_shell_command_output': run_session_shell_command_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'True'}
             except:
                 output = {'outcome': 'failed', 'message': 'Invalid session_shell_command', 'forward_log': 'False'}
@@ -511,7 +511,8 @@ class call_msf:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify session_id', 'forward_log': 'False'}
             return output
         try:
-            script_path = self.args['script_path']
+            script_name = self.args['script_name']
+            script = f'/opt/havocops/shared/{script_name}'
         except:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify script_path', 'forward_log': 'False'}
             return output
@@ -519,7 +520,7 @@ class call_msf:
         if session_id in session_list:
             try:
                 session_info = self.msf_client.sessions.session(session_id).info
-                session_import_psh_output = self.msf_client.sessions.session(session_id).import_psh(script_path)
+                session_import_psh_output = self.msf_client.sessions.session(session_id).import_psh(script)
                 output = {'outcome': 'success', 'session_import_psh_output': session_import_psh_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'True'}
             except:
                 output = {'outcome': 'failed', 'message': 'Invalid script_path', 'forward_log': 'False'}
