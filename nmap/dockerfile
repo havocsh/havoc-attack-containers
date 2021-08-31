@@ -10,6 +10,8 @@ RUN pip3 install service_identity
 RUN pip3 install Twisted
 RUN pip3 install requests
 RUN pip3 install awscli
+
+# Install havoc library version 0.2.6
 RUN pip3 install havoc
 
 # Install nmap and python-nmap
