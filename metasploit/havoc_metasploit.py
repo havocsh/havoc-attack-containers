@@ -633,7 +633,6 @@ class call_msf:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify session_id', 'forward_log': 'False'}
             return output
         session_list = self.msf_client.sessions.list
-        print(session_list) #Temporary print statement for debugging
         if session_id in session_list:
             try:
                 session_info = self.msf_client.sessions.session(session_id).info
