@@ -321,6 +321,7 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                     'execute_module': powershell_empire[instruct_instance].execute_module,
                     'get_stored_credentials': powershell_empire[instruct_instance].get_stored_credentials,
                     'get_logged_events': powershell_empire[instruct_instance].get_logged_events,
+                    'cert_gen': powershell_empire[instruct_instance].cert_gen,
                     'echo': powershell_empire[instruct_instance].echo
                 }
                 if instruct_command in powershell_empire_functions:

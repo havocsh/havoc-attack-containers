@@ -1,6 +1,8 @@
 import re
+import sys
 import time
 import requests
+import subprocess
 
 
 class call_powershell_empire:
@@ -349,6 +351,11 @@ class call_powershell_empire:
             get_logged_events_response = requests.get(get_logged_events_uri)
             events = get_logged_events_response.json()['reporting']
             output = {'outcome': 'success', 'events': events, 'forward_log': 'False'}
+        return output
+
+    def cert_gen(self):
+        subprocess.call(["/opt/Empire/setup/cert.sh"], stdout=sys.stderr)
+        output = {'outcome': 'success', 'cert_dir': '/opt/Empire/empire/server/data/', 'forward_log': 'True'}
         return output
 
     def agent_status_monitor(self):
