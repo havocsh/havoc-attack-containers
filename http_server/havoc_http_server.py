@@ -7,6 +7,7 @@ class HttpServer:
         self.args = None
         self.host_info = None
         self.results = None
+        self.twisted_process = None
 
     def set_args(self, args, attack_ip, hostname, local_ip):
         self.args = args
@@ -28,7 +29,7 @@ class HttpServer:
         if ssl:
             ssl_cert = Path('server-priv.key')
             if ssl_cert.is_file():
-                subprocess.Popen(
+                self.twisted_process = subprocess.Popen(
                     ['twistd,' '-no', 'web', f'--https={listen_port}', '-c server-priv.key', '-k server-chain.pem',
                      '--path /opt/havoc/shared/']
                 )
@@ -37,8 +38,18 @@ class HttpServer:
                           'forward_log': 'False'}
                 return output
         else:
-            subprocess.Popen(['twistd,' '-no', 'web', f'--port={listen_port}', '--path /opt/havoc/shared/'])
-        output = {'outcome': 'success', 'message': , 'forward_log': 'True'}
+            self.twisted_process = subprocess.Popen(
+                ['twistd,' '-no', 'web', f'--port={listen_port}', '--path /opt/havoc/shared/']
+            )
+        output = {'outcome': 'success', 'message': 'HTTP server started', 'forward_log': 'True'}
+        return output
+
+    def stop_server(self):
+        if not self.twisted_process:
+            output = {'outcome': 'failed', 'message': 'no server is running', 'forward_log': 'False'}
+            return output
+        self.twisted_process.terminate()
+        output = {'outcome': 'success', 'message': 'HTTP server stopped', 'forward_log': 'True'}
         return output
 
     def cert_gen(self):
@@ -58,7 +69,7 @@ class HttpServer:
         if openssl_out:
             output = {'outcome': 'success', 'message': openssl_out, 'forward_log': 'True'}
         else:
-            output = {'outcome': 'success', 'message': openssl_err, 'forward_log': 'True'}
+            output = {'outcome': 'failed', 'message': openssl_err, 'forward_log': 'True'}
         return output
 
     def echo(self):
