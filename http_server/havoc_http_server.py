@@ -25,8 +25,13 @@ class HttpServer:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify ssl', 'forward_log': 'False'}
             return output
         ssl = self.args['ssl']
+        if isinstance(ssl, bool):
+            if ssl:
+                ssl = 'true'
+            else:
+                ssl = 'false'
 
-        if ssl:
+        if ssl.lower() == 'true':
             ssl_cert = Path('server-priv.key')
             if ssl_cert.is_file():
                 self.twisted_process = subprocess.Popen(
