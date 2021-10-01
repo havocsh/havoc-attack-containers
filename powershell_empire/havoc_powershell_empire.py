@@ -354,8 +354,23 @@ class call_powershell_empire:
         return output
 
     def cert_gen(self):
-        subprocess.call(["/opt/Empire/setup/cert.sh"], stdout=sys.stderr)
-        output = {'outcome': 'success', 'cert_dir': '/opt/Empire/empire/server/data/', 'forward_log': 'True'}
+        if 'subj' not in self.args:
+            output = {'outcome': 'failed', 'message': 'instruct_args must specify subj', 'forward_log': 'False'}
+            return output
+        subj = self.args['subj']
+
+        p = subprocess.Popen(
+            ['/usr/bin/openssl', 'req' '-new', '-x509', '-keyout /opt/Empire/empire/server/data/empire-priv.key',
+             '-out /opt/Empire/empire/server/data/empire-chain.pem', '-days 365', '-nodes', f'-subj {subj}'],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        openssl_out, openssl_err = p.communicate()
+        if openssl_out:
+            output = {'outcome': 'success', 'message': openssl_out, 'forward_log': 'True'}
+        else:
+            output = {'outcome': 'failed', 'message': openssl_err, 'forward_log': 'True'}
         return output
 
     def agent_status_monitor(self):

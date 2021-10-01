@@ -35,7 +35,7 @@ class HttpServer:
             ssl_cert = Path('server-priv.key')
             if ssl_cert.is_file():
                 self.twisted_process = subprocess.Popen(
-                    ['twistd,' '-no', 'web', f'--https={listen_port}', '-c server-priv.key', '-k server-chain.pem',
+                    ['/usr/local/bin/twistd,' '-no', 'web', f'--https={listen_port}', '-c server-priv.key', '-k server-chain.pem',
                      '--path /opt/havoc/shared/']
                 )
             else:
@@ -44,7 +44,7 @@ class HttpServer:
                 return output
         else:
             self.twisted_process = subprocess.Popen(
-                ['twistd,' '-no', 'web', f'--port={listen_port}', '--path /opt/havoc/shared/']
+                ['/usr/local/bin/twistd,' '-no', 'web', f'--port={listen_port}', '--path /opt/havoc/shared/']
             )
         output = {'outcome': 'success', 'message': 'HTTP server started', 'forward_log': 'True'}
         return output
@@ -64,7 +64,7 @@ class HttpServer:
         subj = self.args['subj']
 
         p = subprocess.Popen(
-            ['openssl', 'req' '-new', '-x509', '-keyout server-priv.key', '-out server-chain.pem', '-days 365',
+            ['/usr/bin/openssl', 'req' '-new', '-x509', '-keyout server-priv.key', '-out server-chain.pem', '-days 365',
              '-nodes', f'-subj {subj}'],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
