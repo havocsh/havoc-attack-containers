@@ -360,7 +360,7 @@ class call_powershell_empire:
         subj = self.args['subj']
 
         p = subprocess.Popen(
-            ['/usr/bin/openssl', 'req' '-new', '-x509', '-keyout /opt/Empire/empire/server/data/empire-priv.key',
+            ['/usr/bin/openssl', 'req', '-new', '-x509', '-keyout /opt/Empire/empire/server/data/empire-priv.key',
              '-out /opt/Empire/empire/server/data/empire-chain.pem', '-days 365', '-nodes', f'-subj {subj}'],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
