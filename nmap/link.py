@@ -169,6 +169,16 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                 send_response(rt, {response_kv[0]: response_kv[1], 'local_directory_contents': file_list},
                               'True', user_id, task_name, task_context, task_type, instruct_user_id, instruct_instance,
                               instruct_command, instruct_args, attack_ip, local_ip, end_time)
+            elif instruct_command == 'ls':
+                file_list = []
+                for root, subdirs, files in os.walk('/opt/havoc/shared'):
+                    for filename in files:
+                        corrected_root = re.match('/opt/havoc/shared/(.*)', root).group(1)
+                        relative_path = os.path.join(corrected_root, filename)
+                        file_list.append(relative_path)
+                send_response(rt, {'outcome': 'success', 'local_directory_contents': file_list}, 'False',
+                              user_id, task_name, task_context, task_type, instruct_user_id, instruct_instance,
+                              instruct_command, instruct_args, attack_ip, local_ip, end_time)
             elif instruct_command == 'sync_to_workspace':
                 if not rt.check:
                     file_list = []
