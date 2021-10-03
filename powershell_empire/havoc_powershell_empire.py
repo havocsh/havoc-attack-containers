@@ -368,9 +368,11 @@ class call_powershell_empire:
         )
         openssl_out, openssl_err = p.communicate()
         if openssl_out:
-            output = {'outcome': 'success', 'message': openssl_out, 'forward_log': 'True'}
+            message = openssl_out.decode('utf-8')
+            output = {'outcome': 'success', 'message': message, 'forward_log': 'True'}
         else:
-            output = {'outcome': 'failed', 'message': openssl_err, 'forward_log': 'True'}
+            message = openssl_err.decode('utf-8')
+            output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
         return output
 
     def agent_status_monitor(self):
