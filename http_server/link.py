@@ -306,7 +306,7 @@ def get_command_obj(region, campaign_id, task_name, rt, command_list):
 
 def main():
     log.startLogging(sys.stdout)
-    task_type = '<custom_task_type>'
+    task_type = 'http_server'
     region = None
     api_key = None
     secret = None
