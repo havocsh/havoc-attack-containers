@@ -32,11 +32,11 @@ class HttpServer:
                 ssl = 'false'
 
         if ssl.lower() == 'true':
-            ssl_cert = Path('server-priv.key')
+            ssl_cert = Path('/opt/havoc/server-priv.key')
             if ssl_cert.is_file():
                 self.twisted_process = subprocess.Popen(
-                    ['/usr/local/bin/twistd', '-no', 'web', f'--https={listen_port}', '-c server-priv.key', '-k server-chain.pem',
-                     '--path /opt/havoc/shared/']
+                    ['/usr/local/bin/twistd', '-no', 'web', f'--https={listen_port}', '-c /opt/havoc/server-priv.key',
+                     '-k /opt/havoc/server-chain.pem', '--path /opt/havoc/shared/']
                 )
             else:
                 output = {'outcome': 'failed', 'message': 'missing certificate: run cert_gen first',
@@ -64,8 +64,8 @@ class HttpServer:
         subj = self.args['subj']
 
         p = subprocess.Popen(
-            ['/usr/bin/openssl', 'req', '-new', '-x509', '-keyout server-priv.key', '-out server-chain.pem',
-             '-days 365', '-nodes', f'-subj "{subj}"'],
+            ['/usr/bin/openssl', 'req', '-new', '-x509', '-keyout /opt/havoc/server-priv.key',
+             '-out /opt/havoc/server-chain.pem', '-days 365', '-nodes', f'-subj "{subj}"'],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
