@@ -65,7 +65,7 @@ class HttpServer:
 
         p = subprocess.Popen(
             ['/usr/bin/openssl', 'req', '-new', '-x509', '-keyout server-priv.key', '-out server-chain.pem',
-             '-days 365', '-nodes', f'-subj {subj}'],
+             '-days 365', '-nodes', f'-subj "{subj}"'],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
