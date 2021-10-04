@@ -119,7 +119,8 @@ class call_msf:
             except:
                 output = {'outcome': 'failed', 'message': 'Invalid option or option value', 'forward_log': 'False'}
         else:
-            output = {'outcome': 'failed', 'message': 'payload_module must be set before running set_payload_options', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'payload_module must be set before running set_payload_options',
+                      'forward_log': 'False'}
         return output
 
     def show_exploit(self):
@@ -664,6 +665,8 @@ class call_msf:
 
     def session_status_monitor(self):
         current_sessions = self.args['current_sessions']
+        new_sessions = []
+        dead_sessions = []
         list_sessions = self.list_sessions()
         if 'sessions' in list_sessions:
             sessions_status = list_sessions['sessions']
@@ -673,8 +676,7 @@ class call_msf:
             temp_sessions_id = []
             for session in sessions_status:
                 temp_sessions_id.append(session)
-            new_sessions = []
-            dead_sessions = []
+
             for session in sessions_status:
                 if session not in current_sessions_id:
                     sessions_status[session]['session_id'] = session
@@ -683,8 +685,8 @@ class call_msf:
                 if current not in temp_sessions_id:
                     current_sessions[current]['session_id'] = current
                     dead_sessions.append(current_sessions[current])
-            sessions = {'new_sessions': new_sessions, 'dead_sessions': dead_sessions}
-            return sessions
+        sessions = {'new_sessions': new_sessions, 'dead_sessions': dead_sessions}
+        return sessions
 
     def echo(self):
         match = {

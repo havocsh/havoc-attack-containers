@@ -284,28 +284,30 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                 instruct_args = {'current_agents': current_agents}
                 powershell_empire[instruct_instance].set_args(instruct_args, attack_ip, hostname, local_ip)
                 call_agent_status_monitor = powershell_empire[instruct_instance].agent_status_monitor()
-                new_agents = call_agent_status_monitor['new_agents']
-                dead_agents = call_agent_status_monitor['dead_agents']
-                for new_agent in new_agents:
-                    current_agents.append(new_agent)
-                    p = havoc_powershell_empire.PowershellEmpireParser(new_agent, True)
-                    new_agent_parsed = p.powershell_empire_parser()
-                    new_agent_response = {'outcome': 'success', 'agent_connected': 'True'}
-                    for k, v in new_agent_parsed.items():
-                        new_agent_response[k] = v
-                    send_response(rt, new_agent_response, 'True', user_id, task_name, task_context, task_type,
-                                  instruct_user_id, instruct_instance, instruct_command, {'no_args': 'True'}, attack_ip,
-                                  local_ip, end_time)
-                for dead_agent in dead_agents:
-                    p = havoc_powershell_empire.PowershellEmpireParser(dead_agent, True)
-                    dead_agent_parsed = p.powershell_empire_parser()
-                    dead_agent_response = {'outcome': 'success', 'agent_killed': 'True'}
-                    for k, v in dead_agent_parsed.items():
-                        dead_agent_response[k] = v
-                    send_response(rt, dead_agent_response, 'True', user_id, task_name, task_context, task_type,
-                                  instruct_user_id, instruct_instance, instruct_command, {'no_args': 'True'}, attack_ip,
-                                  local_ip, end_time)
-                    current_agents=[x for x in current_agents if x['ID'] not in dead_agent['ID']]
+                if 'new_agents' in call_agent_status_monitor:
+                    new_agents = call_agent_status_monitor['new_agents']
+                    for new_agent in new_agents:
+                        current_agents.append(new_agent)
+                        p = havoc_powershell_empire.PowershellEmpireParser(new_agent, True)
+                        new_agent_parsed = p.powershell_empire_parser()
+                        new_agent_response = {'outcome': 'success', 'agent_connected': 'True'}
+                        for k, v in new_agent_parsed.items():
+                            new_agent_response[k] = v
+                        send_response(rt, new_agent_response, 'True', user_id, task_name, task_context, task_type,
+                                      instruct_user_id, instruct_instance, instruct_command, {'no_args': 'True'},
+                                      attack_ip, local_ip, end_time)
+                if 'dead_agents' in call_agent_status_monitor:
+                    dead_agents = call_agent_status_monitor['dead_agents']
+                    for dead_agent in dead_agents:
+                        p = havoc_powershell_empire.PowershellEmpireParser(dead_agent, True)
+                        dead_agent_parsed = p.powershell_empire_parser()
+                        dead_agent_response = {'outcome': 'success', 'agent_killed': 'True'}
+                        for k, v in dead_agent_parsed.items():
+                            dead_agent_response[k] = v
+                        send_response(rt, dead_agent_response, 'True', user_id, task_name, task_context, task_type,
+                                      instruct_user_id, instruct_instance, instruct_command, {'no_args': 'True'},
+                                      attack_ip, local_ip, end_time)
+                        current_agents=[x for x in current_agents if x['ID'] not in dead_agent['ID']]
             elif instruct_command == 'terminate' or shutdown:
                 send_response(rt, {'status': 'terminating'}, 'True', user_id, task_name, task_context, task_type,
                               instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip, local_ip,

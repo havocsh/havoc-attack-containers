@@ -26,9 +26,6 @@ class call_powershell_empire:
             token_response = requests.post(f'{self.server_uri}api/admin/login', json=request_payload, verify=False)
             if token_response.status_code == 200:
                 self.__token = token_response.json()['token']
-            else:
-                print(token_response.status_code)
-                print(token_response.text)
         return self.__token
 
     def get_listeners(self):
@@ -382,24 +379,25 @@ class call_powershell_empire:
         current_agents = self.args['current_agents']
         agent_status_monitor_uri = f'{self.server_uri}api/agents?token={self.token}'
         agent_status_monitor_response = requests.get(agent_status_monitor_uri, verify=False)
-        if agent_status_monitor_response.status_code == 200:
-            agents_status = agent_status_monitor_response.json()['agents']
+        agents_status_dict = agent_status_monitor_response.json()
+        new_agents = []
+        dead_agents = []
+        if 'agents' in agents_status_dict:
+            agents_status = agents_status_dict['agents']
             current_agents_id = []
             for current in current_agents:
                 current_agents_id.append(current['ID'])
             temp_agents_id = []
             for agent in agents_status:
                 temp_agents_id.append(agent['ID'])
-            new_agents = []
-            dead_agents = []
             for agent in agents_status:
                 if agent['ID'] not in current_agents_id:
                     new_agents.append(agent)
             for current in current_agents:
                 if current['ID'] not in temp_agents_id:
                     dead_agents.append(current)
-            agents = {'new_agents': new_agents, 'dead_agents': dead_agents}
-            return agents
+        agents = {'new_agents': new_agents, 'dead_agents': dead_agents}
+        return agents
 
     def echo(self):
         match = {
