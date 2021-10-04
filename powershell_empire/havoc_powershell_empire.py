@@ -23,7 +23,7 @@ class call_powershell_empire:
     def token(self):
         request_payload = {'username': 'empireadmin', 'password': 'Password123!'}
         if not self.__token:
-            token_response = requests.post(f'{self.server_uri}api/admin/login', json=request_payload)
+            token_response = requests.post(f'{self.server_uri}api/admin/login', json=request_payload, verify=False)
             self.__token = token_response.json()['token']
         return self.__token
 
@@ -31,7 +31,7 @@ class call_powershell_empire:
         if 'listener_name' in self.args:
             listener_name = self.args['listener_name']
             get_listeners_uri = f'{self.server_uri}api/listeners/{listener_name}?token={self.token}'
-            get_listeners_response = requests.get(get_listeners_uri)
+            get_listeners_response = requests.get(get_listeners_uri, verify=False)
             if get_listeners_response.status_code == 200:
                 listeners = get_listeners_response.json()['listeners']
                 output = {'outcome': 'success', 'listeners': listeners, 'forward_log': 'False'}
@@ -39,7 +39,7 @@ class call_powershell_empire:
                 output = {'outcome': 'failed', 'message': 'Check listener_name', 'forward_log': 'False'}
         else:
             get_listeners_uri = f'{self.server_uri}api/listeners?token={self.token}'
-            get_listeners_response = requests.get(get_listeners_uri)
+            get_listeners_response = requests.get(get_listeners_uri, verify=False)
             listeners = get_listeners_response.json()['listeners']
             output = {'outcome': 'success', 'listeners': listeners, 'forward_log': 'False'}
         return output
@@ -48,7 +48,7 @@ class call_powershell_empire:
         if 'listener_type' in self.args:
             listener_type = self.args['listener_type']
             get_listener_options_uri = f'{self.server_uri}api/listeners/options/{listener_type}?token={self.token}'
-            get_listener_options_response = requests.get(get_listener_options_uri)
+            get_listener_options_response = requests.get(get_listener_options_uri, verify=False)
             if get_listener_options_response.status_code == 200:
                 listener_options = get_listener_options_response.json()['listeneroptions']
                 output = {'outcome': 'success', 'listener_options': listener_options, 'forward_log': 'False'}
@@ -69,7 +69,7 @@ class call_powershell_empire:
             output = {'outcome': 'failed', 'message': 'Missing listener_name', 'forward_log': 'False'}
             return output
         create_listener_uri = f'{self.server_uri}api/listeners/{listener_type}?token={self.token}'
-        create_listener_response = requests.post(create_listener_uri, json=self.args)
+        create_listener_response = requests.post(create_listener_uri, json=self.args, verify=False)
         if create_listener_response.status_code == 200:
             message = create_listener_response.json()['msg']
             if create_listener_response.json()['success']:
@@ -87,7 +87,7 @@ class call_powershell_empire:
             output = {'outcome': 'failed', 'message': 'Missing listener_name', 'forward_log': 'False'}
             return output
         kill_listener_uri = f'{self.server_uri}api/listeners/{listener_name}?token={self.token}'
-        kill_listener_response = requests.delete(kill_listener_uri)
+        kill_listener_response = requests.delete(kill_listener_uri, verify=False)
         if kill_listener_response.status_code == 200:
             output = {'outcome': 'success', 'forward_log': 'True'}
         else:
@@ -96,7 +96,7 @@ class call_powershell_empire:
 
     def kill_all_listeners(self):
         kill_listener_uri = f'{self.server_uri}api/listeners/all?token={self.token}'
-        requests.delete(kill_listener_uri)
+        requests.delete(kill_listener_uri, verify=False)
         output = {'outcome': 'success', 'forward_log': 'True'}
         return output
 
@@ -104,7 +104,7 @@ class call_powershell_empire:
         if 'stager_name' in self.args:
             stager_name = self.args['stager_name']
             get_stagers_uri = f'{self.server_uri}api/stagers/{stager_name}?token={self.token}'
-            get_stagers_response = requests.get(get_stagers_uri)
+            get_stagers_response = requests.get(get_stagers_uri, verify=False)
             if get_stagers_response.status_code == 200:
                 stagers = get_stagers_response.json()['stagers']
                 output = {'outcome': 'success', 'stagers': stagers, 'forward_log': 'False'}
@@ -112,7 +112,7 @@ class call_powershell_empire:
                 output = {'outcome': 'failed', 'message': 'Check stager_name', 'forward_log': 'False'}
         else:
             get_stagers_uri = f'{self.server_uri}api/stagers?token={self.token}'
-            get_stagers_response = requests.get(get_stagers_uri)
+            get_stagers_response = requests.get(get_stagers_uri, verify=False)
             stagers = get_stagers_response.json()['stagers']
             output = {'outcome': 'success', 'stagers': stagers, 'forward_log': 'False'}
         return output
@@ -125,7 +125,7 @@ class call_powershell_empire:
             output = {'outcome': 'failed', 'message': 'Missing stager_name', 'forward_log': 'False'}
             return output
         create_stager_uri = f'{self.server_uri}api/stagers?token={self.token}'
-        create_stager_response = requests.post(create_stager_uri, json=self.args)
+        create_stager_response = requests.post(create_stager_uri, json=self.args, verify=False)
         launcher = create_stager_response.json()['launcher']
         output = {'outcome': 'success', 'launcher': launcher, 'forward_log': 'True'}
         return output
@@ -134,7 +134,7 @@ class call_powershell_empire:
         if 'agent_name' in self.args:
             agent_name = self.args['agent_name']
             get_agents_uri = f'{self.server_uri}api/agents/{agent_name}?token={self.token}'
-            get_agents_response = requests.get(get_agents_uri)
+            get_agents_response = requests.get(get_agents_uri, verify=False)
             if get_agents_response.status_code == 200:
                 agents = get_agents_response.json()['agents']
                 output = {'outcome': 'success', 'agents': agents, 'forward_log': 'False'}
@@ -142,14 +142,14 @@ class call_powershell_empire:
                 output = {'outcome': 'failed', 'message': 'Check agent_name', 'forward_log': 'False'}
         else:
             get_agents_uri = f'{self.server_uri}api/agents?token={self.token}'
-            get_agents_response = requests.get(get_agents_uri)
+            get_agents_response = requests.get(get_agents_uri, verify=False)
             agents = get_agents_response.json()['agents']
             output = {'outcome': 'success', 'agents': agents, 'forward_log': 'False'}
         return output
 
     def get_stale_agents(self):
         get_stale_agents_uri = f'{self.server_uri}api/agents/stale?token={self.token}'
-        get_stale_agents_response = requests.get(get_stale_agents_uri)
+        get_stale_agents_response = requests.get(get_stale_agents_uri, verify=False)
         stale_agents = get_stale_agents_response.json()['agents']
         output = {'outcome': 'success', 'agents': stale_agents, 'forward_log': 'False'}
         return output
@@ -161,7 +161,7 @@ class call_powershell_empire:
             output = {'outcome': 'failed', 'message': 'Missing agent_name', 'forward_log': 'False'}
             return output
         remove_agent_uri = f'{self.server_uri}api/agents/{agent_name}?token={self.token}'
-        remove_agent_response = requests.delete(remove_agent_uri)
+        remove_agent_response = requests.delete(remove_agent_uri, verify=False)
         if remove_agent_response.status_code == 200:
             output = {'outcome': 'success', 'forward_log': 'True'}
         else:
@@ -170,7 +170,7 @@ class call_powershell_empire:
 
     def remove_stale_agents(self):
         remove_stale_agents_uri = f'{self.server_uri}api/agents/stale?token={self.token}'
-        requests.delete(remove_stale_agents_uri)
+        requests.delete(remove_stale_agents_uri, verify=False)
         output = {'outcome': 'success', 'forward_log': 'True'}
         return output
 
@@ -185,19 +185,19 @@ class call_powershell_empire:
             output = {'outcome': 'failed', 'message': 'Missing command', 'forward_log': 'False'}
             return output
         agent_shell_uri = f'{self.server_uri}api/agents/{agent_name}/shell?token={self.token}'
-        agent_shell_response = requests.post(agent_shell_uri, json=self.args)
+        agent_shell_response = requests.post(agent_shell_uri, json=self.args, verify=False)
         if agent_shell_response.status_code == 200:
             results = None
             agent_info = None
             while not results:
                 agent_results_uri = f'{self.server_uri}api/agents/{agent_name}/results?token={self.token}'
-                agent_results_response = requests.get(agent_results_uri)
+                agent_results_response = requests.get(agent_results_uri, verify=False)
                 if 'results' in agent_results_response.json()['results']:
                     results = agent_results_response.json()['results']['results']
                 if results:
-                    requests.delete(agent_results_uri)
+                    requests.delete(agent_results_uri, verify=False)
                     get_agent_details_uri = f'{self.server_uri}api/agents/{agent_name}?token={self.token}'
-                    get_agent_details_response = requests.get(get_agent_details_uri)
+                    get_agent_details_response = requests.get(get_agent_details_uri, verify=False)
                     if get_agent_details_response.status_code == 200:
                         agent_info = get_agent_details_response.json()['agents']
                 else:
@@ -215,7 +215,7 @@ class call_powershell_empire:
             output = {'outcome': 'failed', 'message': 'Missing agent_name', 'forward_log': 'False'}
             return output
         clear_queued_shell_commands_uri = f'{self.server_uri}api/agents/{agent_name}/clear?token={self.token}'
-        clear_queued_shell_commands_response = requests.get(clear_queued_shell_commands_uri)
+        clear_queued_shell_commands_response = requests.get(clear_queued_shell_commands_uri, verify=False)
         if clear_queued_shell_commands_response.status_code == 200:
             output = {'outcome': 'success', 'forward_log': 'True'}
             return output
@@ -234,7 +234,7 @@ class call_powershell_empire:
             output = {'outcome': 'failed', 'message': 'Missing new_agent_name', 'forward_log': 'False'}
             return output
         rename_agent_uri = f'{self.server_uri}api/agents/{agent_name}/rename?token={self.token}'
-        rename_agent_response = requests.post(rename_agent_uri, json=self.args)
+        rename_agent_response = requests.post(rename_agent_uri, json=self.args, verify=False)
         if rename_agent_response.status_code == 200:
             output = {'outcome': 'success', 'forward_log': 'True'}
             return output
@@ -249,7 +249,7 @@ class call_powershell_empire:
             output = {'outcome': 'failed', 'message': 'Missing agent_name', 'forward_log': 'False'}
             return output
         kill_agent_uri = f'{self.server_uri}api/agents/{agent_name}/kill?token={self.token}'
-        kill_agent_response = requests.get(kill_agent_uri)
+        kill_agent_response = requests.get(kill_agent_uri, verify=False)
         if kill_agent_response.status_code == 200:
             output = {'outcome': 'success', 'forward_log': 'True'}
             return output
@@ -259,7 +259,7 @@ class call_powershell_empire:
 
     def kill_all_agents(self):
         kill_all_agents_uri = f'{self.server_uri}api/agents/all/kill?token={self.token}'
-        requests.get(kill_all_agents_uri)
+        requests.get(kill_all_agents_uri, verify=False)
         output = {'outcome': 'success', 'forward_log': 'True'}
         return output
 
@@ -267,7 +267,7 @@ class call_powershell_empire:
         if 'module_name' in self.args:
             module_name = self.args['module_name']
             get_modules_uri = f'{self.server_uri}api/modules/{module_name}?token={self.token}'
-            get_modules_response = requests.get(get_modules_uri)
+            get_modules_response = requests.get(get_modules_uri, verify=False)
             if get_modules_response.status_code == 200:
                 modules = get_modules_response.json()['modules']
                 output = {'outcome': 'success', 'modules': modules, 'forward_log': 'False'}
@@ -275,7 +275,7 @@ class call_powershell_empire:
                 output = {'outcome': 'failed', 'message': 'Check module_name', 'forward_log': 'False'}
         else:
             get_modules_uri = f'{self.server_uri}api/modules?token={self.token}'
-            get_modules_response = requests.get(get_modules_uri)
+            get_modules_response = requests.get(get_modules_uri, verify=False)
             modules = get_modules_response.json()['modules']
             output = {'outcome': 'success', 'modules': modules, 'forward_log': 'False'}
         return output
@@ -285,7 +285,7 @@ class call_powershell_empire:
             output = {'outcome': 'failed', 'message': 'Missing term', 'forward_log': 'False'}
             return output
         search_modules_uri = f'{self.server_uri}api/modules/search?token={self.token}'
-        search_modules_response = requests.post(search_modules_uri, json=self.args)
+        search_modules_response = requests.post(search_modules_uri, json=self.args, verify=False)
         if 'modules' in search_modules_response.json():
             modules = search_modules_response.json()['modules']
             output = {'outcome': 'success', 'modules': modules, 'forward_log': 'False'}
@@ -306,19 +306,19 @@ class call_powershell_empire:
             output = {'outcome': 'failed', 'message': 'Missing module_name', 'forward_log': 'False'}
             return output
         execute_module_uri = f'{self.server_uri}api/modules/{module_name}?token={self.token}'
-        execute_module_response = requests.post(execute_module_uri, json=self.args)
+        execute_module_response = requests.post(execute_module_uri, json=self.args, verify=False)
         if execute_module_response.status_code == 200:
             results = None
             agent_info = None
             while not results:
                 agent_results_uri = f'{self.server_uri}api/agents/{agent_name}/results?token={self.token}'
-                agent_results_response = requests.get(agent_results_uri)
+                agent_results_response = requests.get(agent_results_uri, verify=False)
                 if 'results' in agent_results_response.json()['results']:
                     results = agent_results_response.json()['results']['results']
                 if results:
-                    requests.delete(agent_results_uri)
+                    requests.delete(agent_results_uri, verify=False)
                     get_agent_details_uri = f'{self.server_uri}api/agents/{agent_name}?token={self.token}'
-                    get_agent_details_response = requests.get(get_agent_details_uri)
+                    get_agent_details_response = requests.get(get_agent_details_uri, verify=False)
                     if get_agent_details_response.status_code == 200:
                         agent_info = get_agent_details_response.json()['agents']
                 else:
@@ -331,7 +331,7 @@ class call_powershell_empire:
 
     def get_stored_credentials(self):
         get_stored_creds_uri = f'{self.server_uri}api/creds?token={self.token}'
-        get_stored_creds_response = requests.get(get_stored_creds_uri)
+        get_stored_creds_response = requests.get(get_stored_creds_uri, verify=False)
         stored_creds = get_stored_creds_response.json()['creds']
         output = {'outcome': 'success', 'credentials': stored_creds, 'forward_log': 'True'}
         return output
@@ -340,7 +340,7 @@ class call_powershell_empire:
         if 'event_type' in self.args:
             event_type = self.args['event_type']
             get_logged_events_uri = f'{self.server_uri}api/reporting/type/{event_type}?token={self.token}'
-            get_logged_events_response = requests.get(get_logged_events_uri)
+            get_logged_events_response = requests.get(get_logged_events_uri, verify=False)
             if get_logged_events_response.status_code == 200:
                 events = get_logged_events_response.json()['reporting']
                 output = {'outcome': 'success', 'events': events, 'forward_log': 'False'}
@@ -348,7 +348,7 @@ class call_powershell_empire:
                 output = {'outcome': 'failed', 'message': 'Check event_type', 'forward_log': 'False'}
         else:
             get_logged_events_uri = f'{self.server_uri}api/reporting?token={self.token}'
-            get_logged_events_response = requests.get(get_logged_events_uri)
+            get_logged_events_response = requests.get(get_logged_events_uri, verify=False)
             events = get_logged_events_response.json()['reporting']
             output = {'outcome': 'success', 'events': events, 'forward_log': 'False'}
         return output
@@ -377,7 +377,7 @@ class call_powershell_empire:
     def agent_status_monitor(self):
         current_agents = self.args['current_agents']
         agent_status_monitor_uri = f'{self.server_uri}api/agents?token={self.token}'
-        agent_status_monitor_response = requests.get(agent_status_monitor_uri)
+        agent_status_monitor_response = requests.get(agent_status_monitor_uri, verify=False)
         if agent_status_monitor_response.status_code == 200:
             agents_status = agent_status_monitor_response.json()['agents']
             current_agents_id = []
