@@ -1,9 +1,10 @@
 import re
-import sys
 import time
 import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import subprocess
 
+requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
 
 class call_powershell_empire:
 
