@@ -21,7 +21,7 @@ class call_powershell_empire:
 
     @property
     def token(self):
-        request_payload = {'username': 'empireadmin', 'password': 'Password123!'}
+        request_payload = {'username': 'empireadmin', 'password': 'password123'}
         if not self.__token:
             token_response = requests.post(f'{self.server_uri}api/admin/login', json=request_payload, verify=False)
             if token_response.status_code == 200:
