@@ -24,7 +24,11 @@ class call_powershell_empire:
         request_payload = {'username': 'empireadmin', 'password': 'Password123!'}
         if not self.__token:
             token_response = requests.post(f'{self.server_uri}api/admin/login', json=request_payload, verify=False)
-            self.__token = token_response.json()['token']
+            if token_response.status_code == 200:
+                self.__token = token_response.json()['token']
+            else:
+                print(token_response.status_code)
+                print(token_response.text)
         return self.__token
 
     def get_listeners(self):
