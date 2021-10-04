@@ -92,7 +92,8 @@ def get_commands_s3(client, campaign_id, task_name, command_list, user_id):
                 'instruct_user_id': user_id,
                 'instruct_instance': 'agent_status_monitor',
                 'instruct_command': 'agent_status_monitor',
-                'instruct_args': None
+                'instruct_args': None,
+                'end_time': 'None'
             }
         )
 
@@ -114,7 +115,8 @@ def get_commands_http(rt, task_name, command_list, user_id):
                 'instruct_user_id': user_id,
                 'instruct_instance': 'agent_status_monitor',
                 'instruct_command': 'agent_status_monitor',
-                'instruct_args': None
+                'instruct_args': None,
+                'end_time': 'None'
             }
         )
 
