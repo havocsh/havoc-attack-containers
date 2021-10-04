@@ -8,7 +8,6 @@ import boto3
 import socket
 import requests
 import subprocess
-from pathlib import Path
 from datetime import datetime, timezone
 from twisted.python import log
 from twisted.internet import reactor
@@ -86,8 +85,10 @@ def get_commands_s3(client, campaign_id, task_name, command_list, user_id):
             )
             assert delete_object_response, f"delete_object failed for task {task_name}, key {file_entry}"
     else:
+        timestamp = datetime.now(timezone.utc).strftime('%s')
         command_list.append(
             {
+                'timestamp': timestamp,
                 'instruct_user_id': user_id,
                 'instruct_instance': 'agent_status_monitor',
                 'instruct_command': 'agent_status_monitor',
@@ -106,8 +107,10 @@ def get_commands_http(rt, task_name, command_list, user_id):
         for command in commands_response['commands']:
             command_list.append(command)
     else:
+        timestamp = datetime.now(timezone.utc).strftime('%s')
         command_list.append(
             {
+                'timestamp': timestamp,
                 'instruct_user_id': user_id,
                 'instruct_instance': 'agent_status_monitor',
                 'instruct_command': 'agent_status_monitor',

@@ -15,11 +15,13 @@ class HttpServer:
         return True
 
     def start_server(self):
-
         if 'listen_port' not in self.args:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify listen_port', 'forward_log': 'False'}
             return output
         listen_port = self.args['listen_port']
+        if not isinstance(listen_port, int):
+            output = {'outcome': 'failed', 'message': 'listen_port must be type int', 'forward_log': 'False'}
+            return output
 
         if 'ssl' not in self.args:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify ssl', 'forward_log': 'False'}

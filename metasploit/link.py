@@ -45,7 +45,7 @@ def shutdown_timer(end_time):
         return True
 
 
-def get_commands_s3(client, campaign_id, task_name, command_list):
+def get_commands_s3(client, campaign_id, task_name, command_list, user_id):
     list_objects_response = client.list_objects_v2(
         Bucket=f'{campaign_id}-workspace',
         Prefix=task_name + '/'
@@ -71,9 +71,20 @@ def get_commands_s3(client, campaign_id, task_name, command_list):
                 Key=file_entry
             )
             assert delete_object_response, f"delete_object failed for task {task_name}, key {file_entry}"
+    else:
+        timestamp = datetime.now(timezone.utc).strftime('%s')
+        command_list.append(
+            {
+                'timestamp': timestamp,
+                'instruct_user_id': user_id,
+                'instruct_instance': 'session_status_monitor',
+                'instruct_command': 'session_status_monitor',
+                'instruct_args': None
+            }
+        )
 
 
-def get_commands_http(rt, task_name, command_list):
+def get_commands_http(rt, task_name, command_list, user_id):
     h = havoc.Connect(rt.api_region, rt.api_domain_name, rt.api_key, rt.secret)
     commands_response = h.get_commands(task_name)
     if not commands_response:
@@ -82,6 +93,17 @@ def get_commands_http(rt, task_name, command_list):
     if 'commands' in commands_response:
         for command in commands_response['commands']:
             command_list.append(command)
+    else:
+        timestamp = datetime.now(timezone.utc).strftime('%s')
+        command_list.append(
+            {
+                'timestamp': timestamp,
+                'instruct_user_id': user_id,
+                'instruct_instance': 'session_status_monitor',
+                'instruct_command': 'session_status_monitor',
+                'instruct_args': None
+            }
+        )
 
 
 def post_response_http(rt, results):
@@ -346,7 +368,7 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
 
 
 @inlineCallbacks
-def get_command_obj(region, campaign_id, task_name, rt, command_list):
+def get_command_obj(region, campaign_id, task_name, rt, command_list, user_id):
     if not rt.check:
         client = boto3.client('s3', region_name=region)
     else:
@@ -354,9 +376,9 @@ def get_command_obj(region, campaign_id, task_name, rt, command_list):
     while True:
         yield sleep(6)
         if rt.check:
-            get_commands_http(rt, task_name, command_list)
+            get_commands_http(rt, task_name, command_list, user_id)
         else:
-            get_commands_s3(client, campaign_id, task_name, command_list)
+            get_commands_s3(client, campaign_id, task_name, command_list, user_id)
 
 
 def main():
@@ -427,7 +449,7 @@ def main():
     command_list = []
 
     # Setup coroutines
-    get_command_obj(region, campaign_id, task_name, rt, command_list)
+    get_command_obj(region, campaign_id, task_name, rt, command_list, user_id)
     action(campaign_id, user_id, task_type, task_name, task_context, rt, end_time, command_list, attack_ip, hostname,
            local_ip)
 
