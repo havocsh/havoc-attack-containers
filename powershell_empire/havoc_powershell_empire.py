@@ -70,6 +70,9 @@ class call_powershell_empire:
         if 'listener_name' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing listener_name', 'forward_log': 'False'}
             return output
+        listener_name = self.args['listener_name']
+        del self.args['listener_name']
+        self.args['Name'] = listener_name
         create_listener_uri = f'{self.server_uri}api/listeners/{listener_type}?token={self.token}'
         create_listener_response = requests.post(create_listener_uri, json=self.args, verify=False)
         if create_listener_response.status_code == 200:
@@ -120,12 +123,18 @@ class call_powershell_empire:
         return output
 
     def create_stager(self):
-        if 'listener' not in self.args:
-            output = {'outcome': 'failed', 'message': 'Missing listener', 'forward_log': 'False'}
+        if 'listener_name' not in self.args:
+            output = {'outcome': 'failed', 'message': 'Missing listener_name', 'forward_log': 'False'}
             return output
+        listener_name = self.args['listener_name']
+        del self.args['listener_name']
+        self.args['Listener'] = listener_name
         if 'stager_name' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing stager_name', 'forward_log': 'False'}
             return output
+        stager_name = self.args['stager_name']
+        del self.args['stager_name']
+        self.args['StagerName'] = stager_name
         create_stager_uri = f'{self.server_uri}api/stagers?token={self.token}'
         create_stager_response = requests.post(create_stager_uri, json=self.args, verify=False)
         launcher = create_stager_response.json()['launcher']
