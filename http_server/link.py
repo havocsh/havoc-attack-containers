@@ -210,8 +210,8 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                               task_name, task_context, task_type, instruct_user_id, instruct_instance, instruct_command,
                               instruct_args, attack_ip, local_ip, end_time)
             elif instruct_command == 'upload_to_workspace':
-                if 'filename' in instruct_args:
-                    file_name = instruct_args['filename']
+                if 'file_name' in instruct_args:
+                    file_name = instruct_args['file_name']
                     path = pathlib.Path(f'/opt/havoc/shared/{file_name}')
                     if path.is_file():
                         if not rt.check:
@@ -228,7 +228,7 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                                       task_name, task_context, task_type, instruct_user_id, instruct_instance,
                                       instruct_command, instruct_args, attack_ip, local_ip, end_time)
                 else:
-                    send_response(rt, {'outcome': 'failed', 'message': 'Missing filename'}, 'False',
+                    send_response(rt, {'outcome': 'failed', 'message': 'Missing file_name'}, 'False',
                                   user_id, task_name, task_context, task_type, instruct_user_id, instruct_instance,
                                   instruct_command, instruct_args, attack_ip, local_ip, end_time)
             elif instruct_command == 'download_from_workspace':
@@ -254,7 +254,7 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                                       instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip,
                                       local_ip, end_time)
                 else:
-                    send_response(rt, {'outcome': 'failed', 'message': 'Missing filename'}, 'False', user_id, task_name,
+                    send_response(rt, {'outcome': 'failed', 'message': 'Missing file_name'}, 'False', user_id, task_name,
                                   task_context, task_type, instruct_user_id, instruct_instance, instruct_command,
                                   instruct_args, attack_ip, local_ip, end_time)
             elif instruct_command == 'terminate' or shutdown:
