@@ -101,8 +101,8 @@ class call_powershell_empire:
         return output
 
     def get_stagers(self):
-        if 'Name' in self.args:
-            stager_name = self.args['Name']
+        if 'StagerName' in self.args:
+            stager_name = self.args['StagerName']
             get_stagers_uri = f'{self.server_uri}api/stagers/{stager_name}?token={self.token}'
             get_stagers_response = requests.get(get_stagers_uri, verify=False)
             if get_stagers_response.status_code == 200:
