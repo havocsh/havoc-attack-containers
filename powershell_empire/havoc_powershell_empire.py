@@ -30,15 +30,15 @@ class call_powershell_empire:
         return self.__token
 
     def get_listeners(self):
-        if 'listener_name' in self.args:
-            listener_name = self.args['listener_name']
+        if 'Name' in self.args:
+            listener_name = self.args['Name']
             get_listeners_uri = f'{self.server_uri}api/listeners/{listener_name}?token={self.token}'
             get_listeners_response = requests.get(get_listeners_uri, verify=False)
             if get_listeners_response.status_code == 200:
                 listeners = get_listeners_response.json()['listeners']
                 output = {'outcome': 'success', 'listeners': listeners, 'forward_log': 'False'}
             else:
-                output = {'outcome': 'failed', 'message': 'Check listener_name', 'forward_log': 'False'}
+                output = {'outcome': 'failed', 'message': get_listeners_response.json(), 'forward_log': 'False'}
         else:
             get_listeners_uri = f'{self.server_uri}api/listeners?token={self.token}'
             get_listeners_response = requests.get(get_listeners_uri, verify=False)
@@ -67,36 +67,31 @@ class call_powershell_empire:
         else:
             output = {'outcome': 'failed', 'message': 'Missing listener_type', 'forward_log': 'False'}
             return output
-        if 'listener_name' not in self.args:
-            output = {'outcome': 'failed', 'message': 'Missing listener_name', 'forward_log': 'False'}
+        if 'Name' not in self.args:
+            output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
-        listener_name = self.args['listener_name']
-        del self.args['listener_name']
-        self.args['Name'] = listener_name
         create_listener_uri = f'{self.server_uri}api/listeners/{listener_type}?token={self.token}'
         create_listener_response = requests.post(create_listener_uri, json=self.args, verify=False)
         if create_listener_response.status_code == 200:
-            message = create_listener_response.json()['msg']
-            if create_listener_response.json()['success']:
-                output = {'outcome': 'success', 'message': message, 'forward_log': 'True'}
-            else:
-                output = {'outcome': 'failed', 'message': message, 'forward_log': 'False'}
+            message = create_listener_response.json()['success']
+            output = {'outcome': 'success', 'message': message, 'forward_log': 'True'}
         else:
-            output = {'outcome': 'failed', 'message': 'Check listener_type', 'forward_log': 'False'}
+            message = create_listener_response.json()
+            output = {'outcome': 'failed', 'message': message, 'forward_log': 'False'}
         return output
 
     def kill_listener(self):
-        if 'listener_name' in self.args:
-            listener_name = self.args['listener_name']
+        if 'Name' in self.args:
+            listener_name = self.args['Name']
         else:
-            output = {'outcome': 'failed', 'message': 'Missing listener_name', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
         kill_listener_uri = f'{self.server_uri}api/listeners/{listener_name}?token={self.token}'
         kill_listener_response = requests.delete(kill_listener_uri, verify=False)
         if kill_listener_response.status_code == 200:
             output = {'outcome': 'success', 'forward_log': 'True'}
         else:
-            output = {'outcome': 'failed', 'message': 'Check listener_name', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': kill_listener_response.json(), 'forward_log': 'False'}
         return output
 
     def kill_all_listeners(self):
@@ -106,15 +101,15 @@ class call_powershell_empire:
         return output
 
     def get_stagers(self):
-        if 'stager_name' in self.args:
-            stager_name = self.args['stager_name']
+        if 'Name' in self.args:
+            stager_name = self.args['Name']
             get_stagers_uri = f'{self.server_uri}api/stagers/{stager_name}?token={self.token}'
             get_stagers_response = requests.get(get_stagers_uri, verify=False)
             if get_stagers_response.status_code == 200:
                 stagers = get_stagers_response.json()['stagers']
                 output = {'outcome': 'success', 'stagers': stagers, 'forward_log': 'False'}
             else:
-                output = {'outcome': 'failed', 'message': 'Check stager_name', 'forward_log': 'False'}
+                output = {'outcome': 'failed', 'message': get_stagers_response.json(), 'forward_log': 'False'}
         else:
             get_stagers_uri = f'{self.server_uri}api/stagers?token={self.token}'
             get_stagers_response = requests.get(get_stagers_uri, verify=False)
@@ -123,34 +118,30 @@ class call_powershell_empire:
         return output
 
     def create_stager(self):
-        if 'listener_name' not in self.args:
+        if 'Listener' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing listener_name', 'forward_log': 'False'}
             return output
-        listener_name = self.args['listener_name']
-        del self.args['listener_name']
-        self.args['Listener'] = listener_name
-        if 'stager_name' not in self.args:
-            output = {'outcome': 'failed', 'message': 'Missing stager_name', 'forward_log': 'False'}
+        if 'StagerName' not in self.args:
+            output = {'outcome': 'failed', 'message': 'Missing StagerName', 'forward_log': 'False'}
             return output
-        stager_name = self.args['stager_name']
-        del self.args['stager_name']
-        self.args['StagerName'] = stager_name
         create_stager_uri = f'{self.server_uri}api/stagers?token={self.token}'
         create_stager_response = requests.post(create_stager_uri, json=self.args, verify=False)
-        launcher = create_stager_response.json()['launcher']
-        output = {'outcome': 'success', 'launcher': launcher, 'forward_log': 'True'}
+        if create_stager_response.status_code == 200:
+            output = {'outcome': 'success', 'stager': create_stager_response.json(), 'forward_log': 'True'}
+        else:
+            output = {'outcome': 'failed', 'message': create_stager_response.json(), 'forward_log': 'False'}
         return output
 
     def get_agents(self):
-        if 'agent_name' in self.args:
-            agent_name = self.args['agent_name']
+        if 'Name' in self.args:
+            agent_name = self.args['Name']
             get_agents_uri = f'{self.server_uri}api/agents/{agent_name}?token={self.token}'
             get_agents_response = requests.get(get_agents_uri, verify=False)
             if get_agents_response.status_code == 200:
                 agents = get_agents_response.json()['agents']
                 output = {'outcome': 'success', 'agents': agents, 'forward_log': 'False'}
             else:
-                output = {'outcome': 'failed', 'message': 'Check agent_name', 'forward_log': 'False'}
+                output = {'outcome': 'failed', 'message': get_agents_response.json(), 'forward_log': 'False'}
         else:
             get_agents_uri = f'{self.server_uri}api/agents?token={self.token}'
             get_agents_response = requests.get(get_agents_uri, verify=False)
@@ -166,17 +157,17 @@ class call_powershell_empire:
         return output
 
     def remove_agent(self):
-        if 'agent_name' in self.args:
-            agent_name = self.args['agent_name']
+        if 'Name' in self.args:
+            agent_name = self.args['Name']
         else:
-            output = {'outcome': 'failed', 'message': 'Missing agent_name', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
         remove_agent_uri = f'{self.server_uri}api/agents/{agent_name}?token={self.token}'
         remove_agent_response = requests.delete(remove_agent_uri, verify=False)
         if remove_agent_response.status_code == 200:
             output = {'outcome': 'success', 'forward_log': 'True'}
         else:
-            output = {'outcome': 'failed', 'message': 'Check agent_name', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': remove_agent_response.json(), 'forward_log': 'False'}
         return output
 
     def remove_stale_agents(self):
@@ -186,11 +177,11 @@ class call_powershell_empire:
         return output
 
     def agent_shell_command(self):
-        if 'agent_name' in self.args:
-            agent_name = self.args['agent_name']
-            del self.args['agent_name']
+        if 'Name' in self.args:
+            agent_name = self.args['Name']
+            del self.args['Name']
         else:
-            output = {'outcome': 'failed', 'message': 'Missing agent_name', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
         if 'command' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing command', 'forward_log': 'False'}
@@ -214,14 +205,14 @@ class call_powershell_empire:
                 else:
                     time.sleep(2)
         else:
-            output = {'outcome': 'failed', 'message': 'Check agent_name', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': agent_shell_response.json(), 'forward_log': 'False'}
             return output
         output = {'outcome': 'success', 'results': results, 'agent_info': agent_info, 'forward_log': 'True'}
         return output
 
     def clear_queued_shell_commands(self):
-        if 'agent_name' in self.args:
-            agent_name = self.args['agent_name']
+        if 'Name' in self.args:
+            agent_name = self.args['Name']
         else:
             output = {'outcome': 'failed', 'message': 'Missing agent_name', 'forward_log': 'False'}
             return output
@@ -231,18 +222,19 @@ class call_powershell_empire:
             output = {'outcome': 'success', 'forward_log': 'True'}
             return output
         else:
-            output = {'outcome': 'failed', 'message': 'Check agent_name', 'forward_log': 'False'}
+            message = clear_queued_shell_commands_response.json()
+            output = {'outcome': 'failed', 'message': message, 'forward_log': 'False'}
             return output
 
     def rename_agent(self):
-        if 'agent_name' in self.args:
-            agent_name = self.args['agent_name']
-            del self.args['agent_name']
+        if 'Name' in self.args:
+            agent_name = self.args['Name']
+            del self.args['Name']
         else:
-            output = {'outcome': 'failed', 'message': 'Missing agent_name', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
-        if 'new_agent_name' not in self.args:
-            output = {'outcome': 'failed', 'message': 'Missing new_agent_name', 'forward_log': 'False'}
+        if 'Newname' not in self.args:
+            output = {'outcome': 'failed', 'message': 'Missing Newname', 'forward_log': 'False'}
             return output
         rename_agent_uri = f'{self.server_uri}api/agents/{agent_name}/rename?token={self.token}'
         rename_agent_response = requests.post(rename_agent_uri, json=self.args, verify=False)
@@ -250,14 +242,14 @@ class call_powershell_empire:
             output = {'outcome': 'success', 'forward_log': 'True'}
             return output
         else:
-            output = {'outcome': 'failed', 'message': 'Check agent_name', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': rename_agent_response.json(), 'forward_log': 'False'}
             return output
 
     def kill_agent(self):
-        if 'agent_name' in self.args:
-            agent_name = self.args['agent_name']
+        if 'Name' in self.args:
+            agent_name = self.args['Name']
         else:
-            output = {'outcome': 'failed', 'message': 'Missing agent_name', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
         kill_agent_uri = f'{self.server_uri}api/agents/{agent_name}/kill?token={self.token}'
         kill_agent_response = requests.get(kill_agent_uri, verify=False)
@@ -265,7 +257,7 @@ class call_powershell_empire:
             output = {'outcome': 'success', 'forward_log': 'True'}
             return output
         else:
-            output = {'outcome': 'failed', 'message': 'Check agent_name', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': kill_agent_response.json(), 'forward_log': 'False'}
             return output
 
     def kill_all_agents(self):
@@ -275,15 +267,15 @@ class call_powershell_empire:
         return output
 
     def get_modules(self):
-        if 'module_name' in self.args:
-            module_name = self.args['module_name']
+        if 'Name' in self.args:
+            module_name = self.args['Name']
             get_modules_uri = f'{self.server_uri}api/modules/{module_name}?token={self.token}'
             get_modules_response = requests.get(get_modules_uri, verify=False)
             if get_modules_response.status_code == 200:
                 modules = get_modules_response.json()['modules']
                 output = {'outcome': 'success', 'modules': modules, 'forward_log': 'False'}
             else:
-                output = {'outcome': 'failed', 'message': 'Check module_name', 'forward_log': 'False'}
+                output = {'outcome': 'failed', 'message': get_modules_response.json(), 'forward_log': 'False'}
         else:
             get_modules_uri = f'{self.server_uri}api/modules?token={self.token}'
             get_modules_response = requests.get(get_modules_uri, verify=False)
@@ -306,15 +298,15 @@ class call_powershell_empire:
             return output
 
     def execute_module(self):
-        if 'agent_name' in self.args:
-            agent_name = self.args['agent_name']
+        if 'Agent' in self.args:
+            agent_name = self.args['Agent']
         else:
-            output = {'outcome': 'failed', 'message': 'Missing agent_name', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'Missing Agent', 'forward_log': 'False'}
             return output
-        if 'module_name' in self.args:
-            module_name = self.args['module_name']
+        if 'Name' in self.args:
+            module_name = self.args['Name']
         else:
-            output = {'outcome': 'failed', 'message': 'Missing module_name', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
         execute_module_uri = f'{self.server_uri}api/modules/{module_name}?token={self.token}'
         execute_module_response = requests.post(execute_module_uri, json=self.args, verify=False)
@@ -335,7 +327,7 @@ class call_powershell_empire:
                 else:
                     time.sleep(2)
         else:
-            output = {'outcome': 'failed', 'message': 'Check module_name and agent_name', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': execute_module_response.json(), 'forward_log': 'False'}
             return output
         output = {'outcome': 'success', 'results': results, 'agent_info': agent_info, 'forward_log': 'True'}
         return output
