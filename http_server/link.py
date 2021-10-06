@@ -6,6 +6,7 @@ import sys
 import json
 import boto3
 import socket
+import pathlib
 import requests
 import subprocess
 from datetime import datetime, timezone
@@ -211,7 +212,8 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
             elif instruct_command == 'upload_to_workspace':
                 if 'filename' in instruct_args:
                     file_name = instruct_args['filename']
-                    if file_name.is_file():
+                    path = pathlib.Path(f'/opt/havoc/shared/{file_name}')
+                    if path.is_file():
                         if not rt.check:
                             subprocess.call(["aws", "--quiet", "--no-paginate", "--no-progress", "--no-guess-mime-type",
                                              "s3", "cp", f"/opt/havoc/shared/{file_name}",
