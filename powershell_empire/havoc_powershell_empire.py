@@ -445,13 +445,13 @@ class PowershellEmpireParser:
             if 'internal_ip' in agent_info:
                 self.event['target_internal_ip'] = agent_info['internal_ip']
             if 'listener' in agent_info:
-                match_listener = re.search('https?://([^:]+):?(\d+)?/', agent_info['listener'])
-                if match_listener.group(1):
-                    match_ip = re.search('\d+\.\d+\.\d+\.\d+', match_listener.group(1))
-                    if match_ip:
-                        self.event['callback_ip'] = match_listener.group(1)
-                    else:
-                        self.event['callback_hostname'] = match_listener.group(1)
+                listener = agent_info['listener']
+                match_listener = re.search('https?:\/\/([^:]+):?(\d+)?\/?', listener)
+                match_ip = re.search('\d+\.\d+\.\d+\.\d+', match_listener.group(1))
+                if match_ip:
+                    self.event['callback_ip'] = match_listener.group(1)
+                else:
+                    self.event['callback_hostname'] = match_listener.group(1)
                 if match_listener.group(2):
                     self.event['callback_port'] = match_listener.group(2)
         return self.event
