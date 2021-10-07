@@ -434,14 +434,12 @@ class PowershellEmpireParser:
         # If the event comes from the agent_status_monitor method, it will need to be converted to look like the
         # agent_shell_command and execute_module events.
         if self.agent_status_monitor:
-            self.event['agent_info'] = {}
+            new_event = {}
             for k, v in self.event.items():
-                self.event['agent_info'][k] = v
-                del self.event[k]
+                new_event['agent_info'][k] = v
+            self.event = new_event
         if 'agent_info' in self.event:
             agent_info = self.event['agent_info']
-            if 'name' in agent_info:
-                self.event['agent_name'] = agent_info['name']
             if 'external_ip' in agent_info:
                 self.event['target_ip'] = agent_info['external_ip']
             if 'internal_ip' in agent_info:
