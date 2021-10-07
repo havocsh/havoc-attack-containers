@@ -186,6 +186,7 @@ class call_powershell_empire:
         if 'command' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing command', 'forward_log': 'False'}
             return output
+        command = self.args['command']
         agent_shell_uri = f'{self.server_uri}api/agents/{agent_name}/shell?token={self.token}'
         agent_shell_response = requests.post(agent_shell_uri, json=self.args, verify=False)
         if agent_shell_response.status_code == 200:
@@ -194,8 +195,9 @@ class call_powershell_empire:
             while not results:
                 agent_results_uri = f'{self.server_uri}api/agents/{agent_name}/results?token={self.token}'
                 agent_results_response = requests.get(agent_results_uri, verify=False)
-                if agent_results_response:
-                    results = agent_results_response.json()['results']
+                for result in agent_results_response.json()['results'][0]['AgentResults']:
+                    if result['command'] == command and result['results']:
+                        results = result['results']
                 if results:
                     requests.delete(agent_results_uri, verify=False)
                     get_agent_details_uri = f'{self.server_uri}api/agents/{agent_name}?token={self.token}'
