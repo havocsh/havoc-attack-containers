@@ -434,7 +434,7 @@ class PowershellEmpireParser:
         # If the event comes from the agent_status_monitor method, it will need to be converted to look like the
         # agent_shell_command and execute_module events.
         if self.agent_status_monitor:
-            new_event = {}
+            new_event = {'agent_info': {}}
             for k, v in self.event.items():
                 new_event['agent_info'][k] = v
             self.event = new_event
