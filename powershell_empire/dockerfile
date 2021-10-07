@@ -1,4 +1,4 @@
-FROM ubunut:latest
+FROM ubuntu:latest
 
 # Install basic utils
 ENV DEBIAN_FRONTEND=noninteractive
