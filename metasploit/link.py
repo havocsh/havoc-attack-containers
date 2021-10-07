@@ -185,9 +185,7 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                                      "sync", f"s3://{campaign_id}-workspace/shared", "/opt/havoc/shared/"])
                     for root, subdirs, files in os.walk('/opt/havoc/shared'):
                         for filename in files:
-                            corrected_root = re.match('/opt/havoc/shared/(.*)', root).group(1)
-                            relative_path = os.path.join(corrected_root, filename)
-                            file_list.append(relative_path)
+                            file_list.append(filename)
                 else:
                     file_list = sync_workspace_http(rt, 'sync_from_workspace')
                 if instruct_command == 'Initialize':
@@ -201,9 +199,7 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                 file_list = []
                 for root, subdirs, files in os.walk('/opt/havoc/shared'):
                     for filename in files:
-                        corrected_root = re.match('/opt/havoc/shared/(.*)', root).group(1)
-                        relative_path = os.path.join(corrected_root, filename)
-                        file_list.append(relative_path)
+                        file_list.append(filename)
                 send_response(rt, {'outcome': 'success', 'local_directory_contents': file_list}, 'False',
                               user_id, task_name, task_context, task_type, instruct_user_id, instruct_instance,
                               instruct_command, instruct_args, attack_ip, local_ip, end_time)
@@ -214,9 +210,7 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                                      "sync", "/opt/havoc/shared/", f"s3://{campaign_id}-workspace/shared"])
                     for root, subdirs, files in os.walk('/opt/havoc/shared'):
                         for filename in files:
-                            corrected_root = re.match('/opt/havoc/shared/(.*)', root).group(1)
-                            relative_path = os.path.join(corrected_root, filename)
-                            file_list.append(relative_path)
+                            file_list.append(filename)
                 else:
                     file_list = sync_workspace_http(rt, 'sync_to_workspace')
                 send_response(rt, {'outcome': 'success', 'local_directory_contents': file_list}, 'False', user_id,
