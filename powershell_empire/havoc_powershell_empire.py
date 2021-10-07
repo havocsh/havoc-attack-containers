@@ -195,7 +195,7 @@ class call_powershell_empire:
                 agent_results_uri = f'{self.server_uri}api/agents/{agent_name}/results?token={self.token}'
                 agent_results_response = requests.get(agent_results_uri, verify=False)
                 if agent_results_response:
-                    results = agent_results_response.json()
+                    results = agent_results_response.json()['results']
                 if results:
                     requests.delete(agent_results_uri, verify=False)
                     get_agent_details_uri = f'{self.server_uri}api/agents/{agent_name}?token={self.token}'

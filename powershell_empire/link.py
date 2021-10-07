@@ -303,7 +303,11 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                         send_response(rt, dead_agent_response, 'True', user_id, task_name, task_context, task_type,
                                       instruct_user_id, instruct_instance, instruct_command, {'no_args': 'True'},
                                       attack_ip, local_ip, end_time)
-                        current_agents=[x for x in current_agents if x['ID'] not in dead_agent['ID']]
+                        new_current_agents = []
+                        for agent in current_agents:
+                            if dead_agent['ID'] != agent['ID']:
+                                new_current_agents.append(agent)
+                        current_agents = new_current_agents
             elif instruct_command == 'terminate' or shutdown:
                 send_response(rt, {'status': 'terminating'}, 'True', user_id, task_name, task_context, task_type,
                               instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip, local_ip,

@@ -290,7 +290,11 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                     send_response(rt, dead_session_response, 'True', user_id, task_name, task_context, task_type,
                                   instruct_user_id, instruct_instance, instruct_command, {'no_args': 'True'}, attack_ip,
                                   local_ip, end_time)
-                    current_sessions=[x for x in current_sessions if x['session_id'] not in dead_session['session_id']]
+                    new_current_sessions = []
+                    for session in current_sessions:
+                        if dead_session['session_id'] != session['session_id']:
+                            new_current_sessions.append(session)
+                    current_sessions = new_current_sessions
             elif instruct_command == 'terminate' or shutdown:
                 send_response(rt, {'status': 'terminating'}, 'True', user_id, task_name, task_context, task_type,
                               instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip, local_ip,
