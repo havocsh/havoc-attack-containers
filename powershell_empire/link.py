@@ -214,6 +214,23 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                 send_response(rt, {'outcome': 'success', 'local_directory_contents': file_list}, 'False',
                               user_id, task_name, task_context, task_type, instruct_user_id, instruct_instance,
                               instruct_command, instruct_args, attack_ip, local_ip, end_time)
+            elif instruct_command == 'del':
+                if 'file_name' in instruct_args:
+                    file_name = instruct_args['file_name']
+                    path = pathlib.Path(f'/opt/havoc/shared/{file_name}')
+                    if path.is_file():
+                        os.remove(path)
+                        send_response(rt, {'outcome': 'success'}, 'True', user_id, task_name, task_context, task_type,
+                                      instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip,
+                                      local_ip, end_time)
+                    else:
+                        send_response(rt, {'outcome': 'failed', 'message': 'File not found'}, 'False', user_id,
+                                      task_name, task_context, task_type, instruct_user_id, instruct_instance,
+                                      instruct_command, instruct_args, attack_ip, local_ip, end_time)
+                else:
+                    send_response(rt, {'outcome': 'failed', 'message': 'Missing file_name'}, 'False',
+                                  user_id, task_name, task_context, task_type, instruct_user_id, instruct_instance,
+                                  instruct_command, instruct_args, attack_ip, local_ip, end_time)
             elif instruct_command == 'sync_to_workspace':
                 if not rt.check:
                     file_list = []
