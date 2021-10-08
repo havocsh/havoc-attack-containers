@@ -2,6 +2,8 @@ import re
 import socket
 import time
 import requests
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import subprocess
 
@@ -25,18 +27,12 @@ class call_powershell_empire:
     def token(self):
         request_payload = {'username': 'empireadmin', 'password': 'password123'}
         if not self.__token:
-            available = None
-            s = socket.socket()
-            while not available:
-                try:
-                    s.connect(('localhost', 1337))
-                    available = True
-                except socket.error:
-                    available = None
-                finally:
-                    s.close()
-                time.sleep(5)
-            token_response = requests.post(f'{self.server_uri}api/admin/login', json=request_payload, verify=False)
+            s = requests.Session()
+            retries = Retry(total=20,
+                            backoff_factor=0.1,
+                            status_forcelist=[500, 502, 503, 504])
+            s.mount('http://', HTTPAdapter(max_retries=retries))
+            token_response = s.post(f'{self.server_uri}api/admin/login', json=request_payload, verify=False)
             if token_response.status_code == 200:
                 self.__token = token_response.json()['token']
         return self.__token
