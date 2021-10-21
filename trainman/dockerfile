@@ -25,7 +25,6 @@ RUN pip3 install e4l
 RUN pip3 install bloodhound
 RUN pip3 install py-altdns==1.0.2
 RUN pip3 install aiodnsbrute
-RUN pip3 install PyExfil
 RUN pip3 install lsassy
 RUN pip3 install wmic
 RUN pip3 install crackpamexec
@@ -43,3 +42,8 @@ COPY ./havoc_trainman.py /opt/havoc/havoc_trainman.py
 # Copy repo version of link.py into build
 COPY ./link.py /opt/havoc/link.py
 RUN chmod +x /opt/havoc/link.py
+
+# Install PyExfil last
+RUN git clone https://www.github.com/ytisf/PyExfil
+WORKDIR PyExfil
+RUN pip3 install -r requirements.txt
