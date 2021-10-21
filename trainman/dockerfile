@@ -44,5 +44,5 @@ RUN chmod +x /opt/havoc/link.py
 
 # Install PyExfil last
 RUN git clone https://www.github.com/ytisf/PyExfil
-WORKDIR ./PyExfil
-RUN pip3 install -r ./requirements.txt
+WORKDIR PyExfil
+RUN pip3 install -r requirements3.txt
