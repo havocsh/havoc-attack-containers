@@ -20,9 +20,20 @@ class Trainman:
             return output
         file_name = self.args['file_name']
         file_path = Path(f'/opt/havoc/shared/{file_name}')
+        if 'options' in self.args:
+            cmd = self.args['options']
+            if isinstance(cmd, list):
+                exec_path = f'./{file_path}'
+                cmd.insert(0, exec_path)
+                cmd.insert(0, 'bash')
+            else:
+                output = {'outcome': 'failed', 'message': 'options must be a list', 'forward_log': 'False'}
+                return output
+        else:
+            cmd = ['bash', f'./{file_path}']
         if file_path.is_file():
             self.exec_process = subprocess.Popen(
-                ['bash', f'./{file_path}'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
         else:
             output = {'outcome': 'failed', 'message': 'file not found', 'forward_log': 'False'}

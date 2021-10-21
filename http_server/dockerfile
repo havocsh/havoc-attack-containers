@@ -11,7 +11,7 @@ RUN pip3 install Twisted
 RUN pip3 install requests
 RUN pip3 install awscli
 
-# Install havoc library version 0.2.6
+# Install havoc library
 RUN pip3 install havoc
 
 # Setup supervisord

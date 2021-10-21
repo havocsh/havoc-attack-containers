@@ -11,8 +11,26 @@ RUN pip3 install Twisted
 RUN pip3 install requests
 RUN pip3 install awscli
 
-# Install havoc library version 0.2.6
+# Install havoc library
 RUN pip3 install havoc
+
+# Install additional utils
+RUN apt -y install nmap
+RUN pip3 install python-nmap
+RUN pip3 install impacket
+RUN pip3 install kube-hunter
+RUN pip3 install minikerberos
+RUN pip3 install ldeep
+RUN pip3 install e4l
+RUN pip3 install bloodhound
+RUN pip3 install ActiveDirectoryEnum
+RUN pip3 install aztarna
+RUN pip3 install py-altdns==1.0.2
+RUN pip3 install aiodnsbrute
+RUN pip3 install PyExfil
+RUN pip3 install lsassy
+RUN pip3 install wmic
+RUN pip3 install crackpamexec
 
 # Setup supervisord
 COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
