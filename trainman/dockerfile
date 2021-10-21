@@ -23,8 +23,6 @@ RUN pip3 install minikerberos
 RUN pip3 install ldeep
 RUN pip3 install e4l
 RUN pip3 install bloodhound
-RUN pip3 install ActiveDirectoryEnum
-RUN pip3 install aztarna
 RUN pip3 install py-altdns==1.0.2
 RUN pip3 install aiodnsbrute
 RUN pip3 install PyExfil
