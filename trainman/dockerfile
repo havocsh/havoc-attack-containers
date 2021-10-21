@@ -27,7 +27,7 @@ RUN pip3 install py-altdns==1.0.2
 RUN pip3 install aiodnsbrute
 RUN pip3 install lsassy
 RUN pip3 install wmic
-RUN pip3 install crackpamexec
+RUN pip3 install crackmapexec
 
 # Setup supervisord
 COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
