@@ -16,12 +16,10 @@ RUN pip3 install havoc
 
 # Install additional utils
 RUN apt -y install nmap
-RUN pip3 install python-nmap
 RUN pip3 install impacket
 RUN pip3 install kube-hunter
 RUN pip3 install minikerberos
 RUN pip3 install ldeep
-RUN pip3 install e4l
 RUN pip3 install bloodhound
 RUN pip3 install py-altdns==1.0.2
 RUN pip3 install aiodnsbrute
