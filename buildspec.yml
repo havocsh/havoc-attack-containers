@@ -7,3 +7,4 @@ phases:
       - cd $TASK_TYPE
       - zip -r $TASK_TYPE.zip *
       - aws s3 cp ./$TASK_TYPE.zip s3://$BUCKET/$TASK_TYPE/$TASK_TYPE.zip
+      - echo Build complete.
