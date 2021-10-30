@@ -195,9 +195,10 @@ class call_powershell_empire:
             while not results:
                 agent_results_uri = f'{self.server_uri}api/agents/{agent_name}/results?token={self.token}'
                 agent_results_response = requests.get(agent_results_uri, verify=False)
-                for result in agent_results_response.json()['results'][0]['AgentResults']:
-                    if result['command'] == command and result['results']:
-                        results = result['results']
+                if agent_results_response.status_code == 200:
+                    for result in agent_results_response.json()['results'][0]['AgentResults']:
+                        if result['command'] == command and result['results']:
+                            results = result['results']
                 if results:
                     requests.delete(agent_results_uri, verify=False)
                     get_agent_details_uri = f'{self.server_uri}api/agents/{agent_name}?token={self.token}'
@@ -205,7 +206,7 @@ class call_powershell_empire:
                     if get_agent_details_response.status_code == 200:
                         agent_info = get_agent_details_response.json()['agents']
                 else:
-                    time.sleep(2)
+                    time.sleep(10)
         else:
             output = {'outcome': 'failed', 'message': agent_shell_response.json(), 'forward_log': 'False'}
             return output
