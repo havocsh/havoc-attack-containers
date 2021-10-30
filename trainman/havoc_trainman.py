@@ -18,19 +18,17 @@ class Trainman:
         if 'file_name' not in self.args:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify file_name', 'forward_log': 'False'}
             return output
-        file_name = self.args['file_name']
-        file_path = Path(f'/opt/havoc/shared/{file_name}')
+        file_path = Path(self.args['file_path'])
         if 'options' in self.args:
             cmd = self.args['options']
             if isinstance(cmd, list):
-                exec_path = f'./{file_path}'
-                cmd.insert(0, exec_path)
+                cmd.insert(0, file_path)
                 cmd.insert(0, 'bash')
             else:
                 output = {'outcome': 'failed', 'message': 'options must be a list', 'forward_log': 'False'}
                 return output
         else:
-            cmd = ['bash', f'./{file_path}']
+            cmd = ['bash', file_path]
         if file_path.is_file():
             self.exec_process = subprocess.Popen(
                 cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -43,6 +41,14 @@ class Trainman:
             output = {'outcome': 'success', 'message': 'file executed', 'forward_log': 'True'}
         else:
             output = {'outcome': 'failed', 'message': 'file execution failed', 'forward_log': 'True'}
+        return output
+
+    def get_process_output(self):
+        if not self.exec_process:
+            output = {'outcome': 'failed', 'message': 'no process is running', 'forward_log': 'False'}
+            return output
+        process_output = self.exec_process.stdout.read()
+        output = {'outcome': 'success', 'process_output': process_output, 'forward_log': 'True'}
         return output
 
     def kill_process(self):
