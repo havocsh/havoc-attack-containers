@@ -15,7 +15,7 @@ class Trainman:
         return True
 
     def execute_process(self):
-        if 'file_name' not in self.args:
+        if 'file_path' not in self.args:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify file_name', 'forward_log': 'False'}
             return output
         file_path = Path(self.args['file_path'])
