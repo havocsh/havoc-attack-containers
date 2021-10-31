@@ -277,15 +277,16 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                 if instruct_instance not in local_instruct_instance:
                     local_instruct_instance[instruct_instance] = havoc_trainman.Trainman()
                 if instruct_instance in local_instruct_instance:
-                    object_functions = {
+                    trainman_functions = {
                         'execute_process': local_instruct_instance[instruct_instance].execute_process,
+                        'get_process_output': local_instruct_instance[instruct_instance].get_process_output,
                         'kill_process': local_instruct_instance[instruct_instance].kill_process,
                         'echo': local_instruct_instance[instruct_instance].echo
                     }
-                    if instruct_command in object_functions:
+                    if instruct_command in trainman_functions:
                         local_instruct_instance[instruct_instance].set_args(instruct_args, attack_ip, hostname,
                                                                             local_ip)
-                        call_function = object_functions[instruct_command]()
+                        call_function = trainman_functions[instruct_command]()
                     else:
                         call_function = {
                             'outcome': 'failed',
