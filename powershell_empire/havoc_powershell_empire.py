@@ -190,23 +190,24 @@ class call_powershell_empire:
         agent_shell_uri = f'{self.server_uri}api/agents/{agent_name}/shell?token={self.token}'
         agent_shell_response = requests.post(agent_shell_uri, json=self.args, verify=False)
         if agent_shell_response.status_code == 200:
+            command_results = None
             results = None
             agent_info = None
-            while not results:
+            while not command_results:
                 agent_results_uri = f'{self.server_uri}api/agents/{agent_name}/results?token={self.token}'
                 agent_results_response = requests.get(agent_results_uri, verify=False)
                 if agent_results_response.status_code == 200:
-                    for result in agent_results_response.json()['results'][0]['AgentResults']:
-                        if result['command'] == command and result['results']:
-                            results = result['results']
-                if results:
-                    requests.delete(agent_results_uri, verify=False)
-                    get_agent_details_uri = f'{self.server_uri}api/agents/{agent_name}?token={self.token}'
-                    get_agent_details_response = requests.get(get_agent_details_uri, verify=False)
-                    if get_agent_details_response.status_code == 200:
-                        agent_info = get_agent_details_response.json()['agents']
-                else:
-                    time.sleep(10)
+                    for entry in agent_results_response.json()['results'][0]['AgentResults']:
+                        if entry['command'] == command:
+                            command_results = True
+                            results = entry['results']
+                            requests.delete(agent_results_uri, verify=False)
+                            get_agent_details_uri = f'{self.server_uri}api/agents/{agent_name}?token={self.token}'
+                            get_agent_details_response = requests.get(get_agent_details_uri, verify=False)
+                            if get_agent_details_response.status_code == 200:
+                                agent_info = get_agent_details_response.json()['agents']
+                        else:
+                            time.sleep(10)
         else:
             output = {'outcome': 'failed', 'message': agent_shell_response.json(), 'forward_log': 'False'}
             return output
