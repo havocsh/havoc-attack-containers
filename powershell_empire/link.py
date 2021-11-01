@@ -346,6 +346,8 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                     'remove_agent': powershell_empire[instruct_instance].remove_agent,
                     'remove_stale_agents': powershell_empire[instruct_instance].remove_stale_agents,
                     'agent_shell_command': powershell_empire[instruct_instance].agent_shell_command,
+                    'get_shell_command_results': powershell_empire[instruct_instance].get_shell_command_results,
+                    'delete_shell_command_results': powershell_empire[instruct_instance].delete_shell_command_results,
                     'clear_queued_shell_commands': powershell_empire[instruct_instance].clear_queued_shell_commands,
                     'rename_agent': powershell_empire[instruct_instance].rename_agent,
                     'kill_agent': powershell_empire[instruct_instance].kill_agent,

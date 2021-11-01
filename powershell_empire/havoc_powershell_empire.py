@@ -186,33 +186,47 @@ class call_powershell_empire:
         if 'command' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing command', 'forward_log': 'False'}
             return output
-        command = self.args['command']
         agent_shell_uri = f'{self.server_uri}api/agents/{agent_name}/shell?token={self.token}'
         agent_shell_response = requests.post(agent_shell_uri, json=self.args, verify=False)
         if agent_shell_response.status_code == 200:
-            command_results = None
-            results = None
-            agent_info = None
-            while not command_results:
-                agent_results_uri = f'{self.server_uri}api/agents/{agent_name}/results?token={self.token}'
-                agent_results_response = requests.get(agent_results_uri, verify=False)
-                if agent_results_response.status_code == 200:
-                    for entry in agent_results_response.json()['results'][0]['AgentResults']:
-                        if entry['command'] == command:
-                            command_results = True
-                            results = entry['results']
-                            requests.delete(agent_results_uri, verify=False)
-                            get_agent_details_uri = f'{self.server_uri}api/agents/{agent_name}?token={self.token}'
-                            get_agent_details_response = requests.get(get_agent_details_uri, verify=False)
-                            if get_agent_details_response.status_code == 200:
-                                agent_info = get_agent_details_response.json()['agents']
-                        else:
-                            time.sleep(10)
+            output = {'outcome': 'success', 'forward_log': 'True'}
+            return output
         else:
             output = {'outcome': 'failed', 'message': agent_shell_response.json(), 'forward_log': 'False'}
             return output
-        output = {'outcome': 'success', 'results': results, 'agent_info': agent_info, 'forward_log': 'True'}
-        return output
+
+    def get_shell_command_results(self):
+        if 'Name' in self.args:
+            agent_name = self.args['Name']
+            del self.args['Name']
+        else:
+            output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
+            return output
+        agent_results_uri = f'{self.server_uri}api/agents/{agent_name}/results?token={self.token}'
+        agent_results_response = requests.get(agent_results_uri, verify=False)
+        if agent_results_response.status_code == 200:
+            results = agent_results_response.json()['results'][0]['AgentResults']
+            output = {'outcome': 'success', 'results': results, 'forward_log': 'True'}
+            return output
+        else:
+            output = {'outcome': 'failed', 'message': agent_results_response.json(), 'forward_log': 'False'}
+            return output
+
+    def delete_shell_command_results(self):
+        if 'Name' in self.args:
+            agent_name = self.args['Name']
+            del self.args['Name']
+        else:
+            output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
+            return output
+        delete_results_uri = f'{self.server_uri}api/agents/{agent_name}/results?token={self.token}'
+        delete_results_response = requests.delete(delete_results_uri, verify=False)
+        if delete_results_response.status_code == 200:
+            output = {'outcome': 'success', 'forward_log': 'False'}
+            return output
+        else:
+            output = {'outcome': 'failed', 'message': delete_results_response.json(), 'forward_log': 'False'}
+            return output
 
     def clear_queued_shell_commands(self):
         if 'Name' in self.args:
