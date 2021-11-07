@@ -42,7 +42,7 @@ COPY ./link.py /opt/havoc/link.py
 RUN chmod +x /opt/havoc/link.py
 
 # CLone Responder repo
-git clone https://github.com/lgandx/Responder.git
+RUN git clone https://github.com/lgandx/Responder.git
 
 # Install PyExfil last
 RUN git clone https://www.github.com/ytisf/PyExfil

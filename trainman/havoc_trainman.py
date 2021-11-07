@@ -8,6 +8,7 @@ class Trainman:
         self.host_info = None
         self.results = None
         self.exec_process = None
+        self.samba_process = None
 
     def set_args(self, args, attack_ip, hostname, local_ip):
         self.args = args
@@ -88,22 +89,22 @@ class Trainman:
                                             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
                                             )
         config_kerberos.communicate()
-        self.exec_process = subprocess.Popen(
+        self.samba_process = subprocess.Popen(
             'samba', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        if self.exec_process:
-            output = {'outcome': 'success', 'message': 'file executed', 'forward_log': 'True'}
+        if self.samba_process:
+            output = {'outcome': 'success', 'message': 'Samba AD DC is running', 'forward_log': 'True'}
         else:
-            output = {'outcome': 'failed', 'message': 'file execution failed', 'forward_log': 'True'}
+            output = {'outcome': 'failed', 'message': 'running Samba AD DC failed', 'forward_log': 'True'}
         return output
 
 
     def kill_ad_dc(self):
-        if not self.exec_process:
-            output = {'outcome': 'failed', 'message': 'no process is running', 'forward_log': 'False'}
+        if not self.samba_process:
+            output = {'outcome': 'failed', 'message': 'no Samba process is running', 'forward_log': 'False'}
             return output
-        self.exec_process.terminate()
-        output = {'outcome': 'success', 'message': 'process killed', 'forward_log': 'True'}
+        self.samba_process.terminate()
+        output = {'outcome': 'success', 'message': 'Samba process killed', 'forward_log': 'True'}
         return output
 
     def echo(self):
