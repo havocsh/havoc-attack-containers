@@ -59,6 +59,53 @@ class Trainman:
         output = {'outcome': 'success', 'message': 'process killed', 'forward_log': 'True'}
         return output
 
+    def run_ad_dc(self):
+        if 'domain' not in self.args:
+            output = {'outcome': 'failed', 'message': 'instruct_args must specify domain', 'forward_log': 'False'}
+            return output
+        domain = self.args['domain']
+        if 'realm' not in self.args:
+            output = {'outcome': 'failed', 'message': 'instruct_args must specify realm', 'forward_log': 'False'}
+            return output
+        realm = self.args['realm']
+        if 'admin_password' not in self.args:
+            output = {
+                'outcome': 'failed', 'message': 'instruct_args must specify admin_password', 'forward_log': 'False'
+            }
+            return output
+        admin_password = self.args['admin_password']
+        provision_cmd = f'samba-tool domain provision --server-role=dc --use-rfc2307 --dns-backend=SAMBA_INTERNAL ' \
+              f'--realm={realm} --domain={domain} --adminpass={admin_password}'
+        provision = subprocess.Popen(
+            provision_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        provision_output = provision.communicate()[0]
+        if provision_output != 0:
+            output = {
+                'outcome': 'failed', 'message': 'AD provisioning failed. Check instruct_args', 'forward_log': 'False'
+            }
+        config_kerberos =  subprocess.Popen('cp /usr/local/samba/private/krb5.conf /etc/krb5.conf',
+                                            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                                            )
+        config_kerberos.communicate()
+        self.exec_process = subprocess.Popen(
+            'samba', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        if self.exec_process:
+            output = {'outcome': 'success', 'message': 'file executed', 'forward_log': 'True'}
+        else:
+            output = {'outcome': 'failed', 'message': 'file execution failed', 'forward_log': 'True'}
+        return output
+
+
+    def kill_ad_dc(self):
+        if not self.exec_process:
+            output = {'outcome': 'failed', 'message': 'no process is running', 'forward_log': 'False'}
+            return output
+        self.exec_process.terminate()
+        output = {'outcome': 'success', 'message': 'process killed', 'forward_log': 'True'}
+        return output
+
     def echo(self):
         match = {
             'foo': 'bar',

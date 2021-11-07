@@ -281,6 +281,8 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                         'execute_process': local_instruct_instance[instruct_instance].execute_process,
                         'get_process_output': local_instruct_instance[instruct_instance].get_process_output,
                         'kill_process': local_instruct_instance[instruct_instance].kill_process,
+                        'run_ad_dc': local_instruct_instance[instruct_instance].run_ad_dc,
+                        'kill_ad_dc': local_instruct_instance[instruct_instance].kill_ad_dc,
                         'echo': local_instruct_instance[instruct_instance].echo
                     }
                     if instruct_command in trainman_functions:
