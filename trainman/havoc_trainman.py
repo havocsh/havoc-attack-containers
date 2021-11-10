@@ -75,8 +75,10 @@ class Trainman:
             }
             return output
         admin_password = self.args['admin_password']
-        provision_cmd = f'samba-tool domain provision --server-role=dc --use-rfc2307 --dns-backend=SAMBA_INTERNAL ' \
-              f'--realm={realm} --domain={domain} --adminpass={admin_password}'
+        provision_cmd = [
+            'samba-tool', 'domain', 'provision', '--server-role=dc', '--use-rfc2307', '--dns-backend=SAMBA_INTERNAL',
+            f'--realm={realm}', f'--domain={domain}', f'--adminpass={admin_password}'
+        ]
         provision = subprocess.Popen(
             provision_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
@@ -85,12 +87,12 @@ class Trainman:
             output = {
                 'outcome': 'failed', 'message': 'AD provisioning failed. Check instruct_args', 'forward_log': 'False'
             }
-        config_kerberos =  subprocess.Popen('cp /usr/local/samba/private/krb5.conf /etc/krb5.conf',
+        config_kerberos =  subprocess.Popen(['cp', '/usr/local/samba/private/krb5.conf', '/etc/krb5.conf'],
                                             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
                                             )
         config_kerberos.communicate()
         self.samba_process = subprocess.Popen(
-            'samba', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            ['samba'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         if self.samba_process:
             output = {'outcome': 'success', 'message': 'Samba AD DC is running', 'forward_log': 'True'}
