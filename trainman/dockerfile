@@ -34,6 +34,9 @@ COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 RUN mkdir /opt/havoc
 RUN mkdir /opt/havoc/shared
 
+# Remove smb.conf so that samba-tool can provision a DC
+RUN rm /etc/samba/smb.conf
+
 # Copy repo version of havoc_trainman.py into build
 COPY ./havoc_trainman.py /opt/havoc/havoc_trainman.py
 
