@@ -3,7 +3,7 @@ import string
 import random
 import subprocess
 from pathlib import Path
-from shutil import copyfile
+from shutil import copyfile, rmtree
 
 class Trainman:
 
@@ -12,7 +12,10 @@ class Trainman:
         self.host_info = None
         self.results = None
         self.exec_process = None
+        self.realm = None
+        self.admin_password = None
         self.samba_process = None
+        self.samba_users = None
 
     def set_args(self, args, attack_ip, hostname, local_ip):
         self.args = args
@@ -72,13 +75,13 @@ class Trainman:
         if 'realm' not in self.args:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify realm', 'forward_log': 'False'}
             return output
-        realm = self.args['realm']
+        self.realm = self.args['realm']
         if 'admin_password' not in self.args:
             output = {
                 'outcome': 'failed', 'message': 'instruct_args must specify admin_password', 'forward_log': 'False'
             }
             return output
-        admin_password = self.args['admin_password']
+        self.admin_password = self.args['admin_password']
         if 'user_name' not in self.args:
             output = {
                 'outcome': 'failed', 'message': 'instruct_args must specify user_name', 'forward_log': 'False'
@@ -94,7 +97,7 @@ class Trainman:
         os.remove('/etc/samba/smb.conf')
         provision_cmd = [
             'samba-tool', 'domain', 'provision', '--server-role=dc', '--use-rfc2307', '--dns-backend=SAMBA_INTERNAL',
-            f'--realm={realm.upper()}', f'--domain={domain}', f'--adminpass={admin_password}'
+            f'--realm={self.realm.upper()}', f'--domain={domain}', f'--adminpass={self.admin_password}'
         ]
         provision = subprocess.Popen(
             provision_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -112,7 +115,10 @@ class Trainman:
         if not self.samba_process:
             output = {'outcome': 'failed', 'message': 'running Samba AD DC failed', 'forward_log': 'True'}
             return output
-        resolv_cmd = {'name_server': ['echo', 'nameserver 127.0.0.1'], 'search': ['echo', f'search {realm.lower()}']}
+        resolv_cmd = {
+            'name_server': ['echo', 'nameserver 127.0.0.1'],
+            'search': ['echo', f'search {self.realm.lower()}']
+        }
         with open('/etc/resolv.conf', 'w') as r_file:
             subprocess.Popen(resolv_cmd['name_server'], stdout=r_file)
         r_file.close()
@@ -121,8 +127,8 @@ class Trainman:
         r_file.close()
         split_ip = self.host_info[2].split('.')
         in_addr_arpa = f'{split_ip[3]}.{split_ip[2]}.{split_ip[1]}.{split_ip[0]}.in-addr.arpa'
-        dns_zone_cmd = ['samba-tool', 'dns', 'zonecreate', realm.lower(), in_addr_arpa, '-U', 'Administrator',
-                          f'--password={admin_password}']
+        dns_zone_cmd = ['samba-tool', 'dns', 'zonecreate', self.realm.lower(), in_addr_arpa, '-U', 'Administrator',
+                        f'--password={self.admin_password}']
         config_zone = subprocess.Popen(
             dns_zone_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
@@ -131,8 +137,8 @@ class Trainman:
             output = {'outcome': 'failed', 'message': config_zone_output, 'forward_log': 'False'}
             return output
         dns_add_cmd = [
-            'samba-tool', 'dns', 'add', f'{self.host_info[1]}.{realm.lower()}', in_addr_arpa, split_ip[3], 'PTR',
-            f'{self.host_info[1]}.{realm.lower()}', '-U Administrator', f'--password={admin_password}'
+            'samba-tool', 'dns', 'add', f'{self.host_info[1]}.{self.realm.lower()}', in_addr_arpa, split_ip[3], 'PTR',
+            f'{self.host_info[1]}.{self.realm.lower()}', '-U Administrator', f'--password={self.admin_password}'
         ]
         config_dns_add = subprocess.Popen(
             dns_add_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -145,10 +151,12 @@ class Trainman:
         names = names_file.readlines()
         names_file.close()
         name_count = 0
+        self.samba_users = []
         while name_count <= 20:
+            self.samba_users.append(user_name)
             user_add_cmd = [
                 'samba-tool', 'user', 'create', user_name, user_password,
-                f'--home-directory=\\\\{self.host_info[1]}.{realm.lower()}\\{user_name}'
+                f'--home-directory=\\\\{self.host_info[1]}.{self.realm.lower()}\\{user_name}'
             ]
             user_add = subprocess.Popen(
                 user_add_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -186,7 +194,44 @@ class Trainman:
         if not self.samba_process:
             output = {'outcome': 'failed', 'message': 'no Samba process is running', 'forward_log': 'False'}
             return output
+        for user_name in self.samba_users:
+            user_delete_cmd = ['samba-tool', 'user', 'delete', user_name]
+            user_delete = subprocess.Popen(
+                user_delete_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            user_delete_output = user_delete.communicate()[1].decode('ascii')
+            if user_delete_output:
+                output = {'outcome': 'failed', 'message': user_delete_output, 'forward_log': 'False'}
+                return output
+            rmtree(f'/opt/havoc/users/{user_name}')
+        split_ip = self.host_info[2].split('.')
+        in_addr_arpa = f'{split_ip[3]}.{split_ip[2]}.{split_ip[1]}.{split_ip[0]}.in-addr.arpa'
+        dns_delete_cmd = [
+            'samba-tool', 'dns', 'delete', f'{self.host_info[1]}.{self.realm.lower()}', in_addr_arpa, split_ip[3], 'PTR',
+            f'{self.host_info[1]}.{self.realm.lower()}', '-U Administrator', f'--password={self.admin_password}'
+        ]
+        config_dns_delete = subprocess.Popen(
+            dns_delete_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        config_dns_delete_output = config_dns_delete.communicate()[0].decode('ascii')
+        if config_dns_delete_output:
+            output = {'outcome': 'failed', 'message': config_dns_delete_output, 'forward_log': 'False'}
+            return output
+        dns_zone_cmd = ['samba-tool', 'dns', 'zonedelete', self.realm.lower(), in_addr_arpa, '-U', 'Administrator',
+                        f'--password={self.admin_password}']
+        config_zone = subprocess.Popen(
+            dns_zone_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        config_zone_output = config_zone.communicate()[0].decode('ascii')
+        if config_zone_output:
+            output = {'outcome': 'failed', 'message': config_zone_output, 'forward_log': 'False'}
+            return output
+        resolv_cmd = ['echo', 'nameserver 1.1.1.1']
+        with open('/etc/resolv.conf', 'w') as r_file:
+            subprocess.Popen(resolv_cmd, stdout=r_file)
+        r_file.close()
         self.samba_process.terminate()
+        os.remove('/etc/samba/smb.conf')
         output = {'outcome': 'success', 'message': 'Samba process killed', 'forward_log': 'True'}
         return output
 
