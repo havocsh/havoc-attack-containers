@@ -157,12 +157,12 @@ class Trainman:
         while name_count <= 20:
             user_add_cmd = [
                 'samba-tool', 'user', 'create', user_name, user_password,
-                f'--home-directory=\\\\{self.host_info[1]}.{realm.lower()}\\users\\{user_name}',
+                f'--home-directory=\\\\{self.host_info[1]}.{realm.lower()}\\users\\{user_name}'
             ]
             user_add = subprocess.Popen(
                 user_add_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
-            user_add_output = user_add.communicate()[0].decode('ascii')
+            user_add_output = user_add.communicate()[1].decode('ascii')
             if user_add_output:
                 output = {'outcome': 'failed', 'message': user_add_output, 'forward_log': 'False'}
                 return output
