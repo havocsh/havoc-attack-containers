@@ -91,6 +91,7 @@ class Trainman:
             }
             return output
         user_password = self.args['user_password']
+        os.remove('/etc/samba/smb.conf')
         provision_cmd = [
             'samba-tool', 'domain', 'provision', '--server-role=dc', '--use-rfc2307', '--dns-backend=SAMBA_INTERNAL',
             f'--realm={realm.upper()}', f'--domain={domain}', f'--adminpass={admin_password}'
