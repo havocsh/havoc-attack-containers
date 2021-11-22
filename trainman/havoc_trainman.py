@@ -99,15 +99,22 @@ class Trainman:
         provision = subprocess.Popen(
             provision_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        provision_output = provision.communicate()[0]
+        provision_output = provision.communicate()[0].decode('ascii')
         if provision_output:
-            output = {
-                'outcome': 'failed', 'message': 'AD provisioning failed - check instruct_args', 'forward_log': 'False'
-            }
+            output = {'outcome': 'failed', 'message': provision_output, 'forward_log': 'False'}
             return output
         config_kerberos =  subprocess.Popen(['cp', '/var/lib/samba/private/krb5.conf', '/etc/krb5.conf'],
                                             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         config_kerberos.communicate()
+        create_share_cmd = [
+            'printf',
+            '"\n[users]\n\tpath = /opt/havoc/users\n\tvalid users = @everybody\n\tforce group = +everybody\n\t'
+            'writeable = yes\n\tcreate mask = 0666\n\tforce create mode = 0110\n\tdirectory mask = 0777"'
+        ]
+        with open('/etc/samba/smb.conf', 'a') as s_file:
+            config_share_add = subprocess.Popen(create_share_cmd, stdout=s_file)
+            config_share_add.communicate()
+        s_file.close()
         self.samba_process = subprocess.Popen(
             ['samba'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
@@ -128,62 +135,58 @@ class Trainman:
         config_zone = subprocess.Popen(
             dns_zone_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        config_zone.communicate()
+        config_zone_output = config_zone.communicate()[0].decode('ascii')
+        if config_zone_output:
+            output = {'outcome': 'failed', 'message': config_zone_output, 'forward_log': 'False'}
+            return output
         dns_add_cmd = ['samba-tool', 'dns', 'add', f'{self.host_info[1]}.{realm.lower()}', in_addr_arpa, '-U',
                        'Administrator', '--password', admin_password]
-        config_add = subprocess.Popen(
+        config_dns_add = subprocess.Popen(
             dns_add_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        config_add.communicate()
-        create_share_cmd = [
-            'printf',
-            '"\n[users]\n\tpath = /opt/havoc/users\n\tvalid users = @everybody\n\tforce group = +everybody\n\t'
-            'writeable = yes\n\tcreate mask = 0666\n\tforce create mode = 0110\n\tdirectory mask = 0777"',
-            '>>',
-            '/etc/samba/smb.conf'
-        ]
-        config_share_add = subprocess.Popen(
-            create_share_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        config_share_add.communicate()
+        config_dns_add_output = config_dns_add.communicate()[0].decode('ascii')
+        if config_dns_add_output:
+            output = {'outcome': 'failed', 'message': config_dns_add_output, 'forward_log': 'False'}
+            return output
         names_file = open('/opt/havoc/names.txt')
         names = names_file.readlines()
         names_file.close()
         name_count = 0
-        user_list = []
         while name_count <= 20:
-            user_list.append(user_name)
             user_add_cmd = [
-                'samba-tool', 'user', 'create', user_name,
+                'samba-tool', 'user', 'create', user_name, user_password,
                 f'--home-directory=\\\\{self.host_info[1]}.{realm.lower()}\\users\\{user_name}',
             ]
             user_add = subprocess.Popen(
                 user_add_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
-            user_add.communicate()
-            set_pwd_cmd = ['samba-tool', 'user', 'setpassword', user_name, f'--password={user_password}']
-            set_pwd = subprocess.Popen(
-                set_pwd_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
-            set_pwd.communicate()
+            user_add_output = user_add.communicate()[0].decode('ascii')
+            if user_add_output:
+                output = {'outcome': 'failed', 'message': user_add_output, 'forward_log': 'False'}
+                return output
             if not os.path.exists(f'/opt/havoc/users/{user_name}'):
                 os.makedirs(f'/opt/havoc/users/{user_name}')
             folder_perms_cmd = [
                 'printf',
                 f'"[{user_name}]\n\tpath = /opt/havoc/users/{user_name}\n\tvalid users = {user_name}\n\t'
-                f'browseable = no"',
-                '>>',
-                '/etc/samba/smb.conf'
+                f'browseable = no"'
             ]
-            folder_perms_add = subprocess.Popen(
-                folder_perms_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
-            folder_perms_add.communicate()
+            with open('/etc/samba/smb.conf', 'a') as s_file:
+                folder_perms_add = subprocess.Popen(folder_perms_cmd, stdin=s_file)
+                folder_perms_add.communicate()
+            s_file.close()
             copyfile('/opt/havoc/sample-data.csv', f'/opt/havoc/users/{user_name}/sample-data.csv')
             copyfile('/opt/havoc/test-5mb.bin', f'/opt/havoc/users/{user_name}/test-5mb.bin')
             name_count += 1
-            initial = ''.join(random.choice(string.ascii_letters) for i in range(1))
-            user_name = f'{initial}{names[random.randrange(999)]}'
+            initial = ''.join(random.choice(string.ascii_letters) for i in range(1)).lower()
+            user_name = f'{initial}{names[random.randrange(999)].strip().lower()}'
+        self.samba_process.terminate()
+        self.samba_process = subprocess.Popen(
+            ['samba'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        if not self.samba_process:
+            output = {'outcome': 'failed', 'message': 'running Samba AD DC failed', 'forward_log': 'True'}
+            return output
         output = {'outcome': 'success', 'message': 'Samba AD DC is running', 'forward_log': 'True'}
         return output
 
