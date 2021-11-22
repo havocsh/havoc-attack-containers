@@ -106,17 +106,8 @@ class Trainman:
         config_kerberos =  subprocess.Popen(['cp', '/var/lib/samba/private/krb5.conf', '/etc/krb5.conf'],
                                             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         config_kerberos.communicate()
-        create_share_cmd = [
-            'printf',
-            '"\n[users]\n\tpath = /opt/havoc/users\n\tvalid users = @everybody\n\tforce group = +everybody\n\t'
-            'writeable = yes\n\tcreate mask = 0666\n\tforce create mode = 0110\n\tdirectory mask = 0777"'
-        ]
-        with open('/etc/samba/smb.conf', 'a') as s_file:
-            config_share_add = subprocess.Popen(create_share_cmd, stdout=s_file)
-            config_share_add.communicate()
-        s_file.close()
         self.samba_process = subprocess.Popen(
-            ['samba'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            ['samba', '-F'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         if not self.samba_process:
             output = {'outcome': 'failed', 'message': 'running Samba AD DC failed', 'forward_log': 'True'}
@@ -170,11 +161,11 @@ class Trainman:
                 os.makedirs(f'/opt/havoc/users/{user_name}')
             folder_perms_cmd = [
                 'printf',
-                f'"[{user_name}]\n\tpath = /opt/havoc/users/{user_name}\n\tvalid users = {user_name}\n\t'
-                f'browseable = no"'
+                f'\n[{user_name}]\n\tpath = /opt/havoc/users/{user_name}\n\tvalid users = {user_name}\n\t'
+                f'browseable = no\n'
             ]
             with open('/etc/samba/smb.conf', 'a') as s_file:
-                folder_perms_add = subprocess.Popen(folder_perms_cmd, stdin=s_file)
+                folder_perms_add = subprocess.Popen(folder_perms_cmd, stdout=s_file)
                 folder_perms_add.communicate()
             s_file.close()
             copyfile('/opt/havoc/sample-data.csv', f'/opt/havoc/users/{user_name}/sample-data.csv')
@@ -182,13 +173,12 @@ class Trainman:
             name_count += 1
             initial = ''.join(random.choice(string.ascii_letters) for i in range(1)).lower()
             user_name = f'{initial}{names[random.randrange(999)].strip().lower()}'
-        self.samba_process.terminate()
-        self.samba_process = subprocess.Popen(
-            ['samba'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        subprocess.Popen(
+            ['smbcontrol', 'smbd', 'reload-config'],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
         )
-        if not self.samba_process:
-            output = {'outcome': 'failed', 'message': 'running Samba AD DC failed', 'forward_log': 'True'}
-            return output
         output = {'outcome': 'success', 'message': 'Samba AD DC is running', 'forward_log': 'True'}
         return output
 
