@@ -99,16 +99,22 @@ class Trainman:
             provision_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         provision_output = provision.communicate()[0]
-        if provision_output != 0:
+        if provision_output:
             output = {
-                'outcome': 'failed', 'message': 'AD provisioning failed. Check instruct_args', 'forward_log': 'False'
+                'outcome': 'failed', 'message': 'AD provisioning failed - check instruct_args', 'forward_log': 'False'
             }
             return output
-        config_kerberos =  subprocess.Popen(['cp', '/usr/local/samba/private/krb5.conf', '/etc/krb5.conf'],
+        config_kerberos =  subprocess.Popen(['cp', '/var/lib/samba/private/krb5.conf', '/etc/krb5.conf'],
                                             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         config_kerberos.communicate()
-        resolv_cmd = ['mv', '/etc/resolv.conf', '/etc/resolv.bak', ';', 'echo', 'nameserver', '127.0.0.1', '>>',
-                      '/etc/resolv.conf', ';', 'echo', 'search', realm.lower(), '>>', '/etc/resolv.conf']
+        self.samba_process = subprocess.Popen(
+            ['samba'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        if not self.samba_process:
+            output = {'outcome': 'failed', 'message': 'running Samba AD DC failed', 'forward_log': 'True'}
+            return output
+        resolv_cmd = ['echo', 'nameserver', '127.0.0.1', '>', '/etc/resolv.conf', ';', 'echo', 'search', realm.lower(),
+                      '>>', '/etc/resolv.conf']
         config_resolv = subprocess.Popen(
             resolv_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
@@ -176,13 +182,7 @@ class Trainman:
             name_count += 1
             initial = ''.join(random.choice(string.ascii_letters) for i in range(1))
             user_name = f'{initial}{names[random.randrange(999)]}'
-        self.samba_process = subprocess.Popen(
-            ['samba'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        if self.samba_process:
-            output = {'outcome': 'success', 'message': 'Samba AD DC is running', 'forward_log': 'True'}
-        else:
-            output = {'outcome': 'failed', 'message': 'running Samba AD DC failed', 'forward_log': 'True'}
+        output = {'outcome': 'success', 'message': 'Samba AD DC is running', 'forward_log': 'True'}
         return output
 
     def kill_ad_dc(self):
