@@ -131,7 +131,7 @@ class Trainman:
         split_ip = self.host_info[2].split('.')
         in_addr_arpa = f'{split_ip[3]}.{split_ip[2]}.{split_ip[1]}.{split_ip[0]}.in-addr.arpa'
         dns_zone_cmd = ['samba-tool', 'dns', 'zonecreate', realm.lower(), in_addr_arpa, '-U', 'Administrator',
-                          '--password', admin_password]
+                          f'--password={admin_password}']
         config_zone = subprocess.Popen(
             dns_zone_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
@@ -139,8 +139,10 @@ class Trainman:
         if config_zone_output:
             output = {'outcome': 'failed', 'message': config_zone_output, 'forward_log': 'False'}
             return output
-        dns_add_cmd = ['samba-tool', 'dns', 'add', f'{self.host_info[1]}.{realm.lower()}', in_addr_arpa, '-U',
-                       'Administrator', '--password', admin_password]
+        dns_add_cmd = [
+            'samba-tool', 'dns', 'add', f'{self.host_info[1]}.{realm.lower()}', in_addr_arpa, split_ip[3], 'PTR',
+            f'{self.host_info[1]}.{realm.lower()}', '-U Administrator', f'--password={admin_password}'
+        ]
         config_dns_add = subprocess.Popen(
             dns_add_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
