@@ -114,12 +114,13 @@ class Trainman:
         if not self.samba_process:
             output = {'outcome': 'failed', 'message': 'running Samba AD DC failed', 'forward_log': 'True'}
             return output
-        resolv_cmd = ['echo', 'nameserver', '127.0.0.1', '>', '/etc/resolv.conf', ';', 'echo', 'search', realm.lower(),
-                      '>>', '/etc/resolv.conf']
-        config_resolv = subprocess.Popen(
-            resolv_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        config_resolv.communicate()
+        resolv_cmd = {'name_server': ['echo', 'nameserver 127.0.0.1'], 'search': ['echo', f'search {realm.lower()}']}
+        with open('/etc/resolv.conf', 'w') as r_file:
+            subprocess.Popen(resolv_cmd['name_server'], stdout=r_file)
+        r_file.close()
+        with open('/etc/resolv.conf', 'a') as r_file:
+            subprocess.Popen(resolv_cmd['search'], stdout=r_file)
+        r_file.close()
         split_ip = self.host_info[2].split('.')
         in_addr_arpa = f'{split_ip[3]}.{split_ip[2]}.{split_ip[1]}.{split_ip[0]}.in-addr.arpa'
         dns_zone_cmd = ['samba-tool', 'dns', 'zonecreate', realm.lower(), in_addr_arpa, '-U', 'Administrator',
