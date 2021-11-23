@@ -302,7 +302,7 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                               instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip, local_ip,
                               end_time)
             command_list.remove(c)
-        yield sleep(1)
+        yield sleep(5)
 
 
 @inlineCallbacks
@@ -312,7 +312,7 @@ def get_command_obj(region, campaign_id, task_name, rt, command_list):
     else:
         client = None
     while True:
-        yield sleep(6)
+        yield sleep(10)
         if rt.check:
             get_commands_http(rt, task_name, command_list)
         else:
