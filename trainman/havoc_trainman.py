@@ -178,6 +178,8 @@ class Trainman:
             s_file.close()
             copyfile('/opt/havoc/sample-data.csv', f'/opt/havoc/users/{user_name}/sample-data.csv')
             copyfile('/opt/havoc/test-5mb.bin', f'/opt/havoc/users/{user_name}/test-5mb.bin')
+            copyfile('/opt/havoc/test-10mb.bin', f'/opt/havoc/users/{user_name}/test-10mb.bin')
+            copyfile('/opt/havoc/test-20mb.bin', f'/opt/havoc/users/{user_name}/test-20mb.bin')
             name_count += 1
             initial = ''.join(random.choice(string.ascii_letters) for i in range(1)).lower()
             user_name = f'{initial}{names[random.randrange(999)].strip().lower()}'
