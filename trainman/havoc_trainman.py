@@ -94,7 +94,7 @@ class Trainman:
             }
             return output
         user_password = self.args['user_password']
-        os.remove('/etc/samba/smb.conf')
+        os.rename('/etc/samba/smb.conf', '/etc/samba/smb.conf.bak')
         provision_cmd = [
             'samba-tool', 'domain', 'provision', '--server-role=dc', '--use-rfc2307', '--dns-backend=SAMBA_INTERNAL',
             f'--realm={self.realm.upper()}', f'--domain={domain}', f'--adminpass={self.admin_password}'
@@ -109,6 +109,15 @@ class Trainman:
         config_kerberos =  subprocess.Popen(['cp', '/var/lib/samba/private/krb5.conf', '/etc/krb5.conf'],
                                             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         config_kerberos.communicate()
+        share_perms_cmd = [
+            'printf',
+            '\n[users]\n\tpath = /opt/havoc/users/\n\tread only = no\n\tpublic = yes\n\twriteable = yes\n\t'
+            'browseable = yes\n'
+        ]
+        with open('/etc/samba/smb.conf', 'a') as s_file:
+            share_perms_add = subprocess.Popen(share_perms_cmd, stdout=s_file)
+            share_perms_add.communicate()
+        s_file.close()
         self.samba_process = subprocess.Popen(
             ['samba', '-F'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
@@ -178,8 +187,6 @@ class Trainman:
             s_file.close()
             copyfile('/opt/havoc/sample-data.csv', f'/opt/havoc/users/{user_name}/sample-data.csv')
             copyfile('/opt/havoc/test-5mb.bin', f'/opt/havoc/users/{user_name}/test-5mb.bin')
-            copyfile('/opt/havoc/test-10mb.bin', f'/opt/havoc/users/{user_name}/test-10mb.bin')
-            copyfile('/opt/havoc/test-20mb.bin', f'/opt/havoc/users/{user_name}/test-20mb.bin')
             name_count += 1
             initial = ''.join(random.choice(string.ascii_letters) for i in range(1)).lower()
             user_name = f'{initial}{names[random.randrange(999)].strip().lower()}'
@@ -234,6 +241,7 @@ class Trainman:
         r_file.close()
         self.samba_process.terminate()
         os.remove('/etc/samba/smb.conf')
+        os.rename('/etc/samba/smb.conf.bak', '/etc/samba/smb.conf')
         output = {'outcome': 'success', 'message': 'Samba process killed', 'forward_log': 'True'}
         return output
 

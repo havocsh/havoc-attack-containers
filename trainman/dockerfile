@@ -47,6 +47,8 @@ RUN mkdir /opt/havoc/users
 # Copy fake data into build
 COPY ./sample-data.csv /opt/havoc/sample-data.csv
 COPY ./test-5mb.bin /opt/havoc/test-5mb.bin
+COPY ./test-10mb.bin /opt/havoc/users/test-10mb.bin
+COPY ./test-20mb.bin /opt/havoc/users/test-20mb.bin
 
 # CLone Responder repo
 RUN git clone https://github.com/lgandx/Responder.git
