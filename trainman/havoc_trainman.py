@@ -117,7 +117,6 @@ class Trainman:
         with open('/etc/samba/smb.conf', 'a') as s_file:
             share_perms_add = subprocess.Popen(share_perms_cmd, stdout=s_file)
             share_perms_add.communicate()
-        s_file.close()
         self.samba_process = subprocess.Popen(
             ['samba', '-F'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
@@ -130,10 +129,8 @@ class Trainman:
         }
         with open('/etc/resolv.conf', 'w') as r_file:
             subprocess.Popen(resolv_cmd['name_server'], stdout=r_file)
-        r_file.close()
         with open('/etc/resolv.conf', 'a') as r_file:
             subprocess.Popen(resolv_cmd['search'], stdout=r_file)
-        r_file.close()
         split_ip = self.host_info[2].split('.')
         in_addr_arpa = f'{split_ip[3]}.{split_ip[2]}.{split_ip[1]}.{split_ip[0]}.in-addr.arpa'
         dns_zone_cmd = ['samba-tool', 'dns', 'zonecreate', self.realm.lower(), in_addr_arpa, '-U', 'Administrator',
@@ -184,7 +181,6 @@ class Trainman:
             with open('/etc/samba/smb.conf', 'a') as s_file:
                 folder_perms_add = subprocess.Popen(folder_perms_cmd, stdout=s_file)
                 folder_perms_add.communicate()
-            s_file.close()
             copyfile('/opt/havoc/sample-data.csv', f'/opt/havoc/users/{user_name}/sample-data.csv')
             copyfile('/opt/havoc/test-5mb.bin', f'/opt/havoc/users/{user_name}/test-5mb.bin')
             name_count += 1
@@ -238,7 +234,6 @@ class Trainman:
         resolv_cmd = ['echo', 'nameserver 1.1.1.1']
         with open('/etc/resolv.conf', 'w') as r_file:
             subprocess.Popen(resolv_cmd, stdout=r_file)
-        r_file.close()
         self.samba_process.terminate()
         os.remove('/etc/samba/smb.conf')
         os.rename('/etc/samba/smb.conf.bak', '/etc/samba/smb.conf')
