@@ -1,4 +1,3 @@
-import re
 import time
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning

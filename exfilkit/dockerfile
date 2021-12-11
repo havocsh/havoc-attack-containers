@@ -1,0 +1,34 @@
+FROM ubuntu:latest
+
+# Install basic utils
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt update
+RUN apt -y install apt-utils git curl python3 python3-dev python3-pip python3-setuptools supervisor
+RUN pip3 install boto3
+RUN pip3 install pyOpenSSL
+RUN pip3 install service_identity
+RUN pip3 install Twisted
+RUN pip3 install requests
+RUN pip3 install awscli
+
+# Install havoc library
+RUN pip3 install havoc
+
+# Install custom dependencies and modules
+RUN mkdir exfilkit exfilkit/exfilkit
+RUN git clone https://github.com/tasooshi/exfilkit.git exfilkit/exfilkit
+RUN cp exfilkit/exfilkit/exfilkit-cli.py exfilkit/
+
+# Setup supervisord
+COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Setup application directories
+RUN mkdir /opt/havoc
+RUN mkdir /opt/havoc/shared
+
+# Copy repo version of havoc_exfilkit.py into build
+COPY ./havoc_exfilkit.py /opt/havoc/havoc_exfilkit.py
+
+# Copy repo version of link.py into build
+COPY ./link.py /opt/havoc/link.py
+RUN chmod +x /opt/havoc/link.py

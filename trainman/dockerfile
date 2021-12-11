@@ -53,7 +53,8 @@ COPY ./test-20mb.bin /opt/havoc/users/test-20mb.bin
 # CLone Responder repo
 RUN git clone https://github.com/lgandx/Responder.git
 
-# Install PyExfil last
-RUN git clone https://www.github.com/ytisf/PyExfil
-WORKDIR PyExfil
-RUN pip3 install -r requirements3.txt
+# Install exfilkit last
+RUN mkdir exfilkit exfilkit/exfilkit
+RUN git clone https://github.com/tasooshi/exfilkit.git exfilkit/exfilkit
+RUN cp exfilkit/exfilkit/exfilkit-cli.py exfilkit/
+
