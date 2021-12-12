@@ -60,70 +60,96 @@ def get_ip():
 
 
 def get_commands_s3(client, campaign_id, task_name, command_list):
-    list_objects_response = client.list_objects_v2(
-        Bucket=f'{campaign_id}-workspace',
-        Prefix=task_name + '/'
-    )
-    assert list_objects_response, f'list_objects_v2 failed for task_name {task_name}'
+    list_objects_response = None
+    try:
+        list_objects_response = client.list_objects_v2(
+            Bucket=f'{campaign_id}-workspace',
+            Prefix=task_name + '/'
+        )
+    except Exception as err:
+        print(f'get_commands_s3 function failed. Error: {err}')
     file_list = []
     regex = f'{task_name}/(.*)'
-    if 'Contents' in list_objects_response:
+    if list_objects_response and 'Contents' in list_objects_response:
         for file_object in list_objects_response['Contents']:
             search = re.search(regex, file_object['Key'])
             if search.group(1):
                 file_list.append(file_object['Key'])
         for file_entry in file_list:
-            get_object_response = client.get_object(
-                Bucket=f'{campaign_id}-workspace',
-                Key=file_entry
-            )
-            assert get_object_response, f'get_object failed for task_name {task_name}, key {file_entry}'
-            interaction = json.loads(get_object_response['Body'].read().decode('utf-8'))
-            command_list.append(interaction)
-            delete_object_response = client.delete_object(
-                Bucket=f'{campaign_id}-workspace',
-                Key=file_entry
-            )
-            assert delete_object_response, f"delete_object failed for task {task_name}, key {file_entry}"
+            get_object_response = None
+            try:
+                get_object_response = client.get_object(
+                    Bucket=f'{campaign_id}-workspace',
+                    Key=file_entry
+                )
+            except Exception as err:
+                print(f'get_object failed for task_name {task_name}, key {file_entry} with error {err}')
+            if get_object_response and 'Body' in get_object_response:
+                interaction = json.loads(get_object_response['Body'].read().decode('utf-8'))
+                command_list.append(interaction)
+                try:
+                    client.delete_object(
+                        Bucket=f'{campaign_id}-workspace',
+                        Key=file_entry
+                    )
+                except Exception as err:
+                    print(f'delete_object failed for task {task_name}, key {file_entry} with error {err}')
 
 
 def get_commands_http(rt, task_name, command_list):
+    commands_response = None
     h = havoc.Connect(rt.api_region, rt.api_domain_name, rt.api_key, rt.secret)
-    commands_response = h.get_commands(task_name)
-    if not commands_response:
-        print(f"get_commands_http failed for task {task_name}")
+    try:
+        commands_response = h.get_commands(task_name)
+    except Exception as err:
+        print(f'get_commands_http failed for task {task_name} with error {err}')
 
-    if 'commands' in commands_response:
+    if commands_response and 'commands' in commands_response:
         for command in commands_response['commands']:
             command_list.append(command)
 
 
 def post_response_http(rt, results):
     h = havoc.Connect(rt.api_region, rt.api_domain_name, rt.api_key, rt.secret)
-    post_response = h.post_response(results)
-    if not post_response:
-        print(f"post_response_http failed for results {results}")
+    try:
+        h.post_response(results)
+    except Exception as err:
+        print(f'post_response_http failed for results {results} with error {err}')
 
 
 def sync_workspace_http(rt, sync_direction):
+    sync_workspace_response = None
     h = havoc.Connect(rt.api_region, rt.api_domain_name, rt.api_key, rt.secret)
-    sync_workspace_response = h.sync_workspace(sync_direction, '/opt/havoc/shared')
+    try:
+        sync_workspace_response = h.sync_workspace(sync_direction, '/opt/havoc/shared')
+    except Exception as err:
+        print(f'sync_workspace_http failed with error {err}')
     return sync_workspace_response
 
 
 def file_transfer_http(rt, sync_direction, file_name):
     success = False
+    file_transfer_response = None
     h = havoc.Connect(rt.api_region, rt.api_domain_name, rt.api_key, rt.secret)
     if sync_direction == 'download_from_workspace':
-        file_transfer_response = h.get_file(file_name)
-        if file_transfer_response:
+        try:
+            file_transfer_response = h.get_file(file_name)
+        except Exception as err:
+            print(f'file_transfer_http failed for direction {sync_direction}, file_name {file_name} with error {err}')
+        if file_transfer_response and 'file_contents' in file_transfer_response:
             with open(f'/opt/havoc/share/{file_name}', 'wb') as w:
                 w.write(file_transfer_response['file_contents'])
             success = True
+        else:
+            success = False
     if sync_direction == 'upload_to_workspace':
-        with open (f'opt/havoc/shared/{file_name}', 'rb') as raw_file:
-            h.create_file(file_name, raw_file.read())
-        success = True
+        try:
+            with open (f'opt/havoc/shared/{file_name}', 'rb') as raw_file:
+                h.create_file(file_name, raw_file.read())
+            success = True
+        except Exception as err:
+            print(f'file_transfer_http failed for direction {sync_direction}, file_name {file_name} with error {err}')
+            success = False
     return success
 
 
