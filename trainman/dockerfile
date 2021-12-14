@@ -3,8 +3,9 @@ FROM ubuntu:latest
 # Install basic utils
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update
-RUN apt -y install apt-utils git curl python3 python3-dev python3-pip python3-setuptools supervisor ldap-utils smbclient
+RUN apt -y install apt-utils zip unzip git curl wget python3 python3-dev python3-pip python3-setuptools supervisor ldap-utils smbclient
 RUN apt -y install acl attr samba samba-dsdb-modules samba-vfs-modules winbind libpam-winbind libnss-winbind libpam-krb5 krb5-config krb5-user dnsutils chrony
+RUN apt -y install openjdk-8-jdk
 RUN pip3 install boto3
 RUN pip3 install pyOpenSSL
 RUN pip3 install service_identity
@@ -53,8 +54,21 @@ COPY ./test-20mb.bin /opt/havoc/users/test-20mb.bin
 # CLone Responder repo
 RUN git clone https://github.com/lgandx/Responder.git
 
-# Install exfilkit last
+# Setup exfilkit
 RUN mkdir exfilkit exfilkit/exfilkit
 RUN git clone https://github.com/tasooshi/exfilkit.git exfilkit/exfilkit
 RUN cp exfilkit/exfilkit/exfilkit-cli.py exfilkit/
 
+# Setup Gradle and build vulnerable cve-2021-44228 (log4shell) application
+RUN wget https://services.gradle.org/distributions/gradle-7.3.1-bin.zip
+RUN unzip gradle-7.3.1-bin.zip
+RUN git clone https://github.com/christophetd/log4shell-vulnerable-app.git
+WORKDIR log4shell-vulnerable-app
+RUN /gradle-7.3.1/bin/gradle bootJar --no-daemon
+RUN mkdir app
+COPY build/libs/*.jar app/spring-boot-application.jar
+
+# Setup cve-2021-44228 (log4shell) exploiter
+WORKDIR /
+RUN git clone https://github.com/cyberstruggle/L4sh.git
+RUN pip3 install -r requirements.txt

