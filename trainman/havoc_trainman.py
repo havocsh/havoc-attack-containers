@@ -242,8 +242,8 @@ class Trainman:
         return output
 
     def start_cve_2021_44228_app(self):
-        if 'port' in self.args:
-            port = self.args['port']
+        if 'listen_port' in self.args:
+            port = self.args['listen_port']
         else:
             output = {'outcome': 'failed', 'message': 'Missing port', 'forward_log': 'False'}
             return output
