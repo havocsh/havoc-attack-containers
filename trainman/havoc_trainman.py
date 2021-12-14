@@ -247,17 +247,14 @@ class Trainman:
         else:
             output = {'outcome': 'failed', 'message': 'Missing port', 'forward_log': 'False'}
             return output
-        log4j_cmd = ['java', '-jar /log4shell-vulnerable-app/app/spring-boot-application.jar', f'--server.port={port}']
+        log4j_cmd = [
+            'java', '-jar', '/log4shell-vulnerable-app/app/spring-boot-application.jar', f'--server.port={port}'
+        ]
         self.log4j_process = subprocess.Popen(
             log4j_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        log4j_cmd_output = self.log4j_process.communicate()[0].decode('ascii')
-        if log4j_cmd_output:
-            output = {'outcome': 'failed', 'message': log4j_cmd_output, 'forward_log': 'False'}
-            return output
-        else:
-            output = {'outcome': 'success', 'message': 'cve_2021_44228_app is running', 'forward_log': 'True'}
-            return output
+        output = {'outcome': 'success', 'message': 'cve_2021_44228_app is running', 'forward_log': 'True'}
+        return output
 
     def stop_cve_2021_44228_app(self):
         if not self.log4j_process:
