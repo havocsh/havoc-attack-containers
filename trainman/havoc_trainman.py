@@ -294,16 +294,11 @@ class Trainman:
             f'-p {http_port}',
             f'-l {ldap_port}'
         ]
-        exploit_cve_2021_44228_process = subprocess.Popen(
+        subprocess.Popen(
             exploit_cve_2021_44228_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        exploit_cve_2021_44228_cmd_output = exploit_cve_2021_44228_process.communicate()[0].decode('ascii')
-        if exploit_cve_2021_44228_cmd_output:
-            output = {'outcome': 'failed', 'message': exploit_cve_2021_44228_cmd_output, 'forward_log': 'False'}
-            return output
-        else:
-            output = {'outcome': 'success', 'message': 'exploit_cve_2021_44228 executed', 'forward_log': 'True'}
-            return output
+        output = {'outcome': 'success', 'message': 'exploit_cve_2021_44228 executed', 'forward_log': 'True'}
+        return output
 
     def echo(self):
         match = {
