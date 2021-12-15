@@ -46,7 +46,7 @@ class HttpServer:
                 return output
         else:
             self.twisted_process = subprocess.Popen(
-                ['/usr/local/bin/twistd', '-no', 'web', f'--port={listen_port}', '--path', '/opt/havoc/shared/']
+                ['/usr/local/bin/twistd', '-no', 'web', f'--port tcp:port={listen_port}', '--path', '/opt/havoc/shared/']
             )
         output = {'outcome': 'success', 'message': 'HTTP server started', 'forward_log': 'True'}
         return output
