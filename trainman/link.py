@@ -309,6 +309,7 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                         'kill_process': local_instruct_instance[instruct_instance].kill_process,
                         'run_ad_dc': local_instruct_instance[instruct_instance].run_ad_dc,
                         'kill_ad_dc': local_instruct_instance[instruct_instance].kill_ad_dc,
+                        'list_java_versions': local_instruct_instance[instruct_instance].list_java_versions,
                         'start_cve_2021_44228_app': local_instruct_instance[instruct_instance].start_cve_2021_44228_app,
                         'stop_cve_2021_44228_app': local_instruct_instance[instruct_instance].stop_cve_2021_44228_app,
                         'exploit_cve_2021_44228': local_instruct_instance[instruct_instance].exploit_cve_2021_44228,

@@ -2,6 +2,7 @@ import os
 import string
 import random
 import subprocess
+import time as t
 from pathlib import Path
 from shutil import copyfile, rmtree
 
@@ -16,6 +17,7 @@ class Trainman:
         self.admin_password = None
         self.samba_process = None
         self.samba_users = None
+        self.java_version = None
         self.log4j_process = None
 
     def set_args(self, args, attack_ip, hostname, local_ip):
@@ -241,14 +243,36 @@ class Trainman:
         output = {'outcome': 'success', 'message': 'Samba process killed', 'forward_log': 'True'}
         return output
 
+    def list_java_versions(self):
+        list_java_cmd = ['/root/.jabba/bin/jabba', 'ls-remote']
+        list_java = subprocess.Popen(
+            list_java_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        list_java_output = list_java.communicate()[0].decode('ascii').strip().split('\n')
+        output = {'outcome': 'success', 'java_versions': list_java_output, 'forward_log': 'False'}
+        return output
+
     def start_cve_2021_44228_app(self):
+        if 'java_version' in self.args:
+            self.java_version = self.args['java_version']
+        else:
+            output = {'outcome': 'failed', 'message': 'Missing java_version', 'forward_log': 'False'}
+            return output
         if 'listen_port' in self.args:
             port = self.args['listen_port']
         else:
             output = {'outcome': 'failed', 'message': 'Missing port', 'forward_log': 'False'}
             return output
+        jvm_install_cmd = ['jabba', 'install', self.java_version]
+        jvm_install = subprocess.Popen(
+            jvm_install_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        jvm_install_output = jvm_install.communicate()[0].decode('ascii')
+        if jvm_install_output:
+            output = {'outcome': 'failed', 'message': jvm_install_output, 'forward_log': 'False'}
+            return output
         log4j_cmd = [
-            'java', '-jar', '/log4shell-vulnerable-app/app/spring-boot-application.jar', f'--server.port={port}'
+            'java', '-jar', '/log4shell-vulnerable-app/spring-boot-application.jar', f'--server.port={port}'
         ]
         self.log4j_process = subprocess.Popen(
             log4j_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -261,6 +285,8 @@ class Trainman:
             output = {'outcome': 'failed', 'message': 'no cve_2021_44228_app is running', 'forward_log': 'False'}
             return output
         self.log4j_process.terminate()
+        jvm_uninstall_cmd = ['jabba', 'uninstall', self.java_version]
+        subprocess.Popen(jvm_uninstall_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output = {'outcome': 'success', 'message': 'cve_2021_44228_app stopped', 'forward_log': 'True'}
         return output
 
@@ -294,10 +320,24 @@ class Trainman:
             f'-p {http_port}',
             f'-l {ldap_port}'
         ]
-        subprocess.Popen(
+        exploit_cve_2021_44228 = subprocess.Popen(
             exploit_cve_2021_44228_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        output = {'outcome': 'success', 'message': 'exploit_cve_2021_44228 executed', 'forward_log': 'True'}
+        counter = 1
+        output = None
+        for exploit_line in exploit_cve_2021_44228.stdout:
+            if b'New HTTP Request 200' in exploit_line:
+                output = {'outcome': 'success', 'message': 'exploit_cve_2021_44228 succeeded', 'forward_log': 'True'}
+                break
+            if not output and counter == 25:
+                output = {
+                    'outcome': 'failed',
+                    'message': 'exploit_cve_2021_44228 executed but failed to exploit target',
+                    'forward_log': 'True'
+                }
+                break
+            counter += 1
+        exploit_cve_2021_44228.terminate()
         return output
 
     def echo(self):
