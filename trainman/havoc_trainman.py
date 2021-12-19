@@ -366,21 +366,33 @@ class Trainman:
             env=env,
             cwd=r'/L4sh'
         )
-        counter = 1
-        output = None
-        for exploit_line in exploit_cve_2021_44228.stdout:
-            if b'New HTTP Request 200' in exploit_line:
-                output = {'outcome': 'success', 'message': 'exploit_cve_2021_44228 succeeded', 'forward_log': 'True'}
-                break
-            if not output and counter == 25:
-                output = {
-                    'outcome': 'failed',
-                    'message': 'exploit_cve_2021_44228 executed but failed to exploit target',
-                    'forward_log': 'True'
-                }
-                break
-            counter += 1
-        exploit_cve_2021_44228.terminate()
+        if exploit_cve_2021_44228.stdout:
+            counter = 1
+            output = None
+            for exploit_line in exploit_cve_2021_44228.stdout:
+                if b'New HTTP Request 200' in exploit_line:
+                    output = {
+                        'outcome': 'success',
+                        'message': 'exploit_cve_2021_44228 succeeded',
+                        'forward_log': 'True'
+                    }
+                    break
+                if not output and counter == 25:
+                    output = {
+                        'outcome': 'failed',
+                        'message': 'exploit_cve_2021_44228 executed but failed to exploit target',
+                        'forward_log': 'True'
+                    }
+                    break
+                counter += 1
+            exploit_cve_2021_44228.terminate()
+        else:
+            output = {
+                'outcome': 'failed',
+                'message': exploit_cve_2021_44228.stderr,
+                'forward_log': 'True'
+            }
+            exploit_cve_2021_44228.terminate()
         return output
 
     def echo(self):
