@@ -2,7 +2,6 @@ import os
 import string
 import random
 import subprocess
-import time as t
 from pathlib import Path
 from shutil import copyfile, rmtree
 
@@ -263,27 +262,30 @@ class Trainman:
         else:
             output = {'outcome': 'failed', 'message': 'Missing port', 'forward_log': 'False'}
             return output
+        env = {}
+        env.update(os.environ)
         jvm_install_cmd = ['/root/.jabba/bin/jabba', 'install', self.java_version]
         jvm_install = subprocess.Popen(
-            jvm_install_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            jvm_install_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
         )
         jvm_install_output = jvm_install.communicate()[0].decode('ascii')
         if jvm_install_output:
             output = {'outcome': 'failed', 'message': jvm_install_output, 'forward_log': 'False'}
             return output
+        env.update(os.environ)
         log4j_cmd = [
             'java', '-jar', '/log4shell-vulnerable-app/spring-boot-application.jar', f'--server.port={port}'
         ]
         self.cve_2021_44228_process = subprocess.Popen(
-            log4j_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            log4j_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
         )
         counter = 1
         output = None
         for app_line in self.cve_2021_44228_process.stdout:
-            if b'New HTTP Request 200' in app_line:
+            if b'JVM running for' in app_line:
                 output = {'outcome': 'success', 'message': 'cve_2021_44228_app is running', 'forward_log': 'True'}
                 break
-            if not output and counter == 25:
+            if not output and counter == 35:
                 output = {
                     'outcome': 'failed',
                     'message': 'cve_2021_44228_app executed but failed to start - Java may not be compatible.',
