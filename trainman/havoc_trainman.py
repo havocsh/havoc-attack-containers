@@ -265,16 +265,27 @@ class Trainman:
         env = {}
         env.update(os.environ)
         jvm_install_cmd = ['/root/.jabba/bin/jabba', 'install', self.java_version]
-        subprocess.Popen(jvm_install_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+        jvm_install = subprocess.Popen(
+            jvm_install_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+        )
+        jvm_install_output = jvm_install.communicate()[1].decode('ascii')
         env['PATH'] = env['PATH'] + f':/root/.jabba/jdk/{self.java_version}/bin'
         java_version_cmd = ['java', '-version']
-        java_version = subprocess.Popen(
-            java_version_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
-        )
-        java_version_output = java_version.communicate()[0].decode('ascii')
-        if java_version_output:
+        try:
+            java_version = subprocess.Popen(
+                java_version_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+            )
+            java_version_output = java_version.communicate()[0].decode('ascii')
+            if java_version_output:
+                output = {
+                    'outcome': 'failed',
+                    'message': f'Java install failed - {java_version_output}',
+                    'forward_log': 'False'
+                }
+                return output
+        except:
             output = {
-                'outcome': 'failed', 'message': f'Java install failed - {java_version_output}', 'forward_log': 'False'
+                'outcome': 'failed', 'message': f'Java install failed - {jvm_install_output}', 'forward_log': 'False'
             }
             return output
         log4j_cmd = [
