@@ -265,14 +265,18 @@ class Trainman:
         env = {}
         env.update(os.environ)
         jvm_install_cmd = ['/root/.jabba/bin/jabba', 'install', self.java_version]
-        jvm_install = subprocess.Popen(
-            jvm_install_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+        subprocess.Popen(jvm_install_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+        env['PATH'] = env['PATH'] + f':/root/.jabba/jdk/{self.java_version}/bin'
+        java_version_cmd = ['java', '-version']
+        java_version = subprocess.Popen(
+            java_version_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
         )
-        jvm_install_output = jvm_install.communicate()[0].decode('ascii')
-        if jvm_install_output:
-            output = {'outcome': 'failed', 'message': jvm_install_output, 'forward_log': 'False'}
+        java_version_output = java_version.communicate()[0].decode('ascii')
+        if java_version_output:
+            output = {
+                'outcome': 'failed', 'message': f'Java install failed - {java_version_output}', 'forward_log': 'False'
+            }
             return output
-        env.update(os.environ)
         log4j_cmd = [
             'java', '-jar', '/log4shell-vulnerable-app/spring-boot-application.jar', f'--server.port={port}'
         ]
