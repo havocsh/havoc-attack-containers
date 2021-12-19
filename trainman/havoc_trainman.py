@@ -263,7 +263,7 @@ class Trainman:
         else:
             output = {'outcome': 'failed', 'message': 'Missing port', 'forward_log': 'False'}
             return output
-        jvm_install_cmd = ['jabba', 'install', self.java_version]
+        jvm_install_cmd = ['/root/.jabba/bin/jabba', 'install', self.java_version]
         jvm_install = subprocess.Popen(
             jvm_install_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
@@ -285,7 +285,7 @@ class Trainman:
             output = {'outcome': 'failed', 'message': 'no cve_2021_44228_app is running', 'forward_log': 'False'}
             return output
         self.log4j_process.terminate()
-        jvm_uninstall_cmd = ['jabba', 'uninstall', self.java_version]
+        jvm_uninstall_cmd = ['/root/.jabba/bin/jabba', 'uninstall', self.java_version]
         subprocess.Popen(jvm_uninstall_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output = {'outcome': 'success', 'message': 'cve_2021_44228_app stopped', 'forward_log': 'True'}
         return output
