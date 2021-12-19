@@ -68,7 +68,7 @@ RUN git clone https://github.com/lgandx/Responder.git
 RUN mkdir exfilkit exfilkit/exfilkit
 RUN git clone https://github.com/tasooshi/exfilkit.git exfilkit/exfilkit
 RUN cp exfilkit/exfilkit/exfilkit-cli.py exfilkit/
-WORKDIR exfilkit
+WORKDIR exfilkit/exfilkit
 RUN pip3 install -r requirements.txt
 
 # Setup cve-2021-44228 (log4shell) exploiter
