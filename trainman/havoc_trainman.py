@@ -18,7 +18,7 @@ class Trainman:
         self.samba_process = None
         self.samba_users = None
         self.java_version = None
-        self.log4j_process = None
+        self.cve_2021_44228_process = None
 
     def set_args(self, args, attack_ip, hostname, local_ip):
         self.args = args
@@ -274,17 +274,31 @@ class Trainman:
         log4j_cmd = [
             'java', '-jar', '/log4shell-vulnerable-app/spring-boot-application.jar', f'--server.port={port}'
         ]
-        self.log4j_process = subprocess.Popen(
+        self.cve_2021_44228_process = subprocess.Popen(
             log4j_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        output = {'outcome': 'success', 'message': 'cve_2021_44228_app is running', 'forward_log': 'True'}
+        counter = 1
+        output = None
+        for app_line in self.cve_2021_44228_process.stdout:
+            if b'New HTTP Request 200' in app_line:
+                output = {'outcome': 'success', 'message': 'cve_2021_44228_app is running', 'forward_log': 'True'}
+                break
+            if not output and counter == 25:
+                output = {
+                    'outcome': 'failed',
+                    'message': 'cve_2021_44228_app executed but failed to start - Java may not be compatible.',
+                    'forward_log': 'True'
+                }
+                self.cve_2021_44228_process.terminate()
+                break
+            counter += 1
         return output
 
     def stop_cve_2021_44228_app(self):
-        if not self.log4j_process:
+        if not self.cve_2021_44228_process:
             output = {'outcome': 'failed', 'message': 'no cve_2021_44228_app is running', 'forward_log': 'False'}
             return output
-        self.log4j_process.terminate()
+        self.cve_2021_44228_process.terminate()
         jvm_uninstall_cmd = ['/root/.jabba/bin/jabba', 'uninstall', self.java_version]
         subprocess.Popen(jvm_uninstall_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output = {'outcome': 'success', 'message': 'cve_2021_44228_app stopped', 'forward_log': 'True'}
