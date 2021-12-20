@@ -270,7 +270,9 @@ class Trainman:
             jvm_install_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
         )
         jvm_install_output = jvm_install.communicate()[1].decode('ascii')
-        env['PATH'] = env['PATH'] + f':/root/.jabba/jdk/{self.java_version}/bin'
+        os.environ['JAVA_HOME'] = f'/root/.jabba/jdk/{self.java_version}'
+        os.environ['PATH'] = os.environ['PATH'] + f':/root/.jabba/jdk/{self.java_version}/bin'
+        env.update(os.environ)
         java_version_cmd = ['java', '-version']
         try:
             java_version = subprocess.Popen(
@@ -289,11 +291,15 @@ class Trainman:
                 'outcome': 'failed', 'message': f'Java install failed - {jvm_install_output}', 'forward_log': 'False'
             }
             return output
-        log4j_cmd = [
-            'java', '-jar', '/log4shell-vulnerable-app/spring-boot-application.jar', f'--server.port={port}'
-        ]
+        log4j_cmd = 'java -jar /log4shell-vulnerable-app/spring-boot-application.jar --server.port={port}'
         self.cve_2021_44228_process = subprocess.Popen(
-            log4j_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+            log4j_cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=True,
+            env=env,
+            preexec_fn=os.setsid
         )
         counter = 1
         output = None
@@ -307,7 +313,11 @@ class Trainman:
                     'message': 'cve_2021_44228_app executed but failed to start - Java may not be compatible.',
                     'forward_log': 'True'
                 }
-                self.cve_2021_44228_process.terminate()
+                os.killpg(os.getpgid(self.cve_2021_44228_process.pid), signal.SIGTERM)
+                jvm_uninstall_cmd = ['/root/.jabba/bin/jabba', 'uninstall', self.java_version]
+                subprocess.Popen(
+                    jvm_uninstall_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+                )
                 break
             counter += 1
         return output
@@ -316,7 +326,7 @@ class Trainman:
         if not self.cve_2021_44228_process:
             output = {'outcome': 'failed', 'message': 'no cve_2021_44228_app is running', 'forward_log': 'False'}
             return output
-        self.cve_2021_44228_process.terminate()
+        os.killpg(os.getpgid(self.cve_2021_44228_process.pid), signal.SIGTERM)
         jvm_uninstall_cmd = ['/root/.jabba/bin/jabba', 'uninstall', self.java_version]
         subprocess.Popen(jvm_uninstall_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output = {'outcome': 'success', 'message': 'cve_2021_44228_app stopped', 'forward_log': 'True'}
