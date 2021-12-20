@@ -382,7 +382,6 @@ class Trainman:
                         'forward_log': 'True'
                     }
                     break
-                t.sleep(1)
             exploit_cve_2021_44228.terminate()
         else:
             message = None
