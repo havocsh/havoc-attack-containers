@@ -291,7 +291,7 @@ class Trainman:
                 'outcome': 'failed', 'message': f'Java install failed - {jvm_install_output}', 'forward_log': 'False'
             }
             return output
-        log4j_cmd = 'java -jar /log4shell-vulnerable-app/spring-boot-application.jar --server.port={port}'
+        log4j_cmd = f'java -jar /log4shell-vulnerable-app/spring-boot-application.jar --server.port={port}'
         self.cve_2021_44228_process = subprocess.Popen(
             log4j_cmd,
             stdin=subprocess.PIPE,
