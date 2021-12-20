@@ -390,7 +390,7 @@ class Trainman:
                 output = {
                     'outcome': 'failed',
                     'message': 'exploit_cve_2021_44228 executed but failed to exploit target. '
-                               f'Exploit results: {exploit_cve_2021_44228_error.decode()}',
+                               f'Exploit results: {exploit_cve_2021_44228_output.decode()}',
                     'forward_log': 'True'
                 }
         else:
