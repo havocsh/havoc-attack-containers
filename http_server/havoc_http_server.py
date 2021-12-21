@@ -37,7 +37,7 @@ class HttpServer:
             ssl_cert = Path('/opt/havoc/server-priv.key')
             if ssl_cert.is_file():
                 self.twisted_process = subprocess.Popen(
-                    ['/usr/local/bin/twistd', '-no', 'web', f'--https={listen_port}', '-c',
+                    ['/usr/local/bin/twistd', '-no', 'web', f'--listen tcp:{listen_port}', '-c',
                      '/opt/havoc/server-priv.key', '-k', '/opt/havoc/server-chain.pem', '--path', '/opt/havoc/shared/']
                 )
             else:
@@ -46,7 +46,7 @@ class HttpServer:
                 return output
         else:
             self.twisted_process = subprocess.Popen(
-                ['/usr/local/bin/twistd', '-no', 'web', f'--port tcp:port={listen_port}', '--path', '/opt/havoc/shared/']
+                ['/usr/local/bin/twistd', '-no', 'web', f'--listen tcp:{listen_port}', '--path', '/opt/havoc/shared/']
             )
         output = {'outcome': 'success', 'message': 'HTTP server started', 'forward_log': 'True'}
         return output
