@@ -459,7 +459,7 @@ def main():
                 subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
     else:
         region = os.environ['REGION']
-        local_ip = ['None']
+        local_ip = get_ip()
     if 'END_TIME' in os.environ:
         end_time = os.environ['END_TIME']
     else:

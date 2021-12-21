@@ -46,6 +46,19 @@ def shutdown_timer(end_time):
         return True
 
 
+def get_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # doesn't even have to be reachable
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+    except Exception:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
+
+
 def get_commands_s3(client, campaign_id, task_name, command_list):
     list_objects_response = None
     try:
@@ -376,7 +389,7 @@ def main():
                 subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
     else:
         region = os.environ['REGION']
-        local_ip = ['None']
+        local_ip = get_ip()
     if 'END_TIME' in os.environ:
         end_time = os.environ['END_TIME']
     else:
