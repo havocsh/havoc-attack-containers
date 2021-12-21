@@ -380,7 +380,7 @@ class Trainman:
             preexec_fn=os.setsid
         )
         try:
-            exploit_cve_2021_44228_output, exploit_cve_2021_44228_error = exploit_cve_2021_44228.communicate(timeout=20)
+            exploit_cve_2021_44228_output, exploit_cve_2021_44228_error = exploit_cve_2021_44228.communicate(timeout=30)
         except:
             os.killpg(os.getpgid(exploit_cve_2021_44228.pid), signal.SIGTERM)
             exploit_cve_2021_44228_output, exploit_cve_2021_44228_error = exploit_cve_2021_44228.communicate()
@@ -388,7 +388,9 @@ class Trainman:
             if 'New HTTP Request 200' in exploit_cve_2021_44228_output.decode():
                 output = {
                     'outcome': 'success',
-                    'message': 'exploit_cve_2021_44228 succeeded',
+                    'message': 'exploit_cve_2021_44228 succeeded. '
+                               f'stdout: {exploit_cve_2021_44228_output.decode()},'
+                               f'stderr: {exploit_cve_2021_44228_error.decode()}',
                     'forward_log': 'True'
                 }
             else:
