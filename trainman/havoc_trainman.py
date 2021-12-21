@@ -380,7 +380,7 @@ class Trainman:
             preexec_fn=os.setsid
         )
         try:
-            exploit_cve_2021_44228_output, exploit_cve_2021_44228_error = exploit_cve_2021_44228.communicate(timeout=30)
+            exploit_cve_2021_44228_output, exploit_cve_2021_44228_error = exploit_cve_2021_44228.communicate(timeout=10)
         except:
             os.killpg(os.getpgid(exploit_cve_2021_44228.pid), signal.SIGTERM)
             exploit_cve_2021_44228_output, exploit_cve_2021_44228_error = exploit_cve_2021_44228.communicate()
