@@ -310,7 +310,7 @@ class Trainman:
             if not output and counter == 35:
                 output = {
                     'outcome': 'failed',
-                    'message': 'cve_2021_44228_app executed but failed to start - Java may not be compatible.',
+                    'message': 'cve_2021_44228_app executed but failed to start',
                     'forward_log': 'True'
                 }
                 os.killpg(os.getpgid(self.cve_2021_44228_process.pid), signal.SIGTERM)
@@ -380,7 +380,7 @@ class Trainman:
             preexec_fn=os.setsid
         )
         try:
-            exploit_cve_2021_44228_output, exploit_cve_2021_44228_error = exploit_cve_2021_44228.communicate(timeout=10)
+            exploit_cve_2021_44228_output, exploit_cve_2021_44228_error = exploit_cve_2021_44228.communicate(timeout=20)
         except:
             os.killpg(os.getpgid(exploit_cve_2021_44228.pid), signal.SIGTERM)
             exploit_cve_2021_44228_output, exploit_cve_2021_44228_error = exploit_cve_2021_44228.communicate()
