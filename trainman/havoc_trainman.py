@@ -370,7 +370,7 @@ class Trainman:
             exploit_code = exploit_template.read().replace('CMDGOESHERE', exec_cmd)
         with open('/tmp/Main.java', 'w') as exploit_java:
             exploit_java.write(exploit_code)
-        build_exploit_cmd = 'javac /tmp/Main.java'
+        build_exploit_cmd = '/root/.jabba/jdk/openjdk-ri@1.8.41/bin/javac /tmp/Main.java'
         build_exploit = subprocess.Popen(build_exploit_cmd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
