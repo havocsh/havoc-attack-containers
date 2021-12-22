@@ -359,9 +359,9 @@ class Trainman:
             return output
         env = {}
         env.update(os.environ)
-        jvm_install_cmd = ['/root/.jabba/bin/jabba', 'install', 'adopt@1.8.0-292']
+        jvm_install_cmd = '/root/.jabba/bin/jabba install adopt@1.8.0-292'
         subprocess.Popen(
-            jvm_install_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+            jvm_install_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env
         )
         os.environ['JAVA_HOME'] = '/root/.jabba/jdk/adopt@1.8.0-292'
         os.environ['PATH'] = os.environ['PATH'] + ':/root/.jabba/jdk/adopt@1.8.0-292/bin'
@@ -371,12 +371,14 @@ class Trainman:
         with open('/tmp/Main.java', 'w') as exploit_java:
             exploit_java.write(exploit_code)
         build_exploit_cmd = '/root/.jabba/jdk/openjdk-ri@1.8.41/bin/javac /tmp/Main.java'
-        build_exploit = subprocess.Popen(build_exploit_cmd,
+        build_exploit = subprocess.Popen(
+            build_exploit_cmd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=True,
-            env=env)
+            env=env
+        )
         build_exploit_output, build_exploit_error = build_exploit.communicate()
         if build_exploit_error:
             output = {
