@@ -360,9 +360,19 @@ class Trainman:
         env = {}
         env.update(os.environ)
         jvm_install_cmd = '/root/.jabba/bin/jabba install openjdk-ri@1.8.41'
-        subprocess.Popen(
+        jvm_install = subprocess.Popen(
             jvm_install_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env
         )
+        jvm_install_output, jvm_install_error = jvm_install.communicate()
+        if jvm_install_error:
+            output = {
+                'outcome': 'failed',
+                'message': 'Java installation failed. '
+                           f'stdout: {jvm_install_output.decode()}, '
+                           f'stderr: {jvm_install_error.decode()}',
+                'forward_log': 'False'
+            }
+            return output
         os.environ['JAVA_HOME'] = '/root/.jabba/jdk/openjdk-ri@1.8.41'
         os.environ['PATH'] = os.environ['PATH'] + ':/root/.jabba/jdk/openjdk-ri@1.8.41/bin'
         env.update(os.environ)
