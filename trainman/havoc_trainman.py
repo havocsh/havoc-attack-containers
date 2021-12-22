@@ -363,19 +363,28 @@ class Trainman:
         jvm_install = subprocess.Popen(
             jvm_install_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env
         )
-        jvm_install_output, jvm_install_error = jvm_install.communicate()
-        if jvm_install_error:
-            output = {
-                'outcome': 'failed',
-                'message': 'Java installation failed. '
-                           f'stdout: {jvm_install_output.decode()}, '
-                           f'stderr: {jvm_install_error.decode()}',
-                'forward_log': 'False'
-            }
-            return output
+        jvm_install_output = jvm_install.communicate()[1].decode('ascii')
         os.environ['JAVA_HOME'] = '/root/.jabba/jdk/openjdk-ri@1.8.41'
         os.environ['PATH'] = os.environ['PATH'] + ':/root/.jabba/jdk/openjdk-ri@1.8.41/bin'
         env.update(os.environ)
+        java_version_cmd = ['java', '-version']
+        try:
+            java_version = subprocess.Popen(
+                java_version_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+            )
+            java_version_output = java_version.communicate()[0].decode('ascii')
+            if java_version_output:
+                output = {
+                    'outcome': 'failed',
+                    'message': f'Java install failed - {java_version_output}',
+                    'forward_log': 'False'
+                }
+                return output
+        except:
+            output = {
+                'outcome': 'failed', 'message': f'Java install failed - {jvm_install_output}', 'forward_log': 'False'
+            }
+            return output
         exploit_template = open('/L4sh/db/template.java', 'r')
         exploit_code = exploit_template.read().replace('CMDGOESHERE', exec_cmd)
         exploit_template.close()
