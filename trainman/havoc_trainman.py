@@ -366,10 +366,12 @@ class Trainman:
         os.environ['JAVA_HOME'] = '/root/.jabba/jdk/openjdk-ri@1.8.41'
         os.environ['PATH'] = os.environ['PATH'] + ':/root/.jabba/jdk/openjdk-ri@1.8.41/bin'
         env.update(os.environ)
-        with open('/L4sh/db/template.java', 'r') as exploit_template:
-            exploit_code = exploit_template.read().replace('CMDGOESHERE', exec_cmd)
-        with open('/tmp/Main.java', 'w') as exploit_java:
-            exploit_java.write(exploit_code)
+        exploit_template = open('/L4sh/db/template.java', 'r')
+        exploit_code = exploit_template.read().replace('CMDGOESHERE', exec_cmd)
+        exploit_template.close()
+        exploit_java = open('/tmp/Main.java', 'w')
+        exploit_java.write(exploit_code)
+        exploit_java.close()
         build_exploit_cmd = '/root/.jabba/jdk/openjdk-ri@1.8.41/bin/javac /tmp/Main.java'
         build_exploit = subprocess.Popen(
             build_exploit_cmd,
