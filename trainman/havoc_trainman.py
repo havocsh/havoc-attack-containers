@@ -446,11 +446,23 @@ class Trainman:
                     'forward_log': 'True'
                 }
         else:
+            debug_cmd = 'netstat -tanp | grep LISTEN'
+            debug = subprocess.Popen(
+                debug_cmd,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=True,
+                env=env
+            )
+            debug_output, debug_error = debug.communicate()
             output = {
                 'outcome': 'failed',
                 'message': 'exploit_cve_2021_44228 execution failed. '
-                            f'stdout: {exploit_cve_2021_44228_output.decode()}, '
-                            f'stderr: {exploit_cve_2021_44228_error.decode()}',
+                            f'exploit stdout: {exploit_cve_2021_44228_output.decode()}, '
+                            f'exploit stderr: {exploit_cve_2021_44228_error.decode()}, '
+                            f'debug stdout: {debug_output}, '
+                            f'debug stderr: {debug_error}',
                 'forward_log': 'True'
             }
         return output
