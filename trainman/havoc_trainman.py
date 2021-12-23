@@ -353,7 +353,7 @@ class Trainman:
             output = {'outcome': 'failed', 'message': 'Missing ldap_port', 'forward_log': 'False'}
             return output
         if 'exec_cmd' in self.args:
-            exec_cmd = self.args['exec_cmd']
+            exec_cmd = self.args['exec_cmd'].strip('"')
         else:
             output = {'outcome': 'failed', 'message': 'Missing exec_cmd', 'forward_log': 'False'}
             return output
