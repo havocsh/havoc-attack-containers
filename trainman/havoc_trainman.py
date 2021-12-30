@@ -1,5 +1,4 @@
 import os
-import psutil
 import string
 import random
 import signal
