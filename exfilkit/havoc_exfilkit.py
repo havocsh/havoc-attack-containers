@@ -57,6 +57,22 @@ class CallExfilkit:
         else:
             output = {'outcome': 'failed', 'message': 'Missing port', 'forward_log': 'False'}
             return output
+        if 'subj' not in self.args:
+            output = {'outcome': 'failed', 'message': 'Missing subj', 'forward_log': 'False'}
+            return output
+        subj = self.args['subj']
+        p = subprocess.Popen(
+            ['/usr/bin/openssl', 'req', '-new', '-x509', '-keyout', '/HTTPUploadExfil/HTTPUploadExfil.key',
+             '-out', '/HTTPUploadExfil/HTTPUploadExfil.csr', '-days', '365', '-nodes', '-subj', f'{subj}'],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        openssl_out, openssl_err = p.communicate()
+        message = openssl_err.decode('utf-8')
+        if 'writing new private key' not in message and 'problems making Certificate Request' in message:
+            output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+            return output
         self.https_process = subprocess.Popen(
             f'httpuploadexfil :{port} /opt/havoc/shared',
             stdin=subprocess.PIPE,
@@ -84,6 +100,8 @@ class CallExfilkit:
             output = {'outcome': 'failed', 'message': 'no https_exfil_server is running', 'forward_log': 'False'}
             return output
         os.killpg(os.getpgid(self.https_process.pid), signal.SIGTERM)
+        os.remove('/HTTPUploadExfil/HTTPUploadExfil.key')
+        os.remove('/HTTPUploadExfil/HTTPUploadExfil.csr')
         output = {'outcome': 'success', 'message': 'https_exfil_server stopped', 'forward_log': 'True'}
         return output
 
