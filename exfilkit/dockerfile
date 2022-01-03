@@ -31,6 +31,9 @@ COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 RUN mkdir /opt/havoc
 RUN mkdir /opt/havoc/shared
 
+# Copy repo version of havoc_exfilkit.py into build
+COPY ./havoc_exfilkit.py /opt/havoc/havoc_exfilkit.py
+
 # Copy repo version of link.py into build
 COPY ./link.py /opt/havoc/link.py
 RUN chmod +x /opt/havoc/link.py
