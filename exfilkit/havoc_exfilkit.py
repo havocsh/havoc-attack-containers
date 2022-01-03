@@ -16,10 +16,10 @@ class CallExfilkit:
         return True
 
     def start_http_exfil_server(self):
-        if 'port' in self.args:
-            port = self.args['port']
+        if 'listen_port' in self.args:
+            port = self.args['listen_port']
         else:
-            output = {'outcome': 'failed', 'message': 'Missing port', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'Missing listen_port', 'forward_log': 'False'}
             return output
         self.http_process = subprocess.Popen(
             f'httpuploadexfil :{port} /opt/havoc/shared',
@@ -52,10 +52,10 @@ class CallExfilkit:
         return output
 
     def start_https_exfil_server(self):
-        if 'port' in self.args:
-            port = self.args['port']
+        if 'listen_port' in self.args:
+            port = self.args['listen_port']
         else:
-            output = {'outcome': 'failed', 'message': 'Missing port', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'Missing listen_port', 'forward_log': 'False'}
             return output
         if 'subj' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing subj', 'forward_log': 'False'}
