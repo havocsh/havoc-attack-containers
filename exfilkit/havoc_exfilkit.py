@@ -74,7 +74,7 @@ class CallExfilkit:
             output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
             return output
         self.https_process = subprocess.Popen(
-            f'httpuploadexfil :{port} /opt/havoc/shared',
+            f'/HTTPUploadExfil/httpuploadexfil :{port} /opt/havoc/shared',
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
