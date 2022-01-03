@@ -301,15 +301,13 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                 subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
             else:
                 if instruct_instance not in exfilkit:
-                    exfilkit[instruct_instance] = havoc_exfilkit.call_exfilkit()
+                    exfilkit[instruct_instance] = havoc_exfilkit.CallExfilkit()
                 if instruct_instance in exfilkit:
                     exfilkit_functions = {
-                        'start_dns_exfil_server': exfilkit[instruct_instance].start_dns_exfil_server,
-                        'stop_dns_exfil_server': exfilkit[instruct_instance].stop_dns_exfil_server,
-                        'start_http_get_exfil_server': exfilkit[instruct_instance].start_http_get_exfil_server,
-                        'stop_http_get_exfil_server': exfilkit[instruct_instance].stop_http_get_exfil_server,
-                        'start_http_post_exfil_server': exfilkit[instruct_instance].start_http_post_exfil_server,
-                        'stop_http_post_exfil_server': exfilkit[instruct_instance].stop_http_post_exfil_server,
+                        'start_http_exfil_server': exfilkit[instruct_instance].start_http_exfil_server,
+                        'stop_http_exfil_server': exfilkit[instruct_instance].stop_http_exfil_server,
+                        'start_https_exfil_server': exfilkit[instruct_instance].start_https_exfil_server,
+                        'stop_https_exfil_server': exfilkit[instruct_instance].stop_https_exfil_server,
                         'echo': exfilkit[instruct_instance].echo
                     }
                     if instruct_command in exfilkit_functions:

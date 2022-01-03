@@ -14,10 +14,15 @@ RUN pip3 install awscli
 # Install havoc library
 RUN pip3 install havoc
 
-# Install custom dependencies and modules
-RUN mkdir exfilkit exfilkit/exfilkit
-RUN git clone https://github.com/tasooshi/exfilkit.git exfilkit/exfilkit
-RUN cp exfilkit/exfilkit/exfilkit-cli.py exfilkit/
+# Install Go
+RUN wget -O go1.17.5.linux-amd64.tar.gz https://go.dev/dl/go1.17.5.linux-amd64.tar.gz
+RUN tar -C /usr/local -xzf go1.17.5.linux-amd64.tar.gz
+RUN export PATH=$PATH:/usr/local/go/bin
+
+# Install HTTPUploadExfil
+RUN git clone https://github.com/IngoKl/HTTPUploadExfil.git
+WORKDIR /HTTPUploadExfil
+RUN go build
 
 # Setup supervisord
 COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
@@ -25,9 +30,6 @@ COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # Setup application directories
 RUN mkdir /opt/havoc
 RUN mkdir /opt/havoc/shared
-
-# Copy repo version of havoc_exfilkit.py into build
-COPY ./havoc_exfilkit.py /opt/havoc/havoc_exfilkit.py
 
 # Copy repo version of link.py into build
 COPY ./link.py /opt/havoc/link.py
