@@ -57,8 +57,9 @@ RUN mkdir /opt/havoc/users
 # Copy fake data into build
 COPY ./sample-data.csv /opt/havoc/sample-data.csv
 COPY ./test-5mb.bin /opt/havoc/test-5mb.bin
-COPY ./test-10mb.bin /opt/havoc/users/test-10mb.bin
-COPY ./test-20mb.bin /opt/havoc/users/test-20mb.bin
+COPY ./100MB.bin /opt/havoc/users/large_file_1.bin
+COPY ./100MB.bin /opt/havoc/users/large_file_2.bin
+COPY ./100MB.bin /opt/havoc/users/large_file_3.bin
 
 # CLone Responder repo
 WORKDIR /
