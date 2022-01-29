@@ -3,7 +3,7 @@ version: 0.2
 env:
   shell: bash
   variables:
-    IMAGE_REPO_NAME: "<image_repo_name>"
+    IMAGE_REPO_NAME: "trainman"
     IMAGE_TAG: "latest"
 
 phases:
