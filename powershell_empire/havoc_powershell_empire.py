@@ -188,7 +188,7 @@ class call_powershell_empire:
         agent_shell_uri = f'{self.server_uri}api/agents/{agent_name}/shell?token={self.token}'
         agent_shell_response = requests.post(agent_shell_uri, json=self.args, verify=False)
         if agent_shell_response.status_code == 200:
-            output = {'outcome': 'success', 'forward_log': 'True'}
+            output = {'outcome': 'success', 'message': agent_shell_response.json(), 'forward_log': 'True'}
             return output
         else:
             output = {'outcome': 'failed', 'message': agent_shell_response.json(), 'forward_log': 'False'}
