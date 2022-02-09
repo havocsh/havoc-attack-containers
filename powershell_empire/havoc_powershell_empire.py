@@ -118,7 +118,7 @@ class call_powershell_empire:
 
     def create_stager(self):
         if 'Listener' not in self.args:
-            output = {'outcome': 'failed', 'message': 'Missing listener_name', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'Missing Listener', 'forward_log': 'False'}
             return output
         if 'StagerName' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing StagerName', 'forward_log': 'False'}
