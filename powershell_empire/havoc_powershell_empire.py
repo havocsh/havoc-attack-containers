@@ -286,18 +286,16 @@ class call_powershell_empire:
     def get_modules(self):
         if 'Name' in self.args:
             module_name = self.args['Name']
-            get_modules_uri = f'{self.server_uri}api/modules/{module_name}?token={self.token}'
-            get_modules_response = requests.get(get_modules_uri, verify=False)
-            if get_modules_response.status_code == 200:
-                modules = get_modules_response.json()['modules']
-                output = {'outcome': 'success', 'modules': modules, 'forward_log': 'False'}
-            else:
-                output = {'outcome': 'failed', 'message': get_modules_response.json(), 'forward_log': 'False'}
         else:
-            get_modules_uri = f'{self.server_uri}api/modules?token={self.token}'
-            get_modules_response = requests.get(get_modules_uri, verify=False)
+            output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
+            return output
+        get_modules_uri = f'{self.server_uri}api/modules/{module_name}?token={self.token}'
+        get_modules_response = requests.get(get_modules_uri, verify=False)
+        if get_modules_response.status_code == 200:
             modules = get_modules_response.json()['modules']
             output = {'outcome': 'success', 'modules': modules, 'forward_log': 'False'}
+        else:
+            output = {'outcome': 'failed', 'message': get_modules_response.json(), 'forward_log': 'False'}
         return output
 
     def search_modules(self):
