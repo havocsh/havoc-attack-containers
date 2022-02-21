@@ -118,7 +118,7 @@ class call_powershell_empire:
 
     def create_stager(self):
         if 'Listener' not in self.args:
-            output = {'outcome': 'failed', 'message': 'Missing listener_name', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'Missing Listener', 'forward_log': 'False'}
             return output
         if 'StagerName' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing StagerName', 'forward_log': 'False'}
@@ -188,7 +188,7 @@ class call_powershell_empire:
         agent_shell_uri = f'{self.server_uri}api/agents/{agent_name}/shell?token={self.token}'
         agent_shell_response = requests.post(agent_shell_uri, json=self.args, verify=False)
         if agent_shell_response.status_code == 200:
-            output = {'outcome': 'success', 'forward_log': 'True'}
+            output = {'outcome': 'success', 'message': agent_shell_response.json(), 'forward_log': 'True'}
             return output
         else:
             output = {'outcome': 'failed', 'message': agent_shell_response.json(), 'forward_log': 'False'}
@@ -286,18 +286,16 @@ class call_powershell_empire:
     def get_modules(self):
         if 'Name' in self.args:
             module_name = self.args['Name']
-            get_modules_uri = f'{self.server_uri}api/modules/{module_name}?token={self.token}'
-            get_modules_response = requests.get(get_modules_uri, verify=False)
-            if get_modules_response.status_code == 200:
-                modules = get_modules_response.json()['modules']
-                output = {'outcome': 'success', 'modules': modules, 'forward_log': 'False'}
-            else:
-                output = {'outcome': 'failed', 'message': get_modules_response.json(), 'forward_log': 'False'}
         else:
-            get_modules_uri = f'{self.server_uri}api/modules?token={self.token}'
-            get_modules_response = requests.get(get_modules_uri, verify=False)
+            output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
+            return output
+        get_modules_uri = f'{self.server_uri}api/modules/{module_name}?token={self.token}'
+        get_modules_response = requests.get(get_modules_uri, verify=False)
+        if get_modules_response.status_code == 200:
             modules = get_modules_response.json()['modules']
             output = {'outcome': 'success', 'modules': modules, 'forward_log': 'False'}
+        else:
+            output = {'outcome': 'failed', 'message': get_modules_response.json(), 'forward_log': 'False'}
         return output
 
     def search_modules(self):
@@ -315,9 +313,7 @@ class call_powershell_empire:
             return output
 
     def execute_module(self):
-        if 'Agent' in self.args:
-            agent_name = self.args['Agent']
-        else:
+        if 'Agent' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing Agent', 'forward_log': 'False'}
             return output
         if 'Name' in self.args:
@@ -325,28 +321,13 @@ class call_powershell_empire:
         else:
             output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
+        del self.args['Name']
         execute_module_uri = f'{self.server_uri}api/modules/{module_name}?token={self.token}'
         execute_module_response = requests.post(execute_module_uri, json=self.args, verify=False)
         if execute_module_response.status_code == 200:
-            results = None
-            agent_info = None
-            while not results:
-                agent_results_uri = f'{self.server_uri}api/agents/{agent_name}/results?token={self.token}'
-                agent_results_response = requests.get(agent_results_uri, verify=False)
-                if 'results' in agent_results_response.json()['results']:
-                    results = agent_results_response.json()['results']['results']
-                if results:
-                    requests.delete(agent_results_uri, verify=False)
-                    get_agent_details_uri = f'{self.server_uri}api/agents/{agent_name}?token={self.token}'
-                    get_agent_details_response = requests.get(get_agent_details_uri, verify=False)
-                    if get_agent_details_response.status_code == 200:
-                        agent_info = get_agent_details_response.json()['agents']
-                else:
-                    time.sleep(2)
+            output = {'outcome': 'success', 'message': execute_module_response.json(), 'forward_log': 'True'}
         else:
             output = {'outcome': 'failed', 'message': execute_module_response.json(), 'forward_log': 'False'}
-            return output
-        output = {'outcome': 'success', 'results': results, 'agent_info': agent_info, 'forward_log': 'True'}
         return output
 
     def get_stored_credentials(self):
