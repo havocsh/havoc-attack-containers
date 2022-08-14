@@ -1,6 +1,8 @@
 import os
+import shutil
 import signal
 import subprocess
+
 
 class CallExfilkit:
 
@@ -57,22 +59,55 @@ class CallExfilkit:
         else:
             output = {'outcome': 'failed', 'message': 'Missing listen_port', 'forward_log': 'False'}
             return output
-        if 'subj' not in self.args:
-            output = {'outcome': 'failed', 'message': 'Missing subj', 'forward_log': 'False'}
+        if 'subj' not in self.args and 'domain' not in self.args:
+            output = {'outcome': 'failed', 'message': 'Missing subj or domain', 'forward_log': 'False'}
             return output
-        subj = self.args['subj']
-        p = subprocess.Popen(
-            ['/usr/bin/openssl', 'req', '-new', '-x509', '-keyout', '/HTTPUploadExfil/HTTPUploadExfil.key',
-             '-out', '/HTTPUploadExfil/HTTPUploadExfil.csr', '-days', '365', '-nodes', '-subj', f'{subj}'],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        openssl_out, openssl_err = p.communicate()
-        message = openssl_err.decode('utf-8')
-        if 'writing new private key' not in message and 'problems making Certificate Request' in message:
-            output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+        if 'subj' in self.args and 'domain' in self.args:
+            output = {'outcome': 'failed', 'message': 'Specify subj or domain but not both', 'forward_log': 'False'}
             return output
+        if 'subj' in self.args:
+            subj = self.args['subj']
+            p = subprocess.Popen(
+                ['/usr/bin/openssl', 'req', '-new', '-x509', '-keyout', '/HTTPUploadExfil/HTTPUploadExfil.key',
+                '-out', '/HTTPUploadExfil/HTTPUploadExfil.csr', '-days', '365', '-nodes', '-subj', f'{subj}'],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            openssl_out, openssl_err = p.communicate()
+            message = openssl_err.decode('utf-8')
+            if 'writing new private key' not in message and 'problems making Certificate Request' in message:
+                output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+                return output
+        if 'domain' in self.args:
+            domain = self.args['domain']
+            p = subprocess.Popen(
+                ['/usr/bin/certbot', 'certonly', '--standalone', '-d', domain],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            certbot_out, certbot_err = p.communicate()
+            message = certbot_out.decode('utf-8')
+            if 'Successfully received certificate' not in message:
+                output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+                return output
+            shutil.copyfile(f'/etc/letsencrypt/live/{domain}/fullchain.pem', '/HTTPUploadExfil/HTTPUploadExfil.csr')
+            shutil.copyfile(f'/etc/letsencrypt/live/{domain}/privkey.pem', '/HTTPUploadExfil/HTTPUploadExfil.pem')
+            p = subprocess.Popen(
+                [
+                    '/usr/bin/openssl', 'rsa', '-outform', 'der', '-in', '/HTTPUploadExfil/HTTPUploadExfil.pem',
+                    '-out', '/HTTPUploadExfil/HTTPUploadExfil.key'
+                ],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            openssl_out, openssl_err = p.communicate()
+            message = openssl_err.decode('utf-8')
+            if 'writing new private key' not in message:
+                output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+                return output
         self.https_process = subprocess.Popen(
             f'/HTTPUploadExfil/httpuploadexfil :{port} /opt/havoc/shared',
             stdin=subprocess.PIPE,

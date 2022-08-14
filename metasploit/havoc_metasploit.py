@@ -1,4 +1,7 @@
+import os
 import re
+import shutil
+import subprocess
 from pymetasploit3.msfrpc import *
 
 
@@ -662,6 +665,102 @@ class call_msf:
         else:
             output = {'outcome': 'failed', 'message': 'job_id not found', 'forward_log': 'False'}
         return output
+    
+    def cert_gen(self):
+        if 'subj' not in self.args and 'domain' not in self.args:
+            output = {'outcome': 'failed', 'message': 'Missing subj or domain', 'forward_log': 'False'}
+            return output
+        if 'subj' in self.args and 'domain' in self.args:
+            output = {'outcome': 'failed', 'message': 'Specify subj or domain but not both', 'forward_log': 'False'}
+            return output
+        if 'subj' in self.args:
+            subj = self.args['subj']
+            p = subprocess.Popen(
+                [
+                    '/usr/bin/openssl',
+                    'req',
+                    '-new',
+                    '-x509',
+                    '-keyout',
+                    '/opt/havoc/private.key',
+                    '-out',
+                    '/opt/havoc/fullchain.pem',
+                    '-days',
+                    '365',
+                    '-nodes',
+                    '-subj',
+                    f'{subj}'
+                ],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            openssl_out, openssl_err = p.communicate()
+            message = openssl_err.decode('utf-8')
+            if 'writing new private key' in message and 'problems making Certificate Request' in message:
+                output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+                return output
+            if os.path.isfile('/opt/havoc/unified.pem'):
+                os.remove('/opt/havoc/unified.pem')
+            cat = subprocess.Popen(
+                [
+                    '/bin/cat',
+                    '/opt/havoc/private.key',
+                    '/opt/havoc/fullchain.pem',
+                    '>>',
+                    '/opt/havoc/unified.pem'
+                ]
+            )
+            cat_out, cat_err = cat.communicate()
+            if cat_err:
+                output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+            else:
+                output = {
+                    'outcome': 'success',
+                    'message': 'unified certificate file: /opt/havoc/unified.pem',
+                    'forward_log': 'True'
+                }
+            return output
+        if 'domain' in self.args:
+            domain = self.args['domain']
+            p = subprocess.Popen(
+                ['/usr/bin/certbot', 'certonly', '--standalone', '-d', domain],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            certbot_out, certbot_err = p.communicate()
+            message = certbot_out.decode('utf-8')
+            if 'Successfully received certificate' not in message:
+                output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+                return output
+            shutil.copyfile(
+                f'/etc/letsencrypt/live/{domain}/fullchain.pem', '/opt/havoc/fullchain.pem'
+            )
+            shutil.copyfile(
+                f'/etc/letsencrypt/live/{domain}/privkey.pem', '/opt/havoc/privkey.pem'
+            )
+            if os.path.isfile('/opt/havoc/unified.pem'):
+                os.remove('/opt/havoc/unified.pem')
+            cat = subprocess.Popen(
+                [
+                    '/bin/cat',
+                    '/opt/havoc/privkey.pem',
+                    '/opt/havoc/fullchain.pem',
+                    '>>',
+                    '/opt/havoc/unified.pem'
+                ]
+            )
+            cat_out, cat_err = cat.communicate()
+            if cat_err:
+                output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+            else:
+                output = {
+                    'outcome': 'success',
+                    'message': 'unified certificate file: /opt/havoc/unified.pem',
+                    'forward_log': 'True'
+                }
+            return output
 
     def session_status_monitor(self):
         current_sessions = self.args['current_sessions']

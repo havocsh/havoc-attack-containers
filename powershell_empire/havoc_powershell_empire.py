@@ -1,4 +1,4 @@
-import time
+import shutil
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import subprocess
@@ -355,25 +355,82 @@ class call_powershell_empire:
         return output
 
     def cert_gen(self):
-        if 'subj' not in self.args:
-            output = {'outcome': 'failed', 'message': 'instruct_args must specify subj', 'forward_log': 'False'}
+        if 'subj' not in self.args and 'domain' not in self.args:
+            output = {'outcome': 'failed', 'message': 'Missing subj or domain', 'forward_log': 'False'}
             return output
-        subj = self.args['subj']
-
-        p = subprocess.Popen(
-            ['/usr/bin/openssl', 'req', '-new', '-x509', '-keyout', '/opt/Empire/empire/server/data/empire-priv.key',
-             '-out', '/opt/Empire/empire/server/data/empire-chain.pem', '-days', '365', '-nodes', '-subj', f'{subj}'],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        openssl_out, openssl_err = p.communicate()
-        message = openssl_err.decode('utf-8')
-        if 'writing new private key' in message and 'problems making Certificate Request' not in message:
-            output = {'outcome': 'success', 'message': message, 'forward_log': 'True'}
-        else:
-            output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
-        return output
+        if 'subj' in self.args and 'domain' in self.args:
+            output = {'outcome': 'failed', 'message': 'Specify subj or domain but not both', 'forward_log': 'False'}
+            return output
+        if 'subj' in self.args:
+            subj = self.args['subj']
+            p = subprocess.Popen(
+                [
+                    '/usr/bin/openssl',
+                    'req',
+                    '-new',
+                    '-x509',
+                    '-keyout',
+                    '/opt/Empire/empire/server/data/empire-priv.key',
+                    '-out',
+                    '/opt/Empire/empire/server/data/empire-chain.pem',
+                    '-days',
+                    '365',
+                    '-nodes',
+                    '-subj',
+                    f'{subj}'
+                ],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            openssl_out, openssl_err = p.communicate()
+            message = openssl_err.decode('utf-8')
+            if 'writing new private key' in message and 'problems making Certificate Request' not in message:
+                output = {'outcome': 'success', 'message': message, 'forward_log': 'True'}
+            else:
+                output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+            return output
+        if 'domain' in self.args:
+            domain = self.args['domain']
+            p = subprocess.Popen(
+                ['/usr/bin/certbot', 'certonly', '--standalone', '-d', domain],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            certbot_out, certbot_err = p.communicate()
+            message = certbot_out.decode('utf-8')
+            if 'Successfully received certificate' not in message:
+                output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+                return output
+            shutil.copyfile(
+                f'/etc/letsencrypt/live/{domain}/fullchain.pem', '/opt/Empire/empire/server/data/empire-chain.pem'
+            )
+            shutil.copyfile(
+                f'/etc/letsencrypt/live/{domain}/privkey.pem', '/opt/Empire/empire/server/data/empire-priv.pem'
+            )
+            p = subprocess.Popen(
+                [
+                    '/usr/bin/openssl',
+                    'rsa',
+                    '-outform',
+                    'der',
+                    '-in',
+                    '/opt/Empire/empire/server/data/empire-priv.pem',
+                    '-out',
+                    '/opt/Empire/empire/server/data/empire-priv.key'
+                ],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            openssl_out, openssl_err = p.communicate()
+            message = openssl_err.decode('utf-8')
+            if 'writing new private key' not in message:
+                output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+            else:
+                output = {'outcome': 'success', 'message': message, 'forward_log': 'True'}
+            return output
 
     def agent_status_monitor(self):
         current_agents = self.args['current_agents']
