@@ -734,9 +734,9 @@ class call_msf:
                 stderr=subprocess.PIPE
             )
             certbot_out, certbot_err = p.communicate()
-            message = certbot_out.decode('utf-8')
-            if 'Successfully received certificate' not in message:
-                output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+            certbot_message = certbot_out.decode('utf-8')
+            if 'Successfully received certificate' not in certbot_message:
+                output = {'outcome': 'failed', 'message': certbot_message, 'forward_log': 'False'}
                 return output
             shutil.copyfile(
                 f'/etc/letsencrypt/live/{domain}/fullchain.pem', '/opt/havoc/fullchain.pem'
@@ -757,7 +757,7 @@ class call_msf:
             )
             cat_out, cat_err = cat.communicate()
             if cat_err:
-                output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+                output = {'outcome': 'failed', 'message': message, 'forward_log': 'False'}
             else:
                 output = {
                     'outcome': 'success',

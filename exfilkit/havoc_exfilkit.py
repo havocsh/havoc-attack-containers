@@ -92,9 +92,9 @@ class CallExfilkit:
                 stderr=subprocess.PIPE
             )
             certbot_out, certbot_err = p.communicate()
-            message = certbot_out.decode('utf-8')
-            if 'Successfully received certificate' not in message:
-                output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+            certbot_message = certbot_out.decode('utf-8')
+            if 'Successfully received certificate' not in certbot_message:
+                output = {'outcome': 'failed', 'message': certbot_message, 'forward_log': 'False'}
                 return output
             shutil.copyfile(f'/etc/letsencrypt/live/{domain}/fullchain.pem', '/HTTPUploadExfil/HTTPUploadExfil.csr')
             shutil.copyfile(f'/etc/letsencrypt/live/{domain}/privkey.pem', '/HTTPUploadExfil/HTTPUploadExfil.pem')
@@ -108,9 +108,9 @@ class CallExfilkit:
                 stderr=subprocess.PIPE
             )
             openssl_out, openssl_err = p.communicate()
-            message = openssl_err.decode('utf-8')
-            if 'writing RSA key' not in message:
-                output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+            openssl_message = openssl_err.decode('utf-8')
+            if 'writing RSA key' not in openssl_message:
+                output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'False'}
                 return output
         self.https_process = subprocess.Popen(
             f'/HTTPUploadExfil/httpuploadexfil :{port} /opt/havoc/shared',
