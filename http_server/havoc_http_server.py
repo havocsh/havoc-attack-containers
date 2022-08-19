@@ -104,9 +104,9 @@ class HttpServer:
                 stderr=subprocess.PIPE
             )
             certbot_out, certbot_err = p.communicate()
-            message = certbot_out.decode('utf-8')
-            if 'Successfully received certificate' not in message:
-                output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+            certbot_message = certbot_out.decode('utf-8')
+            if 'Successfully received certificate' not in certbot_message:
+                output = {'outcome': 'failed', 'message': certbot_message, 'forward_log': 'False'}
                 return output
             shutil.copyfile(f'/etc/letsencrypt/live/{domain}/fullchain.pem', '/opt/havoc/server-chain.pem')
             shutil.copyfile(f'/etc/letsencrypt/live/{domain}/privkey.pem', '/opt/havoc/server-priv.pem')
@@ -120,11 +120,11 @@ class HttpServer:
                 stderr=subprocess.PIPE
             )
             openssl_out, openssl_err = p.communicate()
-            message = openssl_err.decode('utf-8')
-            if 'writing RSA key' not in message:
-                output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+            openssl_message = openssl_err.decode('utf-8')
+            if 'writing RSA key' not in openssl_message:
+                output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'False'}
             else:
-                output = {'outcome': 'success', 'message': message, 'forward_log': 'True'}
+                output = {'outcome': 'success', 'message': openssl_message, 'forward_log': 'True'}
             return output
 
     def echo(self):
