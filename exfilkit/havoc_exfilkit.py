@@ -109,7 +109,7 @@ class CallExfilkit:
             )
             openssl_out, openssl_err = p.communicate()
             message = openssl_err.decode('utf-8')
-            if 'writing new private key' not in message:
+            if 'writing RSA key' not in message:
                 output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
                 return output
         self.https_process = subprocess.Popen(
