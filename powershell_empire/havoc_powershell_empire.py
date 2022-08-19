@@ -391,9 +391,13 @@ class call_powershell_empire:
                 output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
             return output
         if 'domain' in self.args:
+            if 'email' not in self.args:
+                output = {'outcome': 'failed', 'message': 'Missing email for certificate registration', 'forward_log': 'False'}
+                return output
             domain = self.args['domain']
+            email = self.args['email']
             p = subprocess.Popen(
-                ['/usr/bin/certbot', 'certonly', '--standalone', '-d', domain],
+                ['/usr/bin/certbot', 'certonly', '--standalone', '--non-interactive', '--agree-tos', '-d', domain, '-m', email],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
