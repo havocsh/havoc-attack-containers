@@ -407,34 +407,43 @@ class call_powershell_empire:
             if 'Successfully received certificate' not in certbot_message:
                 output = {'outcome': 'failed', 'message': certbot_message, 'forward_log': 'False'}
                 return output
-            shutil.copyfile(
-                f'/etc/letsencrypt/live/{domain}/fullchain.pem', '/opt/Empire/empire/server/data/empire-chain.pem'
-            )
-            shutil.copyfile(
-                f'/etc/letsencrypt/live/{domain}/privkey.pem', '/opt/Empire/empire/server/data/empire-priv.pem'
-            )
-            p = subprocess.Popen(
-                [
-                    '/usr/bin/openssl',
-                    'rsa',
-                    '-outform',
-                    'der',
-                    '-in',
-                    '/opt/Empire/empire/server/data/empire-priv.pem',
-                    '-out',
-                    '/opt/Empire/empire/server/data/empire-priv.key'
-                ],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-            openssl_out, openssl_err = p.communicate()
-            openssl_message = openssl_err.decode('utf-8')
-            if 'writing RSA key\n' in openssl_message:
-                output = {'outcome': 'success', 'message': openssl_message, 'forward_log': 'True'}
-            else:
-                output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'False'}
+            try:
+                shutil.copyfile(
+                    f'/etc/letsencrypt/live/{domain}/fullchain.pem', '/opt/Empire/empire/server/data/empire-chain.pem'
+                )
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': e, 'forward_log': 'False'}
+                return output
+            try:
+                shutil.copyfile(
+                    f'/etc/letsencrypt/live/{domain}/privkey.pem', '/opt/Empire/empire/server/data/empire-priv.key'
+                )
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': e, 'forward_log': 'False'}
+                return output
+            output = {'outcome': 'success', 'message': 'Certificate files written to /opt/Empire/empire/server/data/', 'forward_log': 'True'}
             return output
+            #p = subprocess.Popen(
+            #    [
+            #        '/usr/bin/openssl',
+            #        'rsa',
+            #        '-outform',
+            #        'der',
+            #        '-in',
+            #        '/opt/Empire/empire/server/data/empire-priv.pem',
+            #        '-out',
+            #        '/opt/Empire/empire/server/data/empire-priv.key'
+            #    ],
+            #    stdin=subprocess.PIPE,
+            #    stdout=subprocess.PIPE,
+            #    stderr=subprocess.PIPE
+            #)
+            #openssl_out, openssl_err = p.communicate()
+            #openssl_message = openssl_err.decode('utf-8')
+            #if 'writing RSA key\n' in openssl_message:
+            #    output = {'outcome': 'success', 'message': openssl_message, 'forward_log': 'True'}
+            #else:
+            #    output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'False'}
 
     def agent_status_monitor(self):
         current_agents = self.args['current_agents']
