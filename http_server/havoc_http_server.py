@@ -1,3 +1,4 @@
+import time
 import shutil
 import subprocess
 from pathlib import Path
@@ -47,7 +48,10 @@ class HttpServer:
                         ':privateKey=/opt/havoc/server-priv.key'
                         ':certKey=/opt/havoc/server-chain.pem',
                         '--path=/opt/havoc/shared/'
-                    ]
+                    ],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
                 )
             else:
                 output = {'outcome': 'failed', 'message': 'missing certificate: run cert_gen first',
@@ -55,10 +59,20 @@ class HttpServer:
                 return output
         else:
             self.twisted_process = subprocess.Popen(
-                ['/usr/local/bin/twistd', '-no', 'web', f'--listen=tcp:{listen_port}', '--path=/opt/havoc/shared/']
+                ['/usr/local/bin/twistd', '-no', 'web', f'--listen=tcp:{listen_port}', '--path=/opt/havoc/shared/'],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
             )
-        output = {'outcome': 'success', 'message': 'HTTP server started', 'forward_log': 'True'}
-        return output
+        time.sleep(3)
+        if self.twisted_process.poll():
+            twisted_process_out = self.twisted_process.communicate()
+            twisted_message = twisted_process_out[0].decode('utf-8')
+            output = {'outcome': 'failed', 'message': twisted_message, 'forward_log': 'False'}
+            return output
+        else:
+            output = {'outcome': 'success', 'message': 'HTTP server started', 'forward_log': 'True'}
+            return output
 
     def stop_server(self):
         if not self.twisted_process:
@@ -84,12 +98,12 @@ class HttpServer:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
-            openssl_out, openssl_err = p.communicate()
-            message = openssl_err.decode('utf-8')
-            if 'writing new private key' in message and 'problems making Certificate Request' not in message:
-                output = {'outcome': 'success', 'message': message, 'forward_log': 'True'}
+            openssl_out = p.communicate()
+            openssl_message = openssl_out[1].decode('utf-8')
+            if 'writing new private key' in openssl_message and 'problems making Certificate Request' not in openssl_message:
+                output = {'outcome': 'success', 'message': openssl_message, 'forward_log': 'True'}
             else:
-                output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+                output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'True'}
             return output
         if 'domain' in self.args:
             if 'email' not in self.args:
@@ -103,29 +117,39 @@ class HttpServer:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
-            certbot_out, certbot_err = p.communicate()
-            certbot_message = certbot_out.decode('utf-8')
+            certbot_out = p.communicate()
+            certbot_message = certbot_out[1].decode('utf-8')
             if 'Successfully received certificate' not in certbot_message:
                 output = {'outcome': 'failed', 'message': certbot_message, 'forward_log': 'False'}
                 return output
-            shutil.copyfile(f'/etc/letsencrypt/live/{domain}/fullchain.pem', '/opt/havoc/server-chain.pem')
-            shutil.copyfile(f'/etc/letsencrypt/live/{domain}/privkey.pem', '/opt/havoc/server-priv.pem')
-            p = subprocess.Popen(
-                [
-                    '/usr/bin/openssl', 'rsa', '-outform', 'der', '-in', '/opt/havoc/server-priv.pem',
-                    '-out', '/opt/havoc/server-priv.key'
-                ],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-            openssl_out, openssl_err = p.communicate()
-            openssl_message = openssl_err.decode('utf-8')
-            if 'writing RSA key\n' in openssl_message:
-                output = {'outcome': 'success', 'message': openssl_message, 'forward_log': 'True'}
-            else:
-                output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'False'}
+            try:
+                shutil.copyfile(f'/etc/letsencrypt/live/{domain}/fullchain.pem', '/opt/havoc/server-chain.pem')
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': e, 'forward_log': 'False'}
+                return output
+            try:
+                shutil.copyfile(f'/etc/letsencrypt/live/{domain}/privkey.pem', '/opt/havoc/server-priv.key')
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': e, 'forward_log': 'False'}
+                return output
+            output = {'outcome': 'success', 'message': 'Certificate files written to /opt/havoc/', 'forward_log': 'True'}
             return output
+            #p = subprocess.Popen(
+            #    [
+            #        '/usr/bin/openssl', 'rsa', '-outform', 'der', '-in', '/opt/havoc/server-priv.pem',
+            #        '-out', '/opt/havoc/server-priv.key'
+            #    ],
+            #    stdin=subprocess.PIPE,
+            #    stdout=subprocess.PIPE,
+            #    stderr=subprocess.PIPE
+            #)
+            #openssl_out, openssl_err = p.communicate()
+            #openssl_message = openssl_err.decode('utf-8')
+            #if 'writing RSA key\n' in openssl_message:
+            #    output = {'outcome': 'success', 'message': openssl_message, 'forward_log': 'True'}
+            #else:
+            #    output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'False'}
+            #return output
 
     def echo(self):
         match = {
