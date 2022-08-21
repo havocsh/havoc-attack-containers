@@ -695,10 +695,10 @@ class call_msf:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
-            openssl_out, openssl_err = p.communicate()
-            message = openssl_err.decode('utf-8')
-            if 'writing new private key' in message and 'problems making Certificate Request' in message:
-                output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+            openssl_out = p.communicate()
+            openssl_message = openssl_out[1].decode('utf-8')
+            if 'writing new private key' in openssl_message and 'problems making Certificate Request' in openssl_message:
+                output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'False'}
                 return output
             if os.path.isfile('/opt/havoc/unified.pem'):
                 os.remove('/opt/havoc/unified.pem')
@@ -711,9 +711,9 @@ class call_msf:
                     '/opt/havoc/unified.pem'
                 ]
             )
-            cat_out, cat_err = cat.communicate()
-            if cat_err:
-                output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
+            cat_out = cat.communicate()
+            if cat_out[1]:
+                output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'False'}
             else:
                 output = {
                     'outcome': 'success',
@@ -727,23 +727,31 @@ class call_msf:
                 return output
             domain = self.args['domain']
             email = self.args['email']
+            if 'test_cert' in self.args and self.args['test_cert'].lower() == 'true':
+                certbot_command = ['/usr/bin/certbot', 'certonly', '--standalone', '--non-interactive', '--agree-tos', '--test-cert', '-d', domain, '-m', email]
+            else:
+                certbot_command = ['/usr/bin/certbot', 'certonly', '--standalone', '--non-interactive', '--agree-tos', '-d', domain, '-m', email]
             p = subprocess.Popen(
-                ['/usr/bin/certbot', 'certonly', '--standalone', '--non-interactive', '--agree-tos', '-d', domain, '-m', email],
+                certbot_command,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
-            certbot_out, certbot_err = p.communicate()
-            certbot_message = certbot_out.decode('utf-8')
+            certbot_out = p.communicate()
+            certbot_message = certbot_out[0].decode('utf-8')
             if 'Successfully received certificate' not in certbot_message:
                 output = {'outcome': 'failed', 'message': certbot_message, 'forward_log': 'False'}
                 return output
-            shutil.copyfile(
-                f'/etc/letsencrypt/live/{domain}/fullchain.pem', '/opt/havoc/fullchain.pem'
-            )
-            shutil.copyfile(
-                f'/etc/letsencrypt/live/{domain}/privkey.pem', '/opt/havoc/privkey.pem'
-            )
+            try:
+                shutil.copyfile(f'/etc/letsencrypt/live/{domain}/fullchain.pem', '/opt/havoc/fullchain.pem')
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': e, 'forward_log': 'False'}
+                return output
+            try:
+                shutil.copyfile(f'/etc/letsencrypt/live/{domain}/privkey.pem', '/opt/havoc/privkey.pem')
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': e, 'forward_log': 'False'}
+                return output
             if os.path.isfile('/opt/havoc/unified.pem'):
                 os.remove('/opt/havoc/unified.pem')
             cat = subprocess.Popen(
@@ -755,9 +763,9 @@ class call_msf:
                     '/opt/havoc/unified.pem'
                 ]
             )
-            cat_out, cat_err = cat.communicate()
-            if cat_err:
-                output = {'outcome': 'failed', 'message': message, 'forward_log': 'False'}
+            cat_out = cat.communicate()
+            if cat_out[1]:
+                output = {'outcome': 'failed', 'message': certbot_message, 'forward_log': 'False'}
             else:
                 output = {
                     'outcome': 'success',

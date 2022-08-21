@@ -111,14 +111,18 @@ class HttpServer:
                 return output
             domain = self.args['domain']
             email = self.args['email']
+            if 'test_cert' in self.args and self.args['test_cert'].lower() == 'true':
+                certbot_command = ['/usr/bin/certbot', 'certonly', '--standalone', '--non-interactive', '--agree-tos', '--test-cert', '-d', domain, '-m', email]
+            else:
+                certbot_command = ['/usr/bin/certbot', 'certonly', '--standalone', '--non-interactive', '--agree-tos', '-d', domain, '-m', email]
             p = subprocess.Popen(
-                ['/usr/bin/certbot', 'certonly', '--standalone', '--non-interactive', '--agree-tos', '-d', domain, '-m', email],
+                certbot_command,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
             certbot_out = p.communicate()
-            certbot_message = certbot_out[1].decode('utf-8')
+            certbot_message = certbot_out[0].decode('utf-8')
             if 'Successfully received certificate' not in certbot_message:
                 output = {'outcome': 'failed', 'message': certbot_message, 'forward_log': 'False'}
                 return output
@@ -134,22 +138,6 @@ class HttpServer:
                 return output
             output = {'outcome': 'success', 'message': 'Certificate files written to /opt/havoc/', 'forward_log': 'True'}
             return output
-            #p = subprocess.Popen(
-            #    [
-            #        '/usr/bin/openssl', 'rsa', '-outform', 'der', '-in', '/opt/havoc/server-priv.pem',
-            #        '-out', '/opt/havoc/server-priv.key'
-            #    ],
-            #    stdin=subprocess.PIPE,
-            #    stdout=subprocess.PIPE,
-            #    stderr=subprocess.PIPE
-            #)
-            #openssl_out, openssl_err = p.communicate()
-            #openssl_message = openssl_err.decode('utf-8')
-            #if 'writing RSA key\n' in openssl_message:
-            #    output = {'outcome': 'success', 'message': openssl_message, 'forward_log': 'True'}
-            #else:
-            #    output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'False'}
-            #return output
 
     def echo(self):
         match = {
