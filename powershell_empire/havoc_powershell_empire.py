@@ -385,7 +385,7 @@ class call_powershell_empire:
             )
             openssl_out = p.communicate()
             openssl_message = openssl_out[1].decode('utf-8')
-            if 'writing new private key' in openssl_message and 'problems making Certificate Request' not in openssl_message:
+            if 'problems making Certificate Request' not in openssl_message:
                 output = {'outcome': 'success', 'message': openssl_message, 'forward_log': 'True'}
             else:
                 output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'False'}

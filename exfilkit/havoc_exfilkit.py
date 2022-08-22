@@ -71,7 +71,7 @@ class CallExfilkit:
             )
             openssl_out = p.communicate()
             openssl_message = openssl_out[1].decode('utf-8')
-            if 'writing new private key' not in openssl_message and 'problems making Certificate Request' in openssl_message:
+            if 'problems making Certificate Request' in openssl_message:
                 output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'True'}
                 return output
         if 'domain' in self.args:
