@@ -427,27 +427,6 @@ class call_powershell_empire:
                 return output
             output = {'outcome': 'success', 'message': 'Certificate files written to /opt/Empire/empire/server/data/', 'forward_log': 'True'}
             return output
-            #p = subprocess.Popen(
-            #    [
-            #        '/usr/bin/openssl',
-            #        'rsa',
-            #        '-outform',
-            #        'der',
-            #        '-in',
-            #        '/opt/Empire/empire/server/data/empire-priv.pem',
-            #        '-out',
-            #        '/opt/Empire/empire/server/data/empire-priv.key'
-            #    ],
-            #    stdin=subprocess.PIPE,
-            #    stdout=subprocess.PIPE,
-            #    stderr=subprocess.PIPE
-            #)
-            #openssl_out, openssl_err = p.communicate()
-            #openssl_message = openssl_err.decode('utf-8')
-            #if 'writing RSA key\n' in openssl_message:
-            #    output = {'outcome': 'success', 'message': openssl_message, 'forward_log': 'True'}
-            #else:
-            #    output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'False'}
 
     def agent_status_monitor(self):
         current_agents = self.args['current_agents']

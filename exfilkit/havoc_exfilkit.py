@@ -45,15 +45,14 @@ class CallExfilkit:
             output = {'outcome': 'failed', 'message': 'no http_exfil_server is running', 'forward_log': 'False'}
             return output
         os.kill(self.http_process.pid, signal.SIGTERM)
+        if os.path.isfile('/HTTPUploadExfil/HTTPUploadExfil.key'):
+            os.remove('/HTTPUploadExfil/HTTPUploadExfil.key')
+        if os.path.isfile('/HTTPUploadExfil/HTTPUploadExfil.csr'):
+            os.remove('/HTTPUploadExfil/HTTPUploadExfil.csr')
         output = {'outcome': 'success', 'message': 'http_exfil_server stopped', 'forward_log': 'True'}
         return output
-
-    def start_https_exfil_server(self):
-        if 'listen_port' in self.args:
-            port = self.args['listen_port']
-        else:
-            output = {'outcome': 'failed', 'message': 'Missing listen_port', 'forward_log': 'False'}
-            return output
+    
+    def cert_gen(self):
         if 'subj' not in self.args and 'domain' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing subj or domain', 'forward_log': 'False'}
             return output
@@ -118,32 +117,9 @@ class CallExfilkit:
             openssl_message = openssl_out[1].decode('utf-8')
             if 'writing RSA key\n' not in openssl_message:
                 output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'False'}
-                return output
-        self.https_process = subprocess.Popen(
-            f'/HTTPUploadExfil/httpuploadexfil :{port} /opt/havoc/shared',
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=True,
-            cwd=r'/HTTPUploadExfil'
-        )
-        time.sleep(5)
-        if self.https_process.poll():
-            output = {'outcome': 'failed', 'message': 'https_exfil_server did not start, requested port may be in use', 'forward_log': 'False'}
+            else:
+                output = {'outcome': 'success', 'message': 'Certificate files written to /HTTPUploadExfil', 'forward_log': 'True'}
             return output
-        else:
-            output = {'outcome': 'success', 'message': 'https_exfil_server is running', 'forward_log': 'True'}
-            return output
-
-    def stop_https_exfil_server(self):
-        if not self.https_process:
-            output = {'outcome': 'failed', 'message': 'no https_exfil_server is running', 'forward_log': 'False'}
-            return output
-        os.kill(self.https_process.pid, signal.SIGTERM)
-        os.remove('/HTTPUploadExfil/HTTPUploadExfil.key')
-        os.remove('/HTTPUploadExfil/HTTPUploadExfil.csr')
-        output = {'outcome': 'success', 'message': 'https_exfil_server stopped', 'forward_log': 'True'}
-        return output
 
     def echo(self):
         match = {
