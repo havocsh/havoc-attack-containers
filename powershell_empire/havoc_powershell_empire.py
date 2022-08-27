@@ -1,3 +1,5 @@
+import zlib
+import base64
 import shutil
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -205,6 +207,8 @@ class call_powershell_empire:
         agent_results_response = requests.get(agent_results_uri, verify=False)
         if agent_results_response.status_code == 200:
             results = agent_results_response.json()['results'][0]['AgentResults']
+            if results is not None:
+                results = base64.b64encode(zlib.compress(results.encode())).decode()
             output = {'outcome': 'success', 'results': results, 'forward_log': 'True'}
             return output
         else:
