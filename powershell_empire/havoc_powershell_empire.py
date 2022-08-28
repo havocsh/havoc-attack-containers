@@ -207,6 +207,10 @@ class call_powershell_empire:
         agent_results_response = requests.get(agent_results_uri, verify=False)
         if agent_results_response.status_code == 200:
             results = agent_results_response.json()['results'][0]['AgentResults']
+            if results[0]['results'] is not None:
+                command_results = base64.b64encode(zlib.compress(results[0]['results'].encode())).decode()
+                del results[0]['results']
+                results[0]['results'] = command_results
             output = {'outcome': 'success', 'results': results, 'forward_log': 'True'}
             return output
         else:
