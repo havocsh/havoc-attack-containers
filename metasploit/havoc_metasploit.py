@@ -1,4 +1,7 @@
+import os
 import re
+import shutil
+import subprocess
 from pymetasploit3.msfrpc import *
 
 
@@ -662,6 +665,114 @@ class call_msf:
         else:
             output = {'outcome': 'failed', 'message': 'job_id not found', 'forward_log': 'False'}
         return output
+    
+    def cert_gen(self):
+        if 'subj' not in self.args and 'domain' not in self.args:
+            output = {'outcome': 'failed', 'message': 'Missing subj or domain', 'forward_log': 'False'}
+            return output
+        if 'subj' in self.args and 'domain' in self.args:
+            output = {'outcome': 'failed', 'message': 'Specify subj or domain but not both', 'forward_log': 'False'}
+            return output
+        if 'subj' in self.args:
+            subj = self.args['subj']
+            p = subprocess.Popen(
+                [
+                    '/usr/bin/openssl',
+                    'req',
+                    '-new',
+                    '-x509',
+                    '-keyout',
+                    '/opt/havoc/private.key',
+                    '-out',
+                    '/opt/havoc/fullchain.pem',
+                    '-days',
+                    '365',
+                    '-nodes',
+                    '-subj',
+                    f'{subj}'
+                ],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            openssl_out = p.communicate()
+            openssl_message = openssl_out[1].decode('utf-8')
+            if 'problems making Certificate Request' in openssl_message:
+                output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'False'}
+                return output
+            if os.path.isfile('/opt/havoc/unified.pem'):
+                os.remove('/opt/havoc/unified.pem')
+            cat = subprocess.Popen(
+                [
+                    '/bin/cat',
+                    '/opt/havoc/private.key',
+                    '/opt/havoc/fullchain.pem',
+                    '>>',
+                    '/opt/havoc/unified.pem'
+                ]
+            )
+            cat_out = cat.communicate()
+            if cat_out[1]:
+                output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'False'}
+            else:
+                output = {
+                    'outcome': 'success',
+                    'message': 'unified certificate file: /opt/havoc/unified.pem',
+                    'forward_log': 'True'
+                }
+            return output
+        if 'domain' in self.args:
+            if 'email' not in self.args:
+                output = {'outcome': 'failed', 'message': 'Missing email for certificate registration', 'forward_log': 'False'}
+                return output
+            domain = self.args['domain']
+            email = self.args['email']
+            if 'test_cert' in self.args and self.args['test_cert'].lower() == 'true':
+                certbot_command = ['/usr/bin/certbot', 'certonly', '--standalone', '--non-interactive', '--agree-tos', '--test-cert', '-d', domain, '-m', email]
+            else:
+                certbot_command = ['/usr/bin/certbot', 'certonly', '--standalone', '--non-interactive', '--agree-tos', '-d', domain, '-m', email]
+            p = subprocess.Popen(
+                certbot_command,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            certbot_out = p.communicate()
+            certbot_message = certbot_out[0].decode('utf-8')
+            if 'Successfully received certificate' not in certbot_message:
+                output = {'outcome': 'failed', 'message': certbot_message, 'forward_log': 'False'}
+                return output
+            try:
+                shutil.copyfile(f'/etc/letsencrypt/live/{domain}/fullchain.pem', '/opt/havoc/fullchain.pem')
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': e, 'forward_log': 'False'}
+                return output
+            try:
+                shutil.copyfile(f'/etc/letsencrypt/live/{domain}/privkey.pem', '/opt/havoc/privkey.pem')
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': e, 'forward_log': 'False'}
+                return output
+            if os.path.isfile('/opt/havoc/unified.pem'):
+                os.remove('/opt/havoc/unified.pem')
+            cat = subprocess.Popen(
+                [
+                    '/bin/cat',
+                    '/opt/havoc/privkey.pem',
+                    '/opt/havoc/fullchain.pem',
+                    '>>',
+                    '/opt/havoc/unified.pem'
+                ]
+            )
+            cat_out = cat.communicate()
+            if cat_out[1]:
+                output = {'outcome': 'failed', 'message': certbot_message, 'forward_log': 'False'}
+            else:
+                output = {
+                    'outcome': 'success',
+                    'message': 'unified certificate file: /opt/havoc/unified.pem',
+                    'forward_log': 'True'
+                }
+            return output
 
     def session_status_monitor(self):
         current_sessions = self.args['current_sessions']

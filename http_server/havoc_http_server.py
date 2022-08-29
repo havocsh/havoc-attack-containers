@@ -1,5 +1,8 @@
+import time
+import shutil
 import subprocess
 from pathlib import Path
+
 
 class HttpServer:
 
@@ -45,7 +48,10 @@ class HttpServer:
                         ':privateKey=/opt/havoc/server-priv.key'
                         ':certKey=/opt/havoc/server-chain.pem',
                         '--path=/opt/havoc/shared/'
-                    ]
+                    ],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
                 )
             else:
                 output = {'outcome': 'failed', 'message': 'missing certificate: run cert_gen first',
@@ -53,10 +59,20 @@ class HttpServer:
                 return output
         else:
             self.twisted_process = subprocess.Popen(
-                ['/usr/local/bin/twistd', '-no', 'web', f'--listen=tcp:{listen_port}', '--path=/opt/havoc/shared/']
+                ['/usr/local/bin/twistd', '-no', 'web', f'--listen=tcp:{listen_port}', '--path=/opt/havoc/shared/'],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
             )
-        output = {'outcome': 'success', 'message': 'HTTP server started', 'forward_log': 'True'}
-        return output
+        time.sleep(3)
+        if self.twisted_process.poll():
+            twisted_process_out = self.twisted_process.communicate()
+            twisted_message = twisted_process_out[0].decode('utf-8')
+            output = {'outcome': 'failed', 'message': twisted_message, 'forward_log': 'False'}
+            return output
+        else:
+            output = {'outcome': 'success', 'message': 'HTTP server started', 'forward_log': 'True'}
+            return output
 
     def stop_server(self):
         if not self.twisted_process:
@@ -67,25 +83,61 @@ class HttpServer:
         return output
 
     def cert_gen(self):
-        if 'subj' not in self.args:
-            output = {'outcome': 'failed', 'message': 'instruct_args must specify subj', 'forward_log': 'False'}
+        if 'subj' not in self.args and 'domain' not in self.args:
+            output = {'outcome': 'failed', 'message': 'Missing subj or domain', 'forward_log': 'False'}
             return output
-        subj = self.args['subj']
-
-        p = subprocess.Popen(
-            ['/usr/bin/openssl', 'req', '-new', '-x509', '-keyout', '/opt/havoc/server-priv.key',
-             '-out', '/opt/havoc/server-chain.pem', '-days', '365', '-nodes', '-subj', f'{subj}'],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        openssl_out, openssl_err = p.communicate()
-        message = openssl_err.decode('utf-8')
-        if 'writing new private key' in message and 'problems making Certificate Request' not in message:
-            output = {'outcome': 'success', 'message': message, 'forward_log': 'True'}
-        else:
-            output = {'outcome': 'failed', 'message': message, 'forward_log': 'True'}
-        return output
+        if 'subj' in self.args and 'domain' in self.args:
+            output = {'outcome': 'failed', 'message': 'Specify subj or domain but not both', 'forward_log': 'False'}
+            return output
+        if 'subj' in self.args:
+            subj = self.args['subj']
+            p = subprocess.Popen(
+                ['/usr/bin/openssl', 'req', '-new', '-x509', '-keyout', '/opt/havoc/server-priv.key',
+                 '-out', '/opt/havoc/server-chain.pem', '-days', '365', '-nodes', '-subj', f'{subj}'],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            openssl_out = p.communicate()
+            openssl_message = openssl_out[1].decode('utf-8')
+            if 'problems making Certificate Request' not in openssl_message:
+                output = {'outcome': 'success', 'message': openssl_message, 'forward_log': 'True'}
+            else:
+                output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'True'}
+            return output
+        if 'domain' in self.args:
+            if 'email' not in self.args:
+                output = {'outcome': 'failed', 'message': 'Missing email for certificate registration', 'forward_log': 'False'}
+                return output
+            domain = self.args['domain']
+            email = self.args['email']
+            if 'test_cert' in self.args and self.args['test_cert'].lower() == 'true':
+                certbot_command = ['/usr/bin/certbot', 'certonly', '--standalone', '--non-interactive', '--agree-tos', '--test-cert', '-d', domain, '-m', email]
+            else:
+                certbot_command = ['/usr/bin/certbot', 'certonly', '--standalone', '--non-interactive', '--agree-tos', '-d', domain, '-m', email]
+            p = subprocess.Popen(
+                certbot_command,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            certbot_out = p.communicate()
+            certbot_message = certbot_out[0].decode('utf-8')
+            if 'Successfully received certificate' not in certbot_message:
+                output = {'outcome': 'failed', 'message': certbot_message, 'forward_log': 'False'}
+                return output
+            try:
+                shutil.copyfile(f'/etc/letsencrypt/live/{domain}/fullchain.pem', '/opt/havoc/server-chain.pem')
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': e, 'forward_log': 'False'}
+                return output
+            try:
+                shutil.copyfile(f'/etc/letsencrypt/live/{domain}/privkey.pem', '/opt/havoc/server-priv.key')
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': e, 'forward_log': 'False'}
+                return output
+            output = {'outcome': 'success', 'message': 'Certificate files written to /opt/havoc/', 'forward_log': 'True'}
+            return output
 
     def echo(self):
         match = {
