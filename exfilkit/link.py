@@ -306,8 +306,7 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                     exfilkit_functions = {
                         'start_http_exfil_server': exfilkit[instruct_instance].start_http_exfil_server,
                         'stop_http_exfil_server': exfilkit[instruct_instance].stop_http_exfil_server,
-                        'start_https_exfil_server': exfilkit[instruct_instance].start_https_exfil_server,
-                        'stop_https_exfil_server': exfilkit[instruct_instance].stop_https_exfil_server,
+                        'cert_gen': exfilkit[instruct_instance].cert_gen,
                         'echo': exfilkit[instruct_instance].echo
                     }
                     if instruct_command in exfilkit_functions:
