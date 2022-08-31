@@ -100,25 +100,11 @@ class CallExfilkit:
                 output = {'outcome': 'failed', 'message': e, 'forward_log': 'False'}
                 return output
             try:
-                shutil.copyfile(f'/etc/letsencrypt/live/{domain}/privkey.pem', '/HTTPUploadExfil/HTTPUploadExfil.pem')
+                shutil.copyfile(f'/etc/letsencrypt/live/{domain}/privkey.pem', '/HTTPUploadExfil/HTTPUploadExfil.key')
             except Exception as e:
                 output = {'outcome': 'failed', 'message': e, 'forward_log': 'False'}
                 return output
-            p = subprocess.Popen(
-                [
-                    '/usr/bin/openssl', 'rsa', '-outform', 'der', '-in', '/HTTPUploadExfil/HTTPUploadExfil.pem',
-                    '-out', '/HTTPUploadExfil/HTTPUploadExfil.key'
-                ],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-            openssl_out = p.communicate()
-            openssl_message = openssl_out[1].decode('utf-8')
-            if 'writing RSA key\n' not in openssl_message:
-                output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'False'}
-            else:
-                output = {'outcome': 'success', 'message': 'Certificate files written to /HTTPUploadExfil', 'forward_log': 'True'}
+            output = {'outcome': 'success', 'message': 'Certificate files written to /HTTPUploadExfil', 'forward_log': 'True'}
             return output
 
     def echo(self):
