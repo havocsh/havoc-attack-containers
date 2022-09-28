@@ -73,6 +73,9 @@ class CallExfilkit:
             if 'problems making Certificate Request' in openssl_message:
                 output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'True'}
                 return output
+            else:
+                output = {'outcome': 'success', 'message': 'Certificate files written to /HTTPUploadExfil', 'forward_log': 'True'}
+                return output
         if 'domain' in self.args:
             if 'email' not in self.args:
                 output = {'outcome': 'failed', 'message': 'Missing email for certificate registration', 'forward_log': 'False'}
