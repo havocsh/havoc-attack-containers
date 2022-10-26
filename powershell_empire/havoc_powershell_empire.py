@@ -204,12 +204,20 @@ class call_powershell_empire:
         else:
             output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
+        if 'task_id' in self.args:
+            task_id = self.args['task_id']
+            del self.args['task_id']
+        else:
+            output = {'outcome': 'failed', 'message': 'Missing task_id', 'forward_log': 'False'}
+            return output
         agent_results_uri = f'{self.server_uri}api/agents/{agent_name}/results?token={self.token}'
         agent_results_response = requests.get(agent_results_uri, verify=False)
         if agent_results_response.status_code == 200:
-            results = agent_results_response.json()['results'][0]['AgentResults']
-            if results:
-                results = base64.b64encode(zlib.compress(json.dumps(results).encode())).decode()
+            results = None
+            tmp_results = agent_results_response.json()['results'][0]['AgentResults']
+            for tmp_result in tmp_results:
+                if 'taskID' in tmp_result and tmp_result['taskID'] == task_id:
+                    results = base64.b64encode(zlib.compress(json.dumps(tmp_result).encode())).decode()
             output = {'outcome': 'success', 'results': results, 'forward_log': 'True'}
             return output
         else:
