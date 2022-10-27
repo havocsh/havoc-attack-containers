@@ -204,9 +204,13 @@ class call_powershell_empire:
         else:
             output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
-        if 'task_id' in self.args and self.args['task_id'].isdigit():
-            task_id = int(self.args['task_id'])
-            del self.args['task_id']
+        if 'task_id' in self.args:
+            try:
+                task_id = int(self.args['task_id'])
+                del self.args['task_id']
+            except:
+                output = {'outcome': 'failed', 'message': 'task_id must be a digit', 'forward_log': 'False'}
+                return output    
         else:
             output = {'outcome': 'failed', 'message': 'Missing task_id', 'forward_log': 'False'}
             return output
