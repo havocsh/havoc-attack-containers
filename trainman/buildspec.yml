@@ -16,11 +16,11 @@ phases:
       - echo Building the Docker image...
       - TAG=`sed -r 's/task_version = (.*)/\1/' link.ini`
       - |
-      if [[ "$CODEBUILD_WEBHOOK_BASE_REF" =~ "main" ]]; then
-        docker build -t $IMAGE_REPO_NAME:latest -t $IMAGE_REPO_NAME:stable -t $IMAGE_REPO_NAME:$TAG .
-      else
-        docker build -t $IMAGE_REPO_NAME:dev -t $IMAGE_REPO_NAME:$TAG .
-      fi
+        if [[ "$CODEBUILD_WEBHOOK_BASE_REF" =~ "main" ]]; then
+          docker build -t $IMAGE_REPO_NAME:latest -t $IMAGE_REPO_NAME:stable -t $IMAGE_REPO_NAME:$TAG .
+        else
+          docker build -t $IMAGE_REPO_NAME:dev -t $IMAGE_REPO_NAME:$TAG .
+        fi
   post_build:
     commands:
       - echo Build completed on `date`
