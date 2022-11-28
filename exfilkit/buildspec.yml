@@ -14,7 +14,7 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      - TAG=`sed -r 's/task_version = (.*)/\1/' link.ini`
+      - TAG=`sed -n 's/^task_version = \(.*\)/\1/p' link.ini`
       - |
         if [[ "$CODEBUILD_WEBHOOK_BASE_REF" =~ "main" ]]; then
           docker build -t $IMAGE_REPO_NAME:latest -t $IMAGE_REPO_NAME:stable -t $IMAGE_REPO_NAME:$TAG .
