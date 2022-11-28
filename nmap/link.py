@@ -9,6 +9,7 @@ import socket
 import pathlib
 import requests
 import subprocess
+from configparser import ConfigParser
 from datetime import datetime, timezone
 from twisted.python import log
 from twisted.internet import reactor
@@ -153,15 +154,15 @@ def file_transfer_http(rt, sync_direction, file_name):
     return success
 
 
-def send_response(rt, task_response, forward_log, user_id, task_name, task_context, task_type, instruct_user_id,
-                   instruct_instance, instruct_command, instruct_args, attack_ip, local_ip, end_time):
+def send_response(rt, task_response, forward_log, user_id, task_name, task_context, task_type, task_version,
+                  instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip, local_ip, end_time):
     stime = datetime.now(timezone.utc).strftime('%s')
     output = {
         'instruct_command_output': task_response, 'user_id': user_id, 'task_name': task_name,
-        'task_context': task_context, 'task_type': task_type, 'instruct_user_id': instruct_user_id,
-        'instruct_instance': instruct_instance, 'instruct_command': instruct_command, 'instruct_args': instruct_args,
-        'attack_ip': attack_ip, 'local_ip': local_ip, 'end_time': end_time, 'forward_log': forward_log,
-        'timestamp': stime
+        'task_context': task_context, 'task_type': task_type, 'task_version': task_version,
+        'instruct_user_id': instruct_user_id, 'instruct_instance': instruct_instance, 'instruct_command': instruct_command,
+        'instruct_args': instruct_args, 'attack_ip': attack_ip, 'local_ip': local_ip, 'end_time': end_time,
+        'forward_log': forward_log, 'timestamp': stime
     }
     if rt.check:
         post_response_http(rt, output)
@@ -170,8 +171,8 @@ def send_response(rt, task_response, forward_log, user_id, task_name, task_conte
 
 
 @inlineCallbacks
-def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_time, command_list, attack_ip, hostname,
-           local_ip):
+def action(campaign_id, user_id, task_type, task_version, task_commands, task_name, task_context, rt, end_time, command_list,
+           attack_ip, hostname, local_ip):
     nmap = {}
     while True:
 
@@ -205,15 +206,15 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                 else:
                     response_kv = ['outcome', 'success']
                 send_response(rt, {response_kv[0]: response_kv[1], 'local_directory_contents': file_list},
-                              'True', user_id, task_name, task_context, task_type, instruct_user_id, instruct_instance,
-                              instruct_command, instruct_args, attack_ip, local_ip, end_time)
+                              'True', user_id, task_name, task_context, task_type, task_version, instruct_user_id,
+                              instruct_instance, instruct_command, instruct_args, attack_ip, local_ip, end_time)
             elif instruct_command == 'ls':
                 file_list = []
                 for root, subdirs, files in os.walk('/opt/havoc/shared'):
                     for filename in files:
                         file_list.append(filename)
                 send_response(rt, {'outcome': 'success', 'local_directory_contents': file_list}, 'False',
-                              user_id, task_name, task_context, task_type, instruct_user_id, instruct_instance,
+                              user_id, task_name, task_context, task_type, task_version, instruct_user_id, instruct_instance,
                               instruct_command, instruct_args, attack_ip, local_ip, end_time)
             elif instruct_command == 'del':
                 if 'file_name' in instruct_args:
@@ -222,15 +223,15 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                     if path.is_file():
                         os.remove(path)
                         send_response(rt, {'outcome': 'success'}, 'True', user_id, task_name, task_context, task_type,
-                                      instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip,
-                                      local_ip, end_time)
+                                      task_version, instruct_user_id, instruct_instance, instruct_command, instruct_args,
+                                      attack_ip, local_ip, end_time)
                     else:
                         send_response(rt, {'outcome': 'failed', 'message': 'File not found'}, 'False', user_id,
-                                      task_name, task_context, task_type, instruct_user_id, instruct_instance,
+                                      task_name, task_context, task_type, task_version, instruct_user_id, instruct_instance,
                                       instruct_command, instruct_args, attack_ip, local_ip, end_time)
                 else:
-                    send_response(rt, {'outcome': 'failed', 'message': 'Missing file_name'}, 'False',
-                                  user_id, task_name, task_context, task_type, instruct_user_id, instruct_instance,
+                    send_response(rt, {'outcome': 'failed', 'message': 'Missing file_name'}, 'False',user_id, task_name, 
+                                  task_context, task_type, task_version, instruct_user_id, instruct_instance,
                                   instruct_command, instruct_args, attack_ip, local_ip, end_time)
             elif instruct_command == 'sync_to_workspace':
                 if not rt.check:
@@ -243,8 +244,8 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                 else:
                     file_list = sync_workspace_http(rt, 'sync_to_workspace')
                 send_response(rt, {'outcome': 'success', 'local_directory_contents': file_list}, 'False', user_id,
-                              task_name, task_context, task_type, instruct_user_id, instruct_instance, instruct_command,
-                              instruct_args, attack_ip, local_ip, end_time)
+                              task_name, task_context, task_type, task_version, instruct_user_id, instruct_instance,
+                              instruct_command, instruct_args, attack_ip, local_ip, end_time)
             elif instruct_command == 'upload_to_workspace':
                 if 'file_name' in instruct_args:
                     file_name = instruct_args['file_name']
@@ -257,15 +258,15 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                         else:
                             file_transfer_http(rt, 'upload_to_workspace', file_name)
                         send_response(rt, {'outcome': 'success'}, 'True', user_id, task_name, task_context, task_type,
-                                      instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip,
-                                      local_ip, end_time)
+                                      task_version, instruct_user_id, instruct_instance, instruct_command, instruct_args,
+                                      attack_ip, local_ip, end_time)
                     else:
                         send_response(rt, {'outcome': 'failed', 'message': 'File not found'}, 'False', user_id,
-                                      task_name, task_context, task_type, instruct_user_id, instruct_instance,
+                                      task_name, task_context, task_type, task_version, instruct_user_id, instruct_instance,
                                       instruct_command, instruct_args, attack_ip, local_ip, end_time)
                 else:
                     send_response(rt, {'outcome': 'failed', 'message': 'Missing file_name'}, 'False',
-                                  user_id, task_name, task_context, task_type, instruct_user_id, instruct_instance,
+                                  user_id, task_name, task_context, task_type, task_version, instruct_user_id, instruct_instance,
                                   instruct_command, instruct_args, attack_ip, local_ip, end_time)
             elif instruct_command == 'download_from_workspace':
                 if 'file_name' in instruct_args:
@@ -283,33 +284,30 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                             file_not_found = True
                     if file_not_found:
                         send_response(rt, {'outcome': 'failed', 'message': 'File not found'}, 'False', user_id,
-                                      task_name, task_context, task_type, instruct_user_id, instruct_instance,
+                                      task_name, task_context, task_type, task_version, instruct_user_id, instruct_instance,
                                       instruct_command, instruct_args, attack_ip, local_ip, end_time)
                     else:
                         send_response(rt, {'outcome': 'success'}, 'True', user_id, task_name, task_context, task_type,
-                                      instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip,
-                                      local_ip, end_time)
+                                      task_version, instruct_user_id, instruct_instance, instruct_command, instruct_args,
+                                      attack_ip, local_ip, end_time)
                 else:
                     send_response(rt, {'outcome': 'failed', 'message': 'Missing file_name'}, 'False', user_id, task_name,
-                                  task_context, task_type, instruct_user_id, instruct_instance, instruct_command,
+                                  task_context, task_type, task_version, instruct_user_id, instruct_instance, instruct_command,
                                   instruct_args, attack_ip, local_ip, end_time)
             elif instruct_command == 'terminate' or shutdown:
                 send_response(rt, {'outcome': 'success', 'status': 'terminating'}, 'True', user_id, task_name,
-                              task_context, task_type, instruct_user_id, instruct_instance, instruct_command,
+                              task_context, task_type, task_version, instruct_user_id, instruct_instance, instruct_command,
                               instruct_args, attack_ip, local_ip, end_time)
                 subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
             else:
                 if instruct_instance not in nmap:
                     nmap[instruct_instance] = havoc_nmap.call_nmap()
-                nmap_functions = {
-                    'run_scan': nmap[instruct_instance].run_scan,
-                    'get_scan_info': nmap[instruct_instance].get_scan_info,
-                    'get_scan_results': nmap[instruct_instance].get_scan_results,
-                    'echo': nmap[instruct_instance].echo
-                }
-                if instruct_command in nmap_functions:
+                task_functions = {}
+                for tc in task_commands:
+                    task_functions[tc] = nmap[instruct_instance].tc
+                if instruct_command in task_functions:
                     nmap[instruct_instance].set_args(instruct_args, attack_ip, hostname, local_ip)
-                    call_function = nmap_functions[instruct_command]()
+                    call_function = task_functions[instruct_command]()
                 else:
                     call_function = {
                         'outcome': 'failed',
@@ -327,12 +325,12 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                         for k, v in event.items():
                             task_response[k] = v
                         send_response(rt, task_response, forward_log, user_id, task_name, task_context, task_type,
-                                      instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip,
-                                      local_ip, end_time)
+                                      task_version, instruct_user_id, instruct_instance, instruct_command, instruct_args,
+                                      attack_ip, local_ip, end_time)
                 else:
                     send_response(rt, call_function, forward_log, user_id, task_name, task_context, task_type,
-                                  instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip,
-                                  local_ip, end_time)
+                                  task_version, instruct_user_id, instruct_instance, instruct_command, instruct_args,
+                                  attack_ip, local_ip, end_time)
             command_list.remove(c)
         yield sleep(1)
 
@@ -352,8 +350,14 @@ def get_command_obj(region, campaign_id, task_name, rt, command_list):
 
 
 def main():
+
+    config = ConfigParser()
+    config.read('link.ini')
+    task_type = config.get('task', 'task_type')
+    task_version = config.get('task', 'task_version')
+    task_commands = config.get('task', 'task_commands').split(',')
+
     log.startLogging(sys.stdout)
-    task_type = 'nmap'
     region = None
     api_key = None
     secret = None
@@ -409,10 +413,11 @@ def main():
 
     # If this is a remote task, register it as such
     if rt.check:
-        h = havoc.Connect(rt.api_region, rt.api_domain_name, rt.api_key, rt.secret)
-        task_registration = h.register_task(task_name, task_context, task_type, attack_ip, local_ip)
-        if not task_registration:
-            print('Remote task registration failed. Exiting...')
+        try:
+            h = havoc.Connect(rt.api_region, rt.api_domain_name, rt.api_key, rt.secret)
+            h.register_task(task_name, task_context, task_type, task_version attack_ip, local_ip)
+        except Exception as e:
+            print(f'Remote task registration failed with error:\n{e}\nExiting...')
             subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
 
     # Setup coroutine resources
@@ -420,8 +425,8 @@ def main():
 
     # Setup coroutines
     get_command_obj(region, campaign_id, task_name, rt, command_list)
-    action(campaign_id, user_id, task_type, task_name, task_context, rt, end_time, command_list, attack_ip, hostname,
-           local_ip)
+    action(campaign_id, user_id, task_type, task_version, task_commands, task_name, task_context, rt, end_time, command_list,
+           attack_ip, hostname, local_ip)
 
 
 if __name__ == "__main__":
