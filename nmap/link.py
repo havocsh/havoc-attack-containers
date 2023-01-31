@@ -415,7 +415,7 @@ def main():
     if rt.check:
         try:
             h = havoc.Connect(rt.api_region, rt.api_domain_name, rt.api_key, rt.secret)
-            h.register_task(task_name, task_context, task_type, task_version attack_ip, local_ip)
+            h.register_task(task_name, task_context, task_type, task_version, attack_ip, local_ip)
         except Exception as e:
             print(f'Remote task registration failed with error:\n{e}\nExiting...')
             subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
