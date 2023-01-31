@@ -28,6 +28,7 @@ RUN mkdir /opt/havoc/shared
 # Copy repo version of havoc_nmap.py into build
 COPY ./havoc_nmap.py /opt/havoc/havoc_nmap.py
 
-# Copy repo version of link.py into build
+# Copy repo version of link.py and link.ini into build
 COPY ./link.py /opt/havoc/link.py
+COPY ./link.ini /opt/havoc/link.ini
 RUN chmod +x /opt/havoc/link.py
