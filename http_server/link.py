@@ -60,11 +60,11 @@ def get_ip():
     return IP
 
 
-def get_commands_s3(client, campaign_id, task_name, command_list):
+def get_commands_s3(client, deployment_name, task_name, command_list):
     list_objects_response = None
     try:
         list_objects_response = client.list_objects_v2(
-            Bucket=f'{campaign_id}-workspace',
+            Bucket=f'{deployment_name}-workspace',
             Prefix=task_name + '/'
         )
     except Exception as err:
@@ -80,7 +80,7 @@ def get_commands_s3(client, campaign_id, task_name, command_list):
             get_object_response = None
             try:
                 get_object_response = client.get_object(
-                    Bucket=f'{campaign_id}-workspace',
+                    Bucket=f'{deployment_name}-workspace',
                     Key=file_entry
                 )
             except Exception as err:
@@ -90,7 +90,7 @@ def get_commands_s3(client, campaign_id, task_name, command_list):
                 command_list.append(interaction)
                 try:
                     client.delete_object(
-                        Bucket=f'{campaign_id}-workspace',
+                        Bucket=f'{deployment_name}-workspace',
                         Key=file_entry
                     )
                 except Exception as err:
@@ -171,7 +171,7 @@ def send_response(rt, task_response, forward_log, user_id, task_name, task_conte
 
 
 @inlineCallbacks
-def action(campaign_id, user_id, task_type, task_version, task_commands, task_name, task_context, rt, end_time, command_list,
+def action(deployment_name, user_id, task_type, task_version, task_commands, task_name, task_context, rt, end_time, command_list,
            attack_ip, hostname, local_ip):
     call_function = None
     local_instruct_instance = {}
@@ -196,7 +196,7 @@ def action(campaign_id, user_id, task_type, task_version, task_commands, task_na
                 if not rt.check:
                     file_list = []
                     subprocess.call(["aws", "--quiet", "--no-paginate", "--no-progress", "--no-guess-mime-type", "s3",
-                                     "sync", f"s3://{campaign_id}-workspace/shared", "/opt/havoc/shared/"])
+                                     "sync", f"s3://{deployment_name}-workspace/shared", "/opt/havoc/shared/"])
                     for root, subdirs, files in os.walk('/opt/havoc/shared'):
                         for filename in files:
                             file_list.append(filename)
@@ -238,7 +238,7 @@ def action(campaign_id, user_id, task_type, task_version, task_commands, task_na
                 if not rt.check:
                     file_list = []
                     subprocess.call(["aws", "--quiet", "--no-paginate", "--no-progress", "--no-guess-mime-type", "s3",
-                                     "sync", "/opt/havoc/shared/", f"s3://{campaign_id}-workspace/shared"])
+                                     "sync", "/opt/havoc/shared/", f"s3://{deployment_name}-workspace/shared"])
                     for root, subdirs, files in os.walk('/opt/havoc/shared'):
                         for filename in files:
                             file_list.append(filename)
@@ -255,7 +255,7 @@ def action(campaign_id, user_id, task_type, task_version, task_commands, task_na
                         if not rt.check:
                             subprocess.call(["aws", "--quiet", "--no-paginate", "--no-progress", "--no-guess-mime-type",
                                              "s3", "cp", f"/opt/havoc/shared/{file_name}",
-                                             f"s3://{campaign_id}-workspace/shared/{file_name}"])
+                                             f"s3://{deployment_name}-workspace/shared/{file_name}"])
                         else:
                             file_transfer_http(rt, 'upload_to_workspace', file_name)
                         send_response(rt, {'outcome': 'success'}, 'True', user_id, task_name, task_context, task_type,
@@ -275,7 +275,7 @@ def action(campaign_id, user_id, task_type, task_version, task_commands, task_na
                     file_not_found = False
                     if not rt.check:
                         s = subprocess.call(["aws", "--quiet", "--no-paginate", "--no-progress", "--no-guess-mime-type",
-                                         "s3", "cp", f"s3://{campaign_id}-workspace/shared/{file_name}",
+                                         "s3", "cp", f"s3://{deployment_name}-workspace/shared/{file_name}",
                                          f"/opt/havoc/shared/{file_name}"])
                         if s == 1:
                             file_not_found = True
@@ -326,7 +326,7 @@ def action(campaign_id, user_id, task_type, task_version, task_commands, task_na
 
 
 @inlineCallbacks
-def get_command_obj(region, campaign_id, task_name, rt, command_list):
+def get_command_obj(region, deployment_name, task_name, rt, command_list):
     if not rt.check:
         client = boto3.client('s3', region_name=region)
     else:
@@ -336,7 +336,7 @@ def get_command_obj(region, campaign_id, task_name, rt, command_list):
         if rt.check:
             get_commands_http(rt, task_name, command_list)
         else:
-            get_commands_s3(client, campaign_id, task_name, command_list)
+            get_commands_s3(client, deployment_name, task_name, command_list)
 
 
 def main():
@@ -356,7 +356,7 @@ def main():
     attack_ip = None
 
     # Setup vars
-    campaign_id = os.environ['CAMPAIGN_ID']
+    deployment_name = os.environ['DEPLOYMENT_NAME']
     user_id = os.environ['USER_ID']
     task_name = os.environ['TASK_NAME']
     task_context = os.environ['TASK_CONTEXT']
@@ -414,8 +414,8 @@ def main():
     command_list = []
 
     # Setup coroutines
-    get_command_obj(region, campaign_id, task_name, rt, command_list)
-    action(campaign_id, user_id, task_type, task_version, task_commands, task_name, task_context, rt, end_time, command_list,
+    get_command_obj(region, deployment_name, task_name, rt, command_list)
+    action(deployment_name, user_id, task_type, task_version, task_commands, task_name, task_context, rt, end_time, command_list,
            attack_ip, hostname, local_ip)
 
 

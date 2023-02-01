@@ -60,11 +60,11 @@ def get_ip():
     return IP
 
 
-def get_commands_s3(client, campaign_id, task_name, command_list, user_id):
+def get_commands_s3(client, deployment_name, task_name, command_list, user_id):
     list_objects_response = None
     try:
         list_objects_response = client.list_objects_v2(
-            Bucket=f'{campaign_id}-workspace',
+            Bucket=f'{deployment_name}-workspace',
             Prefix=task_name + '/'
         )
     except Exception as err:
@@ -80,7 +80,7 @@ def get_commands_s3(client, campaign_id, task_name, command_list, user_id):
             get_object_response = None
             try:
                 get_object_response = client.get_object(
-                    Bucket=f'{campaign_id}-workspace',
+                    Bucket=f'{deployment_name}-workspace',
                     Key=file_entry
                 )
             except Exception as err:
@@ -90,7 +90,7 @@ def get_commands_s3(client, campaign_id, task_name, command_list, user_id):
                 command_list.append(interaction)
                 try:
                     client.delete_object(
-                        Bucket=f'{campaign_id}-workspace',
+                        Bucket=f'{deployment_name}-workspace',
                         Key=file_entry
                     )
                 except Exception as err:
@@ -195,7 +195,7 @@ def send_response(rt, task_response, forward_log, user_id, task_name, task_conte
 
 
 @inlineCallbacks
-def action(campaign_id, user_id, task_type, task_version, task_commands, task_name, task_context, rt, end_time, command_list,
+def action(deployment_name, user_id, task_type, task_version, task_commands, task_name, task_context, rt, end_time, command_list,
            attack_ip, hostname, local_ip):
     call_function = None
     metasploit = {}
@@ -222,7 +222,7 @@ def action(campaign_id, user_id, task_type, task_version, task_commands, task_na
                 if not rt.check:
                     file_list = []
                     subprocess.call(["aws", "--quiet", "--no-paginate", "--no-progress", "--no-guess-mime-type", "s3",
-                                     "sync", f"s3://{campaign_id}-workspace/shared", "/opt/havoc/shared/"])
+                                     "sync", f"s3://{deployment_name}-workspace/shared", "/opt/havoc/shared/"])
                     for root, subdirs, files in os.walk('/opt/havoc/shared'):
                         for filename in files:
                             file_list.append(filename)
@@ -264,7 +264,7 @@ def action(campaign_id, user_id, task_type, task_version, task_commands, task_na
                 if not rt.check:
                     file_list = []
                     subprocess.call(["aws", "--quiet", "--no-paginate", "--no-progress", "--no-guess-mime-type", "s3",
-                                     "sync", "/opt/havoc/shared/", f"s3://{campaign_id}-workspace/shared"])
+                                     "sync", "/opt/havoc/shared/", f"s3://{deployment_name}-workspace/shared"])
                     for root, subdirs, files in os.walk('/opt/havoc/shared'):
                         for filename in files:
                             file_list.append(filename)
@@ -281,7 +281,7 @@ def action(campaign_id, user_id, task_type, task_version, task_commands, task_na
                         if not rt.check:
                             subprocess.call(["aws", "--quiet", "--no-paginate", "--no-progress", "--no-guess-mime-type",
                                              "s3", "cp", f"/opt/havoc/shared/{file_name}",
-                                             f"s3://{campaign_id}-workspace/shared/{file_name}"])
+                                             f"s3://{deployment_name}-workspace/shared/{file_name}"])
                         else:
                             file_transfer_http(rt, 'upload_to_workspace', file_name)
                         send_response(rt, {'outcome': 'success'}, 'True', user_id, task_name, task_context, task_type,
@@ -301,7 +301,7 @@ def action(campaign_id, user_id, task_type, task_version, task_commands, task_na
                     file_not_found = False
                     if not rt.check:
                         s = subprocess.call(["aws", "--quiet", "--no-paginate", "--no-progress", "--no-guess-mime-type",
-                                         "s3", "cp", f"s3://{campaign_id}-workspace/shared/{file_name}",
+                                         "s3", "cp", f"s3://{deployment_name}-workspace/shared/{file_name}",
                                          f"/opt/havoc/shared/{file_name}"])
                         if s == 1:
                             file_not_found = True
@@ -322,7 +322,7 @@ def action(campaign_id, user_id, task_type, task_version, task_commands, task_na
                                   task_context, task_type, task_version, instruct_user_id, instruct_instance, instruct_command,
                                   instruct_args, attack_ip, local_ip, end_time)
             elif instruct_command == 'session_status_monitor':
-                metasploit[instruct_instance] = havoc_metasploit.call_msf(campaign_id)
+                metasploit[instruct_instance] = havoc_metasploit.call_msf(deployment_name)
                 instruct_args = {'current_sessions': current_sessions}
                 metasploit[instruct_instance].set_args(instruct_args, attack_ip, hostname, local_ip)
                 call_session_status_monitor = metasploit[instruct_instance].session_status_monitor()
@@ -359,7 +359,7 @@ def action(campaign_id, user_id, task_type, task_version, task_commands, task_na
                 subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
             else:
                 if instruct_instance not in metasploit:
-                    metasploit[instruct_instance] = havoc_metasploit.call_msf(campaign_id)
+                    metasploit[instruct_instance] = havoc_metasploit.call_msf(deployment_name)
                 task_functions = {}
                 for tc in task_commands:
                     task_functions[tc] = metasploit[instruct_instance].tc
@@ -385,7 +385,7 @@ def action(campaign_id, user_id, task_type, task_version, task_commands, task_na
 
 
 @inlineCallbacks
-def get_command_obj(region, campaign_id, task_name, rt, command_list, user_id):
+def get_command_obj(region, deployment_name, task_name, rt, command_list, user_id):
     if not rt.check:
         client = boto3.client('s3', region_name=region)
     else:
@@ -395,7 +395,7 @@ def get_command_obj(region, campaign_id, task_name, rt, command_list, user_id):
         if rt.check:
             get_commands_http(rt, task_name, command_list, user_id)
         else:
-            get_commands_s3(client, campaign_id, task_name, command_list, user_id)
+            get_commands_s3(client, deployment_name, task_name, command_list, user_id)
 
 
 def main():
@@ -415,7 +415,7 @@ def main():
     attack_ip = None
 
     # Setup vars
-    campaign_id = os.environ['CAMPAIGN_ID']
+    deployment_name = os.environ['DEPLOYMENT_NAME']
     user_id = os.environ['USER_ID']
     task_name = os.environ['TASK_NAME']
     task_context = os.environ['TASK_CONTEXT']
@@ -473,8 +473,8 @@ def main():
     command_list = []
 
     # Setup coroutines
-    get_command_obj(region, campaign_id, task_name, rt, command_list, user_id)
-    action(campaign_id, user_id, task_type, task_version, task_commands, task_name, task_context, rt, end_time, command_list,
+    get_command_obj(region, deployment_name, task_name, rt, command_list, user_id)
+    action(deployment_name, user_id, task_type, task_version, task_commands, task_name, task_context, rt, end_time, command_list,
            attack_ip, hostname, local_ip)
 
 
