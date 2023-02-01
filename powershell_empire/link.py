@@ -360,12 +360,9 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
             else:
                 if instruct_instance not in powershell_empire:
                     powershell_empire[instruct_instance] = havoc_powershell_empire.call_powershell_empire()
-                task_functions = {}
-                for tc in task_commands:
-                    task_functions[tc] = powershell_empire[instruct_instance].tc
-                if instruct_command in task_functions:
+                if instruct_command in task_commands:
                     powershell_empire[instruct_instance].set_args(instruct_args, attack_ip, hostname, local_ip)
-                    call_function = task_functions[instruct_command]()
+                    call_function = powershell_empire[instruct_instance].instruct_command()
                 else:
                     call_function = {
                         'outcome': 'failed',
