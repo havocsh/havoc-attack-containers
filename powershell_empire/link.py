@@ -362,17 +362,18 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
                     powershell_empire[instruct_instance] = havoc_powershell_empire.call_powershell_empire()
                 if instruct_command in task_commands:
                     powershell_empire[instruct_instance].set_args(instruct_args, attack_ip, hostname, local_ip)
-                    call_function = getattr(powershell_empire[instruct_instance], instruct_command)
+                    method = getattr(powershell_empire[instruct_instance], instruct_command)
+                    call_method = method()
                 else:
-                    call_function = {
+                    call_method = {
                         'outcome': 'failed',
                         'message': f'Invalid instruct_command: {instruct_command}',
                         'forward_log': 'False'
                     }
 
-                forward_log = call_function['forward_log']
-                del call_function['forward_log']
-                p = havoc_powershell_empire.PowershellEmpireParser(call_function)
+                forward_log = call_method['forward_log']
+                del call_method['forward_log']
+                p = havoc_powershell_empire.PowershellEmpireParser(call_method)
                 task_response = p.powershell_empire_parser()
                 send_response(rt, task_response, forward_log, user_id, task_name, task_context, task_type, task_version,
                               instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip, local_ip,
