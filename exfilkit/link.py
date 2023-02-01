@@ -173,7 +173,6 @@ def send_response(rt, task_response, forward_log, user_id, task_name, task_conte
 @inlineCallbacks
 def action(deployment_name, user_id, task_type, task_version, task_commands, task_name, task_context, rt, end_time, command_list,
            attack_ip, hostname, local_ip):
-    call_function = None
     exfilkit = {}
 
     while True:
@@ -303,22 +302,20 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
             else:
                 if instruct_instance not in exfilkit:
                     exfilkit[instruct_instance] = havoc_exfilkit.CallExfilkit()
-                exfilkit_functions = {}
-                for tc in task_commands:
-                    exfilkit_functions[tc] = exfilkit[instruct_instance].tc
-                if instruct_command in exfilkit_functions:
+                if instruct_command in task_commands:
                     exfilkit[instruct_instance].set_args(instruct_args, attack_ip, hostname, local_ip)
-                    call_function = exfilkit_functions[instruct_command]()
+                    method = getattr(exfilkit[instruct_instance], instruct_command)
+                    call_method = method()
                 else:
-                    call_function = {
+                    call_method = {
                         'outcome': 'failed',
                         'message': f'Invalid instruct_command: {instruct_command}',
                         'forward_log': 'False'
                     }
 
-                forward_log = call_function['forward_log']
-                del call_function['forward_log']
-                send_response(rt, call_function, forward_log, user_id, task_name, task_context, task_type, task_version,
+                forward_log = call_method['forward_log']
+                del call_method['forward_log']
+                send_response(rt, call_method, forward_log, user_id, task_name, task_context, task_type, task_version,
                               instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip, local_ip,
                               end_time)
             command_list.remove(c)

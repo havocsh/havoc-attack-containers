@@ -197,7 +197,6 @@ def send_response(rt, task_response, forward_log, user_id, task_name, task_conte
 @inlineCallbacks
 def action(deployment_name, user_id, task_type, task_version, task_commands, task_name, task_context, rt, end_time, command_list,
            attack_ip, hostname, local_ip):
-    call_function = None
     metasploit = {}
     current_sessions = []
 
@@ -360,22 +359,20 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
             else:
                 if instruct_instance not in metasploit:
                     metasploit[instruct_instance] = havoc_metasploit.call_msf(deployment_name)
-                task_functions = {}
-                for tc in task_commands:
-                    task_functions[tc] = metasploit[instruct_instance].tc
-                if instruct_command in task_functions:
+                if instruct_command in task_commands:
                     metasploit[instruct_instance].set_args(instruct_args, attack_ip, hostname, local_ip)
-                    call_function = task_functions[instruct_command]()
+                    method = getattr(metasploit[instruct_instance], instruct_command)
+                    call_method = method()
                 else:
-                    call_function = {
+                    call_method = {
                         'outcome': 'failed',
                         'message': f'Invalid instruct_command: {instruct_command}',
                         'forward_log': 'False'
                     }
 
-                forward_log = call_function['forward_log']
-                del call_function['forward_log']
-                m = havoc_metasploit.MetasploitParser(call_function)
+                forward_log = call_method['forward_log']
+                del call_method['forward_log']
+                m = havoc_metasploit.MetasploitParser(call_method)
                 task_response = m.metasploit_parser()
                 send_response(rt, task_response, forward_log, user_id, task_name, task_context, task_type, task_version,
                               instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip, local_ip,

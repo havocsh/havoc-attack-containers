@@ -174,6 +174,7 @@ def send_response(rt, task_response, forward_log, user_id, task_name, task_conte
 def action(deployment_name, user_id, task_type, task_version, task_commands, task_name, task_context, rt, end_time, command_list,
            attack_ip, hostname, local_ip):
     nmap = {}
+
     while True:
 
         def sortFunc(e):
@@ -302,33 +303,31 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
             else:
                 if instruct_instance not in nmap:
                     nmap[instruct_instance] = havoc_nmap.call_nmap()
-                task_functions = {}
-                for tc in task_commands:
-                    task_functions[tc] = nmap[instruct_instance].tc
-                if instruct_command in task_functions:
+                if instruct_command in task_commands:
                     nmap[instruct_instance].set_args(instruct_args, attack_ip, hostname, local_ip)
-                    call_function = task_functions[instruct_command]()
+                    method = getattr(nmap[instruct_instance], instruct_command)
+                    call_method = method()
                 else:
-                    call_function = {
+                    call_method = {
                         'outcome': 'failed',
                         'message': f'Invalid instruct_command: {instruct_command}',
                         'forward_log': 'False'
                     }
-                forward_log = call_function['forward_log']
-                del call_function['forward_log']
+                forward_log = call_method['forward_log']
+                del call_method['forward_log']
                 if instruct_command == 'run_scan':
-                    scan = call_function['scan']
+                    scan = call_method['scan']
                     n = havoc_nmap.NmapParser(scan)
                     nmap_events = n.nmap_parser()
                     for event in nmap_events:
-                        task_response = {'outcome': call_function['outcome']}
+                        task_response = {'outcome': call_method['outcome']}
                         for k, v in event.items():
                             task_response[k] = v
                         send_response(rt, task_response, forward_log, user_id, task_name, task_context, task_type,
                                       task_version, instruct_user_id, instruct_instance, instruct_command, instruct_args,
                                       attack_ip, local_ip, end_time)
                 else:
-                    send_response(rt, call_function, forward_log, user_id, task_name, task_context, task_type,
+                    send_response(rt, call_method, forward_log, user_id, task_name, task_context, task_type,
                                   task_version, instruct_user_id, instruct_instance, instruct_command, instruct_args,
                                   attack_ip, local_ip, end_time)
             command_list.remove(c)

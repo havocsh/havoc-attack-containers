@@ -173,7 +173,6 @@ def send_response(rt, task_response, forward_log, user_id, task_name, task_conte
 @inlineCallbacks
 def action(deployment_name, user_id, task_type, task_version, task_commands, task_name, task_context, rt, end_time, command_list,
            attack_ip, hostname, local_ip):
-    call_function = None
     local_instruct_instance = {}
 
     while True:
@@ -303,23 +302,21 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
             else:
                 if instruct_instance not in local_instruct_instance:
                     local_instruct_instance[instruct_instance] = havoc_trainman.Trainman()
-                task_functions = {}
-                for tc in task_commands:
-                    task_functions[tc] = local_instruct_instance[instruct_instance].tc
-                if instruct_command in task_functions:
+                if instruct_command in task_commands:
                     local_instruct_instance[instruct_instance].set_args(instruct_args, attack_ip, hostname,
                                                                         local_ip)
-                    call_function = task_functions[instruct_command]()
+                    method = getattr(local_instruct_instance[instruct_instance], instruct_command)
+                    call_method = method()
                 else:
-                    call_function = {
+                    call_method = {
                         'outcome': 'failed',
                         'message': f'Invalid instruct_command: {instruct_command}',
                         'forward_log': 'False'
                     }
 
-                forward_log = call_function['forward_log']
-                del call_function['forward_log']
-                send_response(rt, call_function, forward_log, user_id, task_name, task_context, task_type,
+                forward_log = call_method['forward_log']
+                del call_method['forward_log']
+                send_response(rt, call_method, forward_log, user_id, task_name, task_context, task_type,
                               task_version, instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip,
                               local_ip, end_time)
             command_list.remove(c)
