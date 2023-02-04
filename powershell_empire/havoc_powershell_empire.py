@@ -1,5 +1,6 @@
 import zlib
 import json
+import copy
 import base64
 import shutil
 import requests
@@ -65,15 +66,16 @@ class call_powershell_empire:
     def create_listener(self):
         if 'listener_type' in self.args:
             listener_type = self.args['listener_type']
-            del self.args['listener_type']
         else:
             output = {'outcome': 'failed', 'message': 'Missing listener_type', 'forward_log': 'False'}
             return output
         if 'Name' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
+        listener_args = copy.deepcopy(self.args)
+        del listener_args['listener_type']
         create_listener_uri = f'{self.server_uri}api/listeners/{listener_type}?token={self.token}'
-        create_listener_response = requests.post(create_listener_uri, json=self.args, verify=False)
+        create_listener_response = requests.post(create_listener_uri, json=listener_args, verify=False)
         if create_listener_response.status_code == 200:
             message = create_listener_response.json()['success']
             output = {'outcome': 'success', 'message': message, 'forward_log': 'True'}
@@ -181,15 +183,16 @@ class call_powershell_empire:
     def agent_shell_command(self):
         if 'Name' in self.args:
             agent_name = self.args['Name']
-            del self.args['Name']
         else:
             output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
         if 'command' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing command', 'forward_log': 'False'}
             return output
+        shell_command_args = copy.deepcopy(self.args)
+        del shell_command_args['Name']
         agent_shell_uri = f'{self.server_uri}api/agents/{agent_name}/shell?token={self.token}'
-        agent_shell_response = requests.post(agent_shell_uri, json=self.args, verify=False)
+        agent_shell_response = requests.post(agent_shell_uri, json=shell_command_args, verify=False)
         if agent_shell_response.status_code == 200:
             output = {'outcome': 'success', 'message': agent_shell_response.json(), 'forward_log': 'True'}
             return output
@@ -200,14 +203,12 @@ class call_powershell_empire:
     def get_shell_command_results(self):
         if 'Name' in self.args:
             agent_name = self.args['Name']
-            del self.args['Name']
         else:
             output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
         if 'task_id' in self.args:
             try:
                 task_id = int(self.args['task_id'])
-                del self.args['task_id']
             except:
                 output = {'outcome': 'failed', 'message': 'task_id must be a digit', 'forward_log': 'False'}
                 return output    
@@ -231,7 +232,6 @@ class call_powershell_empire:
     def get_task_id_list(self):
         if 'Name' in self.args:
             agent_name = self.args['Name']
-            del self.args['Name']
         else:
             output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
@@ -252,7 +252,6 @@ class call_powershell_empire:
     def delete_shell_command_results(self):
         if 'Name' in self.args:
             agent_name = self.args['Name']
-            del self.args['Name']
         else:
             output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
@@ -284,15 +283,16 @@ class call_powershell_empire:
     def rename_agent(self):
         if 'Name' in self.args:
             agent_name = self.args['Name']
-            del self.args['Name']
         else:
             output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
         if 'Newname' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing Newname', 'forward_log': 'False'}
             return output
+        rename_args = copy.deepcopy(self.args)
+        del rename_args['Name']
         rename_agent_uri = f'{self.server_uri}api/agents/{agent_name}/rename?token={self.token}'
-        rename_agent_response = requests.post(rename_agent_uri, json=self.args, verify=False)
+        rename_agent_response = requests.post(rename_agent_uri, json=rename_args, verify=False)
         if rename_agent_response.status_code == 200:
             output = {'outcome': 'success', 'forward_log': 'True'}
             return output
@@ -359,9 +359,10 @@ class call_powershell_empire:
         else:
             output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
-        del self.args['Name']
+        module_args = copy.deepcopy(self.args)
+        del module_args['Name']
         execute_module_uri = f'{self.server_uri}api/modules/{module_name}?token={self.token}'
-        execute_module_response = requests.post(execute_module_uri, json=self.args, verify=False)
+        execute_module_response = requests.post(execute_module_uri, json=module_args, verify=False)
         if execute_module_response.status_code == 200:
             output = {'outcome': 'success', 'message': execute_module_response.json(), 'forward_log': 'True'}
         else:
