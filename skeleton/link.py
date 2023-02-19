@@ -16,8 +16,8 @@ from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks, Deferred
 import havoc
 
-# Havoc imports - name your custom module havoc_object or change the import below to reflect the name of your module
-import havoc_object
+# Havoc imports - name your custom module havoc_module or change the import below to reflect the name of your module
+import havoc_module
 
 
 class Remote:
@@ -301,7 +301,7 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
                 subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
             else:
                 if instruct_instance not in local_instruct_instance:
-                    local_instruct_instance[instruct_instance] = havoc_object.call_object()
+                    local_instruct_instance[instruct_instance] = havoc_module.call_object()
                 if instruct_command in task_commands:
                     local_instruct_instance[instruct_instance].set_args(instruct_args, attack_ip, hostname,
                                                                         local_ip)

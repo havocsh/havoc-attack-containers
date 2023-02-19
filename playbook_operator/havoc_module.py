@@ -1,0 +1,748 @@
+import re
+import json
+import dpath
+import string
+import random
+import havoc
+import havoc_functions
+import hcl2
+import networkx as nx
+import boto3, botocore
+
+
+class ExecutionOrder:
+
+    def __init__(self):
+        self.rules = None
+        self.node_list = []
+        self.current_rule = 0
+    
+    def set_rules(self, execution_order, node_list):
+        self.rules = execution_order
+        self.node_list = node_list
+        return self.current_rule
+    
+    def get_exec_order(self, execution_object):
+        for rule in self.rules:
+            if execution_object == rule['rule_name']:
+                return rule['exec_order'], self.current_rule
+        return -1, self.current_rule
+    
+    def next_exec_rule(self, execution_object):
+        temp_rule_list = []
+        for rule in self.rules:
+            if execution_object == rule['rule_name']:
+                self.rules.remove(rule)
+        for rule in self.rules:
+            temp_rule_list.append(rule['exec_order'])
+        if temp_rule_list:
+            self.current_rule = min(temp_rule_list)
+        return self.current_rule
+    
+    def prev_exec_rule(self, execution_object):
+        temp_rule_list = []
+        for rule in self.rules:
+            if execution_object == rule['rule_name']:
+                self.rules.remove(rule)
+        for rule in self.rules:
+            temp_rule_list.append(rule['exec_order'])
+        if temp_rule_list:
+            self.current_rule = max(temp_rule_list)
+        return self.current_rule
+
+
+class Action:
+
+    def __init__(self):
+        self.action_dict = {
+            'download_from_workspace': {}, 
+            'sync_to_workspace': {}, 
+            'sync_from_workspace': {}, 
+            'node_download_file': {}, 
+            'node_execute_command': {}, 
+            'execute_agent_module': {},
+            'execute_agent_shell_command': {}
+        }
+
+    def download_from_workspace(self, object_name, action, **object_parameters):
+        if action == 'create':
+            task_name = object_parameters['task_name']
+            instruct_command = 'download_from_workspace'
+            instruct_args = {'file_name': object_parameters['file_name']}
+            interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+            if not interact_with_task_response:
+                return 'action_download_from_workspace_create_failed'
+            self.action_dict['download_from_workspace'][object_name] = {key: value for key, value in object_parameters.items()}
+            return 'action_download_from_workspace_create_completed'
+        if action == 'delete':
+            task_name = object_parameters['task_name']
+            instruct_command = 'del'
+            instruct_args = {'file_name': object_parameters['file_name']}
+            interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+            if not interact_with_task_response:
+                return 'action_download_from_workspace_delete_failed'
+            del self.action_dict['download_from_workspace'][object_name]
+            return 'action_download_from_workspace_delete_completed'
+        if action == 'read':
+            new_path = re.search('action.download_from_workspace.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.action_dict['download_from_workspace'], path)
+    
+    def sync_to_workspace(self, object_name, action, **object_parameters):
+        if action == 'create':
+            task_name = object_parameters['task_name']
+            instruct_command = 'sync_to_workspace'
+            interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command)
+            if not interact_with_task_response:
+                return 'action_sync_to_workspace_create_failed'
+            self.action_dict['sync_to_workspace'][object_name] = {key: value for key, value in object_parameters.items()}
+            return 'action_sync_to_workspace_create_completed'
+        if action == 'delete':
+            del self.action_dict['sync_to_workspace'][object_name]
+            return 'action_sync_to_workspace_delete_completed'
+        if action == 'read':
+            new_path = re.search('action.sync_to_workspace.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.action_dict['sync_to_workspace'], path)
+    
+    def sync_from_workspace(self, object_name, action, **object_parameters):
+        if action == 'create':
+            task_name = object_parameters['task_name']
+            instruct_command = 'sync_from_workspace'
+            interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command)
+            if not interact_with_task_response:
+                return 'action_sync_from_workspace_create_failed'
+            self.action_dict['sync_from_workspace'][object_name] = {key: value for key, value in object_parameters.items()}
+            return 'action_sync_from_workspace_create_completed'
+        if action == 'delete':
+            del self.action_dict['sync_from_workspace'][object_name]
+            return 'action_sync_from_workspace_delete_completed'
+        if action == 'read':
+            new_path = re.search('action.sync_from_workspace.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.action_dict['sync_from_workspace'], path)
+    
+    def node_download_file(self, object_name, action, **object_parameters):
+        if action == 'create':
+            node_name = object_parameters['node_name']
+            url = object_parameters['url']
+            file_name = object_parameters['file_name']
+            instruct_command = 'node_download_file'
+            instruct_args = {'url': url, 'file_name': file_name}
+            interact_with_node_response = self.havoc_client.interact_with_node(node_name, instruct_command, instruct_args=instruct_args)
+            if not interact_with_node_response:
+                return 'action_node_download_file_create_failed'
+            self.action_dict['node_download_file'][object_name] = {key: value for key, value in interact_with_node_response.items()}
+            return 'action_node_download_file_create_completed'
+        if action == 'delete':
+            node_name = object_parameters['node_name']
+            file_name = object_parameters['file_name']
+            instruct_command = 'del'
+            instruct_args = {'file_name': file_name}
+            interact_with_node_response = self.havoc_client.interact_with_node(node_name, instruct_command, instruct_args=instruct_args)
+            del self.action_dict['node_download_file'][object_name]
+            return 'action_node_download_file_delete_completed'
+        if action == 'read':
+            new_path = re.search('action.node_download_file.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.action_dict['node_download_file'], path)
+    
+    def node_execute_command(self, object_name, action, **object_parameters):
+        if action == 'create':
+            node_name = object_parameters['node_name']
+            command = object_parameters['command']
+            instruct_command = 'node_execute_command'
+            instruct_args = {'command': command}
+            interact_with_node_response = self.havoc_client.interact_with_node(node_name, instruct_command, instruct_args=instruct_args)
+            if not interact_with_node_response:
+                return 'action_node_execute_command_create_failed'
+            self.action_dict['node_execute_command'][object_name] = {key: value for key, value in interact_with_node_response.items()}
+            return 'action_node_execute_command_create_completed'
+        if action == 'delete':
+            node_name = object_parameters['node_name']
+            command = object_parameters['command']
+            instruct_command = 'kill_command'
+            instruct_args = {'command': command}
+            interact_with_node_response = self.havoc_client.interact_with_node(node_name, instruct_command, instruct_args=instruct_args)
+            del self.action_dict['node_execute_command'][object_name]
+            return 'action_node_execute_command_delete_completed'
+        if action == 'read':
+            new_path = re.search('action.node_execute_command.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.action_dict['node_execute_command'], path)
+    
+    def execute_agent_module(self, object_name, action, **object_parameters):
+        if action == 'create':
+            task_name = object_parameters['task_name']
+            agent_name = object_parameters['agent_name']
+            module = object_parameters['module']
+            wait_for_results = None
+            completion_string = None
+            module_args = {}
+            if 'wait_for_results' in object_parameters:
+                wait_for_results = object_parameters['wait_for_results']
+            if 'completion_string' in object_parameters:
+                completion_string = object_parameters['completion_string']
+            if 'module_args' in object_parameters:
+                module_args = object_parameters['module_args']
+            execute_agent_module_response = self.havoc_client.execute_agent_module(task_name, agent_name, module, module_args, wait_for_results=wait_for_results, completion_string=completion_string)
+            if not execute_agent_module_response:
+                return 'action_execute_agent_module_create_failed'
+            self.action_dict['execute_agent_module'][object_name] = {key: value for key, value in execute_agent_module_response.items()}
+            return 'action_execute_agent_module_create_completed'
+        if action == 'delete':
+            del self.action_dict['execute_agent_module'][object_name]
+            return 'action_execute_agent_module_delete_completed'
+        if action == 'read':
+            new_path = re.search('action.execute_agent_module.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.action_dict['execute_agent_module'], path)
+    
+    def execute_agent_shell_command(self, object_name, action, **object_parameters):
+        if action == 'create':
+            task_name = object_parameters['task_name']
+            agent_name = object_parameters['agent_name']
+            command = object_parameters['command']
+            wait_for_results = None
+            completion_string = None
+            if 'wait_for_results' in object_parameters:
+                wait_for_results = object_parameters['wait_for_results']
+            if 'completion_string' in object_parameters:
+                completion_string = object_parameters['completion_string']
+            execute_agent_shell_command_response = self.havoc_client.execute_agent_shell_command(task_name, agent_name, command, wait_for_results=wait_for_results, completion_string=completion_string)
+            if not execute_agent_shell_command_response:
+                return 'action_execute_agent_shell_command_create_failed'
+            self.action_dict['execute_agent_shell_command'][object_name] = {key: value for key, value in execute_agent_shell_command_response.items()}
+            return 'action_execute_agent_shell_command_create_completed'
+        if action == 'delete':
+            del self.action_dict['execute_agent_shell_command'][object_name]
+            return 'action_execute_agent_shell_command_delete_completed'
+        if action == 'read':
+            new_path = re.search('action.execute_agent_shell_command.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.action_dict['execute_agent_shell_command'], path)
+
+
+class Data:
+    
+    def __init__(self):
+        self.data_dict = {'agents': {}, 'domains': {}, 'files': {}, 'nodes': {}, 'portgroups': {}, 'tasks': {}, 'task_types': {}, 'wait_for_c2': {}}
+    
+    def agents(self, object_name, action, **object_parameters):
+        if action == 'create':
+            get_agent_response = self.havoc_client.get_agent(**object_parameters)
+            if not get_agent_response:
+                return 'data_agents_retrieve_failed'
+            self.data_dict['agents'][object_name] = {key: value for key, value in get_agent_response.items()}
+            return 'data_agents_retrieved'
+        if action == 'delete':
+            del self.data_dict['agents'][object_name]
+            return 'data_agents_deleted'
+        if action == 'read':
+            new_path = re.search('data.agents.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.data_dict['agents'], path)
+    
+    def domains(self, object_name, action, **object_parameters):
+        if action == 'create':
+            get_domain_response = self.havoc_client.get_domain(**object_parameters)
+            if not get_domain_response:
+                return 'data_domains_retrieve_failed'
+            self.data_dict['domains'][object_name] = {key: value for key, value in get_domain_response.items()}
+            return 'data_domains_retrieved'
+        if action == 'delete':
+            del self.data_dict['domains'][object_name]
+            return 'data_domains_deleted'
+        if action == 'read':
+            new_path = re.search('data.domains.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.data_dict['domains'], path)
+    
+    def files(self, object_name, action, **object_parameters):
+        if action == 'create':
+            get_file_response = self.havoc_client.get_file(**object_parameters)
+            if not get_file_response:
+                return 'data_files_retrieve_failed'
+            self.data_dict['files'][object_name] = {key: value for key, value in get_file_response.items()}
+            return 'data_files_retrieved'
+        if action == 'delete':
+            del self.data_dict['files'][object_name]
+            return 'data_files_deleted'
+        if action == 'read':
+            new_path = re.search('data.files.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.data_dict['files'], path)
+    
+    def nodes(self, object_name, action, **object_parameters):
+        if action == 'create':
+            get_node_response = self.havoc_client.get_node(**object_parameters)
+            if not get_node_response:
+                return 'data_nodes_retrieve_failed'
+            self.data_dict['nodes'][object_name] = {key: value for key, value in get_node_response.items()}
+            return 'data_nodes_retrieved'
+        if action == 'delete':
+            del self.data_dict['nodes'][object_name]
+            return 'data_nodes_deleted'
+        if action == 'read':
+            new_path = re.search('data.nodes.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.data_dict['nodes'], path)
+    
+    def portgroups(self, object_name, action, **object_parameters):
+        if action == 'create':
+            get_portgroup_response = self.havoc_client.get_portgroup(**object_parameters)
+            if not get_portgroup_response:
+                return 'data_portgroups_retrieve_failed'
+            self.data_dict['portgroups'][object_name] = {key: value for key, value in get_portgroup_response.items()}
+            return 'data_portgroups_retrieved'
+        if action == 'delete':
+            del self.data_dict['portgroups'][object_name]
+            return 'data_portgroups_deleted'
+        if action == 'read':
+            new_path = re.search('data.portgroups.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.data_dict['portgroups'], path)
+    
+    def tasks(self, object_name, action, **object_parameters):
+        if action == 'create':
+            get_task_response = self.havoc_client.get_task(**object_parameters)
+            if not get_task_response:
+                return 'data_tasks_retrieve_failed'
+            self.data_dict['tasks'][object_name] = {key: value for key, value in get_task_response.items()}
+            return 'data_tasks_retrieved'
+        if action == 'delete':
+            del self.data_dict['tasks'][object_name]
+            return 'data_tasks_deleted'
+        if action == 'read':
+            new_path = re.search('data.tasks.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.data_dict['tasks'], path)
+    
+    def task_types(self, object_name, action, **object_parameters):
+        if action == 'create':
+            get_task_type_response = self.havoc_client.get_task_type(**object_parameters)
+            if not get_task_type_response:
+                return 'data_task_types_retrieve_failed'
+            self.data_dict['task_types'][object_name] = {key: value for key, value in get_task_type_response.items()}
+            return 'data_task_types_retrieved'
+        if action == 'delete':
+            del self.data_dict['task_types'][object_name]
+            return 'data_task_types_deleted'
+        if action == 'read':
+            new_path = re.search('data.task_types.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.data_dict['task_types'], path)
+    
+    def wait_for_c2(self, object_name, action, **object_parameters):
+        if action == 'create':
+            task_name = object_parameters['task_name']
+            wait_for_c2_response = self.havoc_client.wait_for_c2(task_name)
+            if not wait_for_c2_response:
+                return 'data_wait_for_c2_retrieve_failed'
+            self.data_dict['wait_for_c2'][object_name] = {key: value for key, value in wait_for_c2_response.items()}
+            return 'data_wait_for_c2_retrieved'
+        if action == 'delete':
+            del self.data_dict['wait_for_c2'][object_name]
+            return 'data_wait_for_c2_deleted'
+        if action == 'read':
+            new_path = re.search('data.wait_for_c2.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.data_dict['wait_for_c2'], path)
+
+class Local:
+    
+    def __init__(self):
+        self.local_dict = {'function': {}}
+    
+    def function(self, object_name, action, **object_parameters):
+        function_name = None
+        function_parameters = []
+        if action == 'create':
+            function_name = object_parameters['function_name']
+            if 'function_parameters' in object_parameters:
+                function_parameters = object_parameters['function_parameters']
+            result = havoc_functions.perform_function(function_name, function_parameters)
+            self.local_dict['function'][object_name] = result
+            return result
+        if action == 'delete':
+            del self.local_dict['function'][object_name]
+            return 'function_deleted'
+        if action == 'read':
+            new_path = re.search('local.function.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.local_dict['function'], path)
+
+
+class Resource:
+    
+    def __init__(self):
+        self.resource_dict = {'file': {}, 'portgroup': {}, 'random_integer': {}, 'random_string': {}, 'task': {}}
+    
+    def file(self, object_name, action, **object_parameters):
+        if action == 'create':
+            file_name = object_parameters['file_name']
+            file_contents = object_parameters['file_contents'].encode()
+            create_file_response = self.havoc_client.create_file(file_name, file_contents)
+            if not create_file_response:
+                return 'resource_file_create_failed'
+            self.resource_dict['file'][object_name] = {key: value for key, value in object_parameters.items()}
+            return 'resource_file_created'
+        if action == 'delete':
+            delete_file_response = self.havoc_client.delete_file(**object_parameters)
+            if not delete_file_response:
+                return 'resource_file_delete_failed'
+            del self.resource_dict['file'][object_name]
+            return 'resource_file_deleted'
+        if action == 'read':
+            new_path = re.search('resource.file.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.resource_dict['file'], path)
+    
+    def random_integer(self, object_name, action, **object_parameters):
+        if action == 'create':
+            self.resource_dict['random_integer'][object_name] = {key: value for key, value in object_parameters.items()}
+            length = object_parameters['length']
+            result = ''.join(random.choice(string.digits) for i in range(length))
+            self.resource_dict['random_integer'][object_name]['result'] = result
+            return 'resource_random_integer_created'
+        if action == 'delete':
+            del self.resource_dict['random_integer'][object_name]
+            return 'resource_random_integer_deleted'
+        if action == 'read':
+            new_path = re.search('resource.random_integer.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.resource_dict['random_integer'], path)
+    
+    def random_string(self, object_name, action, **object_parameters):
+        if action == 'create':
+            self.resource_dict['random_string'][object_name] = {key: value for key, value in object_parameters.items()}
+            length = object_parameters['length']
+            if object_parameters['special']:
+                string_seed = string.ascii_letters + string.punctuation
+            else:
+                string_seed = string.ascii_letters
+            result = ''.join(random.choice(string_seed) for i in range(length))
+            self.resource_dict['random_string'][object_name]['result'] = result
+            return 'resource_random_string_created'
+        if action == 'delete':
+            del self.resource_dict['random_string'][object_name]
+            return 'resource_random_string_deleted'
+        if action == 'read':
+            new_path = re.search('resource.random_string.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.resource_dict['random_string'], path)
+    
+    def portgroup(self, object_name, action, **object_parameters):
+        if action == 'create':
+            portgroup_name = object_parameters['portgroup_name']
+            ip_ranges = object_parameters['ip_ranges']
+            ip_protocol = object_parameters['ip_protocol']
+            port = object_parameters['port']
+            create_portgroup_response = self.havoc_client.create_portgroup(portgroup_name=portgroup_name, portgroup_description=f'Created by playbook: {playbook_name}')
+            if not create_portgroup_response:
+                return 'resource_portgroup_create_failed'
+            update_portgroup_response = self.havoc_client.update_portgroup_rule(portgroup_name=portgroup_name, portgroup_action='add', ip_ranges=ip_ranges, ip_protocol=ip_protocol, port=port)
+            if not update_portgroup_response:
+                return 'resource_portgroup_update_failed'
+            get_portgroup_response = self.havoc_client.get_portgroup(portgroup_name=portgroup_name)
+            self.resource_dict['portgroup'][object_name] = {key: value for key, value in get_portgroup_response.items()}
+            return 'resource_portgroup_created'
+        if action == 'delete':
+            delete_portgroup_response = self.havoc_client.delete_portgroup(portgroup_name=portgroup_name)
+            if not delete_portgroup_response:
+                return 'resource_portgroup_delete_failed'
+            del self.resource_dict['portgroup'][object_name]
+            return 'resource_portgroup_deleted'
+        if action == 'read':
+            new_path = re.search('resource.portgroup.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.resource_dict['portgroup'], path)
+    
+    def task(self, object_name, action, **object_parameters):
+        if action == 'create':
+            task_startup = {}
+            task_startup['task_name'] = object_parameters['task_name']
+            task_startup['task_type'] = object_parameters['task_type']
+            if 'task_host_name' in object_parameters:
+                task_startup['task_host_name'] = object_parameters['task_host_name']
+            if 'task_domain_name' in object_parameters:
+                task_startup['task_domain_name'] = object_parameters['task_domain_name']
+            if 'portgroups' in object_parameters:
+                task_startup['portgroups'] = object_parameters['portgroups']
+            if 'end_time' in object_parameters:
+                task_startup['end_time'] = object_parameters['end_time']
+            task_startup_response = self.havoc_client.task_startup(**task_startup)
+            if not task_startup_response:
+                return 'resource_task_startup_failed'
+            self.resource_dict['task'][object_name] = {key: value for key, value in task_startup_response.items()}
+            if 'listener' in object_parameters:
+                listener_args = {}
+                for k in object_parameters['listener'][0].keys():
+                    listener_type = k
+                listener_args['listener_type'] = listener_type
+                for k, v in object_parameters['listener'][0][listener_type][0].items():
+                    listener_args[k] = v
+                create_listener_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'create_listener', instruct_args=listener_args)
+                if not create_listener_response:
+                    return 'resource_listener_create_failed'
+                self.resource_dict['task'][object_name] = {key: value for key, value in create_listener_response['listener'].items()}
+            if 'stager' in object_parameters:
+                stager_args = {}
+                for k, v in object_parameters['stager'][0].items():
+                    stager_args[k] = v
+                create_stager_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'create_stager', instruct_args=stager_args)
+                if not create_stager_response:
+                    return 'resource_stager_create_failed'
+                self.resource_dict['task'][object_name] = {key: value for key, value in create_stager_response['stager'].items()}
+            return 'resource_task_created'
+        if action == 'delete':
+            task_name = self.resource_dict['task'][object_name]['task_name']
+            task_shutdown_response = self.havoc_client.task_shutdown(task_name)
+            if 'completed' not in task_shutdown_response:
+                return 'resource_task_delete_failed'
+            del self.resource_dict['task'][object_name]
+            return 'resource_task_deleted'
+        if action == 'read':
+            new_path = re.search('resource.task.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.resource_dict['task'], path)
+
+
+class call_object(ExecutionOrder, Action, Data, Local, Resource):
+
+    def __init__(self):
+        self.region = None
+        self.deployment_name = None
+        self.args = None
+        self.host_info = None
+        self.results = None
+        self.__havoc_client = None
+        self.__aws_s3_client = None
+        super().__init__()
+    
+    @property
+    def havoc_client(self):
+        if self.__havoc_client is None:
+            api_key = self.args['api_key']
+            secret = self.args['secret']
+            api_region = self.args['api_region']
+            api_domain_name = self.args['api_domain_name']
+            self.__havoc_client = havoc.Connect(api_region, api_domain_name, api_key, secret)
+        return self.__havoc_client
+    
+    @property
+    def aws_s3_client(self):
+        """Returns the boto3 S3 session (establishes one automatically if one does not already exist)"""
+        if self.__aws_s3_client is None:
+            self.__aws_s3_client = boto3.client('s3', region_name=self.region)
+        return self.__aws_s3_client
+
+    def set_args(self, region, deployment_name, args, attack_ip, hostname, local_ip):
+        self.region = region
+        self.deployment_name = deployment_name
+        self.args = args
+        self.host_info = [attack_ip, hostname] + local_ip
+        return True
+    
+    def object_resolver(self, object):
+        methods = {
+            'download_from_workspace': super().download_from_workspace,
+            'sync_to_workspace': super().sync_to_workspace,
+            'sync_from_workspace': super().sync_from_workspace,
+            'node_download_file': super().node_download_file,
+            'node_execute_command': super().node_execute_command,
+            'execute_agent_module': super().execute_agent_module,
+            'execute_agent_shell_command': super().execute_agent_shell_command,
+            'agents': super().agents,
+            'domains': super().domains,
+            'files': super().files,
+            'nodes': super().nodes,
+            'portgroups': super().portgroups,
+            'tasks': super().tasks,
+            'task_types': super().task_types,
+            'wait_for_c2': super().wait_for_c2,
+            'function': super().function,
+            'file': super().file,
+            'random_integer': super().random_integer,
+            'random_string': super().random_string,
+            'portgroup': super().portgroup,
+            'task': super().task
+        }
+        object_def = object.split('.')
+        method_name=object_def[1]
+        object_name=object_def[2]
+        return methods[method_name], object_name
+    
+    def creator(self, playbook_config, execution_list):
+        while execution_list:
+            for section in playbook_config:
+                for (path, value) in dpath.search(playbook_config[section], '*/*/*', yielded=True):
+                    new_path = re.search('\d+/(.*)', path).group(1)
+                    dot_path = re.sub('/', '.', new_path)
+                    node_path = f'{section}.{dot_path}'
+                    print('creator 1:')
+                    print(node_path)
+                    if node_path in execution_list:
+                        print('creator 2:')
+                        print(node_path)
+                        execution_order, current_rule = super().get_exec_order(node_path)
+                        print('creator 3:')
+                        print(f'{execution_order}, {current_rule}')
+                        if execution_order == current_rule:
+                            print('creator 4:')
+                            print(f'{execution_order}, {current_rule}')
+                            execution_list.remove(node_path)
+                            method, object_name = self.object_resolver(node_path)
+                            json_value = json.dumps(value)
+                            dep_matches = re.findall('\${([^}]+)}', json_value)
+                            if dep_matches:
+                                for dep_match in dep_matches:
+                                    dep_method, dep_object = self.object_resolver(dep_match)
+                                    dep_value = dep_method(dep_object, 'read', path=dep_match)
+                                    re_sub = re.compile('\${' + dep_match + '}')
+                                    json_value = re.sub(re_sub, dep_value, json_value)
+                            value = json.loads(json_value)
+                            method_result = method(object_name, 'create', **value)
+                            print(f'result: {method_result}')
+                            super().next_exec_rule(node_path)
+                        
+    def destroyer(self, playbook_config, execution_list):
+        while execution_list:
+            for section in playbook_config:
+                for (path, value) in dpath.search(playbook_config[section], '*/*/*', yielded=True):
+                    new_path = re.search('\d+/(.*)', path).group(1)
+                    dot_path = re.sub('/', '.', new_path)
+                    node_path = f'{section}.{dot_path}'
+                    print('destroyer 1:')
+                    print(node_path)
+                    if node_path in execution_list:
+                        print('destroyer 2:')
+                        print(node_path)
+                        execution_order, current_rule = super().get_exec_order(node_path)
+                        print('destroyer 3:')
+                        print(f'{execution_order}, {current_rule}')
+                        if execution_order == current_rule:
+                            print('destroyer 4:')
+                            print(f'{execution_order}, {current_rule}')
+                            execution_list.remove(node_path)
+                            method, object_name = self.object_resolver(node_path)
+                            value = {'destroy_all_resources': True}
+                            method_result = method(object_name, 'delete', **value)
+                            print(f'result: {method_result}')
+                            super().prev_exec_rule(node_path)
+
+    def execute_playbook(self):
+
+        def download_playbook():
+            config_pointer = self.args['config_pointer']
+            try:
+                get_object_response = self.aws_s3_client.get_object(
+                    Bucket=f'{self.deployment_name}-playbooks',
+                    Key=config_pointer
+                )
+                playbook_config = get_object_response['Body'].read()
+            except botocore.exceptions.ClientError as error:
+                return error
+            except botocore.exceptions.ParamValidationError as error:
+                return error
+            return playbook_config
+
+        # Add nodes to graph
+        def afilter(x):
+            if re.match('{([^}]+)}', str(x)):
+                    return True
+            return False
+
+        def add_dependency_edges(block, parent):
+            for (path, value) in dpath.search(block, '*/*/*', afilter=afilter, yielded=True):
+                matches = re.findall('\${([^}]+)}', json.dumps(value))
+                for match in matches:
+                    dep = re.search('([a-zA-Z0-9_\-]+\.[a-zA-Z0-9_\-]+\.[a-zA-Z0-9_\-]+)', match)
+                    if dep:
+                        new_path = re.search('\d+/(.*)', path).group(1)
+                        dot_path = re.sub('/', '.', new_path)
+                        node_path = f'{parent}.{dot_path}'
+                        DG.add_edge(dep.group(1), node_path)
+
+        def get_node_dependencies(graph, start_nodes):
+            nodes = [(x, 0) for x in start_nodes]
+            for node, depth in nodes:
+                this_depth = depth - 1
+                for prenode in graph.predecessors(node):
+                    nodes.append((prenode, this_depth))
+            return nodes
+
+        def clean_dependencies(dependencies):
+            dependencies = set(dependencies)
+            dep_depth_map = {}
+            max_depth = 0
+            for node, depth in dependencies:
+                dep_depth_map.setdefault(node, []).append(depth)
+                max_depth = min(depth, max_depth)   
+            dep_depth_map = sorted(dep_depth_map.items(), key=lambda x: min(x[1]))
+            return [{"rule_name": node, "exec_order": min(depth) + abs(max_depth)} for node, depth in dep_depth_map]
+
+        playbook_config_source = download_playbook()
+        playbook_config = hcl2.load(playbook_config_source)
+
+        DG = nx.DiGraph()
+        action_blocks = None
+        data_blocks = None
+        local_blocks = None
+        resource_blocks = None
+
+        if 'action' in playbook_config:
+            action_blocks = playbook_config['action']
+            add_dependency_edges(action_blocks, 'action')
+
+        if 'data' in playbook_config:
+            data_blocks = playbook_config['data']
+            add_dependency_edges(data_blocks, 'data')
+
+        if 'local' in playbook_config:
+            local_blocks = playbook_config['local']
+            add_dependency_edges(local_blocks, 'local')
+
+        if 'resource' in playbook_config:
+            resource_blocks = playbook_config['resource']
+            add_dependency_edges(resource_blocks, 'resource')
+
+        node_list = []
+        for node in DG.nodes:
+            node_list.append(node)
+        execution_order = clean_dependencies(get_node_dependencies(DG, node_list))
+        super().set_rules(execution_order, node_list)
+        self.creator(playbook_config, node_list)
+
+        node_list = []
+        for node in DG.nodes:
+            node_list.append(node)
+        execution_order = clean_dependencies(get_node_dependencies(DG, node_list))
+        super().set_rules(execution_order, node_list)
+        self.destroyer(playbook_config, node_list)
+
+        output = {'outcome': 'success', 'message': 'playbook executed', 'forward_log': 'True'}
+        return output
+
+    def echo(self):
+        match = {
+            'foo': 'bar',
+            'bar': 'baz',
+            'ping': 'pong',
+            'and then': 'no more and then',
+            'pen testing is dead': 'long live pen testing',
+            'never gonna give you up': 'never gonna let you down, never gonna run around and desert you',
+            'never gonna make you cry': 'never gonna say goodbye, never gonna tell a lie and hurt you'
+        }
+
+        if 'echo' in self.args:
+            echo = self.args['echo']
+            if echo in match:
+                output = {'outcome': 'success', 'echo': match[echo], 'forward_log': 'False'}
+            else:
+                output = {'outcome': 'success', 'echo': 'OK', 'forward_log': 'False'}
+        else:
+            output = {'outcome': 'success', 'echo': 'OK', 'forward_log': 'False'}
+
+        return output
+

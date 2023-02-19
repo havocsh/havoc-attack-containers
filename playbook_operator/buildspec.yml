@@ -1,0 +1,36 @@
+version: 0.2
+
+env:
+  shell: bash
+  variables:
+    IMAGE_REPO_NAME: "playbook_operator"
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/$AWS_REPO_ID
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - TAG=`sed -n 's/^task_version = \(.*\)/\1/p' link.ini`
+      - |
+        if [[ "$CODEBUILD_WEBHOOK_BASE_REF" =~ "main" ]]; then
+          docker build -t public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:latest -t public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:stable -t public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:$TAG .
+        else
+          docker build -t public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:dev -t public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:$TAG .
+        fi
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image...
+      - |
+        if [[ "$CODEBUILD_WEBHOOK_BASE_REF" =~ "main" ]]; then
+          docker push public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:latest
+          docker push public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:stable
+          docker push public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:$TAG
+        else
+          docker push public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:dev
+          docker push public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:$TAG
+        fi

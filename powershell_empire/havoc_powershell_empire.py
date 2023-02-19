@@ -72,13 +72,16 @@ class call_powershell_empire:
         if 'Name' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
+        listener_name = self.args['Name']
         listener_args = copy.deepcopy(self.args)
         del listener_args['listener_type']
         create_listener_uri = f'{self.server_uri}api/listeners/{listener_type}?token={self.token}'
         create_listener_response = requests.post(create_listener_uri, json=listener_args, verify=False)
         if create_listener_response.status_code == 200:
-            message = create_listener_response.json()['success']
-            output = {'outcome': 'success', 'message': message, 'forward_log': 'True'}
+            get_listener_uri = f'{self.server_uri}api/listeners/{listener_name}?token={self.token}'
+            get_listener_response = requests.get(get_listener_uri, verify=False)
+            listener = get_listener_response.json()['listeners']
+            output = {'outcome': 'success', 'listener': listener, 'forward_log': 'True'}
         else:
             message = create_listener_response.json()
             output = {'outcome': 'failed', 'message': message, 'forward_log': 'False'}
@@ -131,7 +134,8 @@ class call_powershell_empire:
         create_stager_uri = f'{self.server_uri}api/stagers?token={self.token}'
         create_stager_response = requests.post(create_stager_uri, json=self.args, verify=False)
         if create_stager_response.status_code == 200:
-            output = {'outcome': 'success', 'stager': create_stager_response.json(), 'forward_log': 'True'}
+            stager = create_stager_response.json()['launcher']
+            output = {'outcome': 'success', 'stager': stager, 'forward_log': 'True'}
         else:
             output = {'outcome': 'failed', 'message': create_stager_response.json(), 'forward_log': 'False'}
         return output
