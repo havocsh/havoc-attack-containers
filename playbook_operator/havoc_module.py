@@ -8,6 +8,18 @@ import havoc_functions
 import hcl2
 import networkx as nx
 import boto3, botocore
+from datetime import datetime, timezone
+
+
+def send_response(playbook_operator_response, forward_log, user_id, playbook_name, playbook_operator_version,
+                  operator_command, command_args, end_time):
+    stime = datetime.now(timezone.utc).strftime('%s')
+    output = {
+        'command_output': playbook_operator_response, 'user_id': user_id, 'playbook_operator_version': playbook_operator_version, 
+        'playbook_name': playbook_name, 'operator_command': operator_command, 'command_args': command_args, 'end_time': end_time,
+        'forward_log': forward_log, 'timestamp': stime
+    }
+    print(output)
 
 
 class ExecutionOrder:
@@ -513,9 +525,11 @@ class call_object(ExecutionOrder, Action, Data, Local, Resource):
     def __init__(self):
         self.region = None
         self.deployment_name = None
+        self.user_id = None
+        self.playbook_name = None
+        self.playbook_operator_version = None
         self.args = None
-        self.host_info = None
-        self.results = None
+        self.end_time = None
         self.__havoc_client = None
         self.__aws_s3_client = None
         super().__init__()
@@ -537,11 +551,14 @@ class call_object(ExecutionOrder, Action, Data, Local, Resource):
             self.__aws_s3_client = boto3.client('s3', region_name=self.region)
         return self.__aws_s3_client
 
-    def set_args(self, region, deployment_name, args, attack_ip, hostname, local_ip):
+    def set_args(self, region, deployment_name, user_id, playbook_name, playbook_operator_version, command_args, end_time):
         self.region = region
         self.deployment_name = deployment_name
-        self.args = args
-        self.host_info = [attack_ip, hostname] + local_ip
+        self.user_id = user_id
+        self.playbook_name = playbook_name
+        self.playbook_operator_version = playbook_operator_version
+        self.args = command_args
+        self.end_time = end_time
         return True
     
     def object_resolver(self, object):
@@ -603,7 +620,13 @@ class call_object(ExecutionOrder, Action, Data, Local, Resource):
                                     json_value = re.sub(re_sub, dep_value, json_value)
                             value = json.loads(json_value)
                             method_result = method(object_name, 'create', **value)
-                            print(f'result: {method_result}')
+                            operator_command = f'create {node_path}'
+                            if 'failed' not in method_result:
+                                send_response({'outcome': 'success'}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
+                                            operator_command, value, self.end_time)
+                            else:
+                                send_response({'outcome': 'failed'}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
+                                            operator_command, value, self.end_time)
                             super().next_exec_rule(node_path)
                         
     def destroyer(self, playbook_config, execution_list):
@@ -628,7 +651,13 @@ class call_object(ExecutionOrder, Action, Data, Local, Resource):
                             method, object_name = self.object_resolver(node_path)
                             value = {'destroy_all_resources': True}
                             method_result = method(object_name, 'delete', **value)
-                            print(f'result: {method_result}')
+                            operator_command = f'delete {node_path}'
+                            if 'failed' not in method_result:
+                                send_response({'outcome': 'success'}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
+                                            operator_command, value, self.end_time)
+                            else:
+                                send_response({'outcome': 'failed'}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
+                                            operator_command, value, self.end_time)
                             super().prev_exec_rule(node_path)
 
     def execute_playbook(self):
@@ -722,27 +751,5 @@ class call_object(ExecutionOrder, Action, Data, Local, Resource):
         self.destroyer(playbook_config, node_list)
 
         output = {'outcome': 'success', 'message': 'playbook executed', 'forward_log': 'True'}
-        return output
-
-    def echo(self):
-        match = {
-            'foo': 'bar',
-            'bar': 'baz',
-            'ping': 'pong',
-            'and then': 'no more and then',
-            'pen testing is dead': 'long live pen testing',
-            'never gonna give you up': 'never gonna let you down, never gonna run around and desert you',
-            'never gonna make you cry': 'never gonna say goodbye, never gonna tell a lie and hurt you'
-        }
-
-        if 'echo' in self.args:
-            echo = self.args['echo']
-            if echo in match:
-                output = {'outcome': 'success', 'echo': match[echo], 'forward_log': 'False'}
-            else:
-                output = {'outcome': 'success', 'echo': 'OK', 'forward_log': 'False'}
-        else:
-            output = {'outcome': 'success', 'echo': 'OK', 'forward_log': 'False'}
-
         return output
 

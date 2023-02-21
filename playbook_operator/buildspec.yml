@@ -14,12 +14,12 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      - TAG=`sed -n 's/^task_version = \(.*\)/\1/p' link.ini`
+      - TAG=`sed -n 's/^version = \(.*\)/\1/p' link.ini`
       - |
         if [[ "$CODEBUILD_WEBHOOK_BASE_REF" =~ "main" ]]; then
-          docker build -t public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:latest -t public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:stable -t public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:$TAG .
+          docker build --build-arg VERSION=$TAG -t public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:latest -t public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:stable -t public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:$TAG .
         else
-          docker build -t public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:dev -t public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:$TAG .
+          docker build --build-arg VERSION=$TAG -t public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:dev -t public.ecr.aws/$AWS_REPO_ID/$IMAGE_REPO_NAME:$TAG .
         fi
   post_build:
     commands:

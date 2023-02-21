@@ -1,3 +1,4 @@
+ARG VERSION
 FROM ubuntu:20.04
 
 # Install basic utils
@@ -13,7 +14,7 @@ RUN pip3 install urllib3
 RUN pip3 install awscli
 
 # Install havoc library
-RUN pip3 install havoc
+RUN pip3 install git+https://github.com/havocsh/havoc-pkg.git@$VERSION
 
 # Setup supervisord
 COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
