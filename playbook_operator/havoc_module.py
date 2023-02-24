@@ -552,7 +552,7 @@ class call_object():
             secret = self.args['secret']
             api_region = self.args['api_region']
             api_domain_name = self.args['api_domain_name']
-            self.__havoc_client = havoc.Connect(api_region, api_domain_name, api_key, secret)
+            self.__havoc_client = havoc.Connect(api_region, api_domain_name, api_key, secret, api_version=1)
         return self.__havoc_client
     
     @property
