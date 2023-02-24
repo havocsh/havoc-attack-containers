@@ -600,17 +600,9 @@ class call_object(ExecutionOrder, Action, Data, Local, Resource):
                     new_path = re.search('\d+/(.*)', path).group(1)
                     dot_path = re.sub('/', '.', new_path)
                     node_path = f'{section}.{dot_path}'
-                    print('creator 1:')
-                    print(node_path)
                     if node_path in execution_list:
-                        print('creator 2:')
-                        print(node_path)
                         execution_order, current_rule = super().get_exec_order(node_path)
-                        print('creator 3:')
-                        print(f'{execution_order}, {current_rule}')
                         if execution_order == current_rule:
-                            print('creator 4:')
-                            print(f'{execution_order}, {current_rule}')
                             execution_list.remove(node_path)
                             method, object_name = self.object_resolver(node_path)
                             json_value = json.dumps(value)
@@ -639,17 +631,9 @@ class call_object(ExecutionOrder, Action, Data, Local, Resource):
                     new_path = re.search('\d+/(.*)', path).group(1)
                     dot_path = re.sub('/', '.', new_path)
                     node_path = f'{section}.{dot_path}'
-                    print('destroyer 1:')
-                    print(node_path)
                     if node_path in execution_list:
-                        print('destroyer 2:')
-                        print(node_path)
                         execution_order, current_rule = super().get_exec_order(node_path)
-                        print('destroyer 3:')
-                        print(f'{execution_order}, {current_rule}')
                         if execution_order == current_rule:
-                            print('destroyer 4:')
-                            print(f'{execution_order}, {current_rule}')
                             execution_list.remove(node_path)
                             method, object_name = self.object_resolver(node_path)
                             value = {'destroy_all_resources': True}

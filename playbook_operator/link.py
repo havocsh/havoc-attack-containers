@@ -53,7 +53,7 @@ def get_commands_s3(client, deployment_name, playbook_name, command_list):
                 command_list.append(interaction)
                 try:
                     client.delete_object(
-                        Bucket=f'{deployment_name}-playbook',
+                        Bucket=f'{deployment_name}-playbooks',
                         Key=file_entry
                     )
                 except Exception as err:
