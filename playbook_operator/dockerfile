@@ -14,6 +14,7 @@ RUN pip3 install urllib3
 RUN pip3 install awscli
 RUN pip3 install python-hcl2
 RUN pip3 install dpath
+RUN pip3 install networkx[default]
 
 # Install havoc library
 RUN pip3 install git+https://github.com/havocsh/havoc-pkg.git@$VERSION
