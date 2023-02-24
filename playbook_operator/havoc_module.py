@@ -499,6 +499,7 @@ class Resource:
                 for k in object_parameters['listener'][0].keys():
                     listener_type = k
                 listener_args['listener_type'] = listener_type
+                listener_args['Name'] = listener_type
                 for k, v in object_parameters['listener'][0][listener_type][0].items():
                     listener_args[k] = v
                 create_listener_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'create_listener', instruct_args=listener_args)
