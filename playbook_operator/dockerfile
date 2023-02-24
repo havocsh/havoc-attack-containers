@@ -1,5 +1,5 @@
-ARG VERSION
 FROM ubuntu:20.04
+ARG VERSION
 
 # Install basic utils
 ENV DEBIAN_FRONTEND=noninteractive
