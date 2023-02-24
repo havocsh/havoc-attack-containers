@@ -69,12 +69,16 @@ class call_powershell_empire:
         else:
             output = {'outcome': 'failed', 'message': 'Missing listener_type', 'forward_log': 'False'}
             return output
+        if 'Name' not in self.args:
+            output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
+            return output
+        listener_name = self.args['Name']
         listener_args = copy.deepcopy(self.args)
         del listener_args['listener_type']
         create_listener_uri = f'{self.server_uri}api/listeners/{listener_type}?token={self.token}'
         create_listener_response = requests.post(create_listener_uri, json=listener_args, verify=False)
         if create_listener_response.status_code == 200:
-            get_listener_uri = f'{self.server_uri}api/listeners/{listener_type}?token={self.token}'
+            get_listener_uri = f'{self.server_uri}api/listeners/{listener_name}?token={self.token}'
             get_listener_response = requests.get(get_listener_uri, verify=False)
             listener = get_listener_response.json()['listeners']
             output = {'outcome': 'success', 'listener': listener, 'forward_log': 'True'}
@@ -84,12 +88,12 @@ class call_powershell_empire:
         return output
 
     def kill_listener(self):
-        if 'listener_type' in self.args:
-            listener_type = self.args['listener_type']
+        if 'Name' in self.args:
+            listener_name = self.args['Name']
         else:
-            output = {'outcome': 'failed', 'message': 'Missing listener_type', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
-        kill_listener_uri = f'{self.server_uri}api/listeners/{listener_type}?token={self.token}'
+        kill_listener_uri = f'{self.server_uri}api/listeners/{listener_name}?token={self.token}'
         kill_listener_response = requests.delete(kill_listener_uri, verify=False)
         if kill_listener_response.status_code == 200:
             output = {'outcome': 'success', 'forward_log': 'True'}
