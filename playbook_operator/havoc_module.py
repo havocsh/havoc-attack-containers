@@ -66,6 +66,7 @@ class ExecutionOrder:
 class Action:
 
     def __init__(self):
+        self.havoc_client = None
         self.action_dict = {
             'instruct_task': {},
             'download_from_workspace': {}, 
@@ -257,6 +258,7 @@ class Action:
 class Data:
     
     def __init__(self):
+        self.havoc_client = None
         self.data_dict = {'agents': {}, 'domains': {}, 'files': {}, 'nodes': {}, 'portgroups': {}, 'tasks': {}, 'task_types': {}, 'wait_for_c2': {}}
     
     def agents(self, object_name, action, **object_parameters):
@@ -392,6 +394,7 @@ class Local:
 class Resource:
     
     def __init__(self):
+        self.havoc_client = None
         self.resource_dict = {'file': {}, 'portgroup': {}, 'random_integer': {}, 'random_string': {}, 'task': {}}
     
     def file(self, object_name, action, **object_parameters):
@@ -524,9 +527,14 @@ class Resource:
             return dpath.get(self.resource_dict['task'], path)
 
 
-class call_object(ExecutionOrder, Action, Data, Local, Resource):
+class call_object():
 
     def __init__(self):
+        self.exec_order = ExecutionOrder()
+        self.action = Action()
+        self.data = Data()
+        self.local = Local()
+        self.resource = Resource()
         self.region = None
         self.deployment_name = None
         self.user_id = None
@@ -536,7 +544,6 @@ class call_object(ExecutionOrder, Action, Data, Local, Resource):
         self.end_time = None
         self.__havoc_client = None
         self.__aws_s3_client = None
-        super().__init__()
     
     @property
     def havoc_client(self):
@@ -564,29 +571,29 @@ class call_object(ExecutionOrder, Action, Data, Local, Resource):
         self.args = command_args
         self.end_time = end_time
         return True
-    
+
     def object_resolver(self, object):
         methods = {
-            'download_from_workspace': super().download_from_workspace,
-            'sync_to_workspace': super().sync_to_workspace,
-            'sync_from_workspace': super().sync_from_workspace,
-            'task_download_file': super().task_download_file,
-            'task_execute_command': super().task_execute_command,
-            'execute_agent_module': super().execute_agent_module,
-            'execute_agent_shell_command': super().execute_agent_shell_command,
-            'agents': super().agents,
-            'domains': super().domains,
-            'files': super().files,
-            'portgroups': super().portgroups,
-            'tasks': super().tasks,
-            'task_types': super().task_types,
-            'wait_for_c2': super().wait_for_c2,
-            'function': super().function,
-            'file': super().file,
-            'random_integer': super().random_integer,
-            'random_string': super().random_string,
-            'portgroup': super().portgroup,
-            'task': super().task
+            'download_from_workspace': self.action.download_from_workspace,
+            'sync_to_workspace': self.action.sync_to_workspace,
+            'sync_from_workspace': self.action.sync_from_workspace,
+            'task_download_file': self.action.task_download_file,
+            'task_execute_command': self.action.task_execute_command,
+            'execute_agent_module': self.action.execute_agent_module,
+            'execute_agent_shell_command': self.action.execute_agent_shell_command,
+            'agents': self.data.agents,
+            'domains': self.data.domains,
+            'files': self.data.files,
+            'portgroups': self.data.portgroups,
+            'tasks': self.data.tasks,
+            'task_types': self.data.task_types,
+            'wait_for_c2': self.data.wait_for_c2,
+            'function': self.local.function,
+            'file': self.resource.file,
+            'random_integer': self.resource.random_integer,
+            'random_string': self.resource.random_string,
+            'portgroup': self.resource.portgroup,
+            'task': self.resource.task
         }
         object_def = object.split('.')
         method_name=object_def[1]
@@ -601,7 +608,7 @@ class call_object(ExecutionOrder, Action, Data, Local, Resource):
                     dot_path = re.sub('/', '.', new_path)
                     node_path = f'{section}.{dot_path}'
                     if node_path in execution_list:
-                        execution_order, current_rule = super().get_exec_order(node_path)
+                        execution_order, current_rule = self.exec_order.get_exec_order(node_path)
                         if execution_order == current_rule:
                             execution_list.remove(node_path)
                             method, object_name = self.object_resolver(node_path)
@@ -622,7 +629,7 @@ class call_object(ExecutionOrder, Action, Data, Local, Resource):
                             else:
                                 send_response({'outcome': 'failed'}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
                                               operator_command, value, self.end_time)
-                            super().next_exec_rule(node_path)
+                            self.exec_order.next_exec_rule(node_path)
                         
     def destroyer(self, playbook_config, execution_list):
         while execution_list:
@@ -632,7 +639,7 @@ class call_object(ExecutionOrder, Action, Data, Local, Resource):
                     dot_path = re.sub('/', '.', new_path)
                     node_path = f'{section}.{dot_path}'
                     if node_path in execution_list:
-                        execution_order, current_rule = super().get_exec_order(node_path)
+                        execution_order, current_rule = self.exec_order.get_exec_order(node_path)
                         if execution_order == current_rule:
                             execution_list.remove(node_path)
                             method, object_name = self.object_resolver(node_path)
@@ -645,9 +652,13 @@ class call_object(ExecutionOrder, Action, Data, Local, Resource):
                             else:
                                 send_response({'outcome': 'failed'}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
                                               operator_command, value, self.end_time)
-                            super().prev_exec_rule(node_path)
+                            self.exec_order.prev_exec_rule(node_path)
 
     def execute_playbook(self):
+
+        self.action.havoc_client = self.havoc_client
+        self.data.havoc_client = self.havoc_client
+        self.resource.havoc_client = self.havoc_client
 
         def download_playbook():
             config_pointer = self.args['config_pointer']
@@ -732,14 +743,14 @@ class call_object(ExecutionOrder, Action, Data, Local, Resource):
         for node in DG.nodes:
             node_list.append(node)
         execution_order = clean_dependencies(get_node_dependencies(DG, node_list))
-        super().set_rules(execution_order, node_list)
+        self.exec_order.set_rules(execution_order, node_list)
         self.creator(playbook_config, node_list)
 
         node_list = []
         for node in DG.nodes:
             node_list.append(node)
         execution_order = clean_dependencies(get_node_dependencies(DG, node_list))
-        super().set_rules(execution_order, node_list)
+        self.exec_order.set_rules(execution_order, node_list)
         self.destroyer(playbook_config, node_list)
 
         output = {'outcome': 'success', 'message': 'playbook executed', 'forward_log': 'True'}
