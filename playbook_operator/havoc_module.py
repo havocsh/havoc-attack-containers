@@ -457,7 +457,7 @@ class Resource:
             ip_ranges = object_parameters['ip_ranges']
             ip_protocol = object_parameters['ip_protocol']
             port = object_parameters['port']
-            create_portgroup_response = self.havoc_client.create_portgroup(portgroup_name=portgroup_name, portgroup_description=f'Created by playbook: {playbook_name}')
+            create_portgroup_response = self.havoc_client.create_portgroup(portgroup_name=portgroup_name, portgroup_description=f'Created by playbook operator.')
             if not create_portgroup_response:
                 return 'resource_portgroup_create_failed'
             update_portgroup_response = self.havoc_client.update_portgroup_rule(portgroup_name=portgroup_name, portgroup_action='add', ip_ranges=ip_ranges, ip_protocol=ip_protocol, port=port)
