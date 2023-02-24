@@ -17,26 +17,20 @@ class HttpServer:
         self.host_info = [attack_ip, hostname] + local_ip
         return True
 
-    def start_server(self):
-        if 'listen_port' not in self.args:
-            output = {'outcome': 'failed', 'message': 'instruct_args must specify listen_port', 'forward_log': 'False'}
+    def create_listener(self):
+        if 'listener_type' not in self.args:
+            output = {'outcome': 'failed', 'message': 'instruct_args must specify listener_type', 'forward_log': 'False'}
             return output
-        listen_port = self.args['listen_port']
-        if not isinstance(listen_port, int):
-            output = {'outcome': 'failed', 'message': 'listen_port must be type int', 'forward_log': 'False'}
+        listener_type = self.args['listener_type']
+        if 'Port' not in self.args:
+            output = {'outcome': 'failed', 'message': 'instruct_args must specify Port', 'forward_log': 'False'}
+            return output
+        port = self.args['Port']
+        if not isinstance(port, int):
+            output = {'outcome': 'failed', 'message': 'Port must be type int', 'forward_log': 'False'}
             return output
 
-        if 'ssl' not in self.args:
-            output = {'outcome': 'failed', 'message': 'instruct_args must specify ssl', 'forward_log': 'False'}
-            return output
-        ssl = self.args['ssl']
-        if isinstance(ssl, bool):
-            if ssl:
-                ssl = 'true'
-            else:
-                ssl = 'false'
-
-        if ssl.lower() == 'true':
+        if listener_type == 'https':
             ssl_cert = Path('/opt/havoc/server-priv.key')
             if ssl_cert.is_file():
                 self.twisted_process = subprocess.Popen(
@@ -44,7 +38,7 @@ class HttpServer:
                         '/usr/local/bin/twistd',
                         '-no',
                         'web',
-                        f'--listen=ssl:{listen_port}'
+                        f'--listen=ssl:{port}'
                         ':privateKey=/opt/havoc/server-priv.key'
                         ':certKey=/opt/havoc/server-chain.pem',
                         '--path=/opt/havoc/shared/'
@@ -57,13 +51,16 @@ class HttpServer:
                 output = {'outcome': 'failed', 'message': 'missing certificate: run cert_gen first',
                           'forward_log': 'False'}
                 return output
-        else:
+        elif listener_type == 'http':
             self.twisted_process = subprocess.Popen(
-                ['/usr/local/bin/twistd', '-no', 'web', f'--listen=tcp:{listen_port}', '--path=/opt/havoc/shared/'],
+                ['/usr/local/bin/twistd', '-no', 'web', f'--listen=tcp:{port}', '--path=/opt/havoc/shared/'],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
+        else:
+            output = {'outcome': 'failed', 'message': 'listener_type must be http or https', 'forward_log': 'False'}
+            return output
         time.sleep(3)
         if self.twisted_process.poll():
             twisted_process_out = self.twisted_process.communicate()
@@ -74,12 +71,12 @@ class HttpServer:
             output = {'outcome': 'success', 'message': 'HTTP server started', 'forward_log': 'True'}
             return output
 
-    def stop_server(self):
+    def kill_listener(self):
         if not self.twisted_process:
-            output = {'outcome': 'failed', 'message': 'no server is running', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'no listener is running', 'forward_log': 'False'}
             return output
         self.twisted_process.terminate()
-        output = {'outcome': 'success', 'message': 'HTTP server stopped', 'forward_log': 'True'}
+        output = {'outcome': 'success', 'message': 'listener stopped', 'forward_log': 'True'}
         return output
 
     def cert_gen(self):

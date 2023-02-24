@@ -18,38 +18,41 @@ class CallExfilkit:
         self.host_info = [attack_ip, hostname] + local_ip
         return True
 
-    def start_http_exfil_server(self):
-        if 'listen_port' in self.args:
-            port = self.args['listen_port']
-        else:
-            output = {'outcome': 'failed', 'message': 'Missing listen_port', 'forward_log': 'False'}
+    def create_listener(self):
+        if 'listener_type' not in self.args:
+            output = {'outcome': 'failed', 'message': 'instruct_args must specify listener_type', 'forward_log': 'False'}
             return output
-        self.http_process = subprocess.Popen(
-            f'/HTTPUploadExfil/httpuploadexfil :{port} /opt/havoc/shared',
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=True,
-            cwd=r'/HTTPUploadExfil'
-        )
-        time.sleep(5)
-        if self.http_process.poll():
-            output = {'outcome': 'failed', 'message': 'http_exfil_server did not start, requested port may be in use', 'forward_log': 'False'}
+        listener_type = self.args['listener_type']
+        if 'Port' not in self.args:
+            output = {'outcome': 'failed', 'message': 'instruct_args must specify Port', 'forward_log': 'False'}
             return output
+        port = self.args['Port']
+        if listener_type == 'http':
+            self.http_process = subprocess.Popen(
+                f'/HTTPUploadExfil/httpuploadexfil :{port} /opt/havoc/shared',
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=True,
+                cwd=r'/HTTPUploadExfil'
+            )
+            time.sleep(5)
+            if self.http_process.poll():
+                output = {'outcome': 'failed', 'message': 'listener did not start, requested port may be in use', 'forward_log': 'False'}
+                return output
+            else:
+                output = {'outcome': 'success', 'message': 'listener is running', 'forward_log': 'True'}
+                return output
         else:
-            output = {'outcome': 'success', 'message': 'http_exfil_server is running', 'forward_log': 'True'}
+            output = {'outcome': 'failed', 'message': 'listener_type must be http', 'forward_log': 'False'}
             return output
 
-    def stop_http_exfil_server(self):
+    def kill_listener(self):
         if not self.http_process:
-            output = {'outcome': 'failed', 'message': 'no http_exfil_server is running', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'no listener is running', 'forward_log': 'False'}
             return output
         os.kill(self.http_process.pid, signal.SIGTERM)
-        if os.path.isfile('/HTTPUploadExfil/HTTPUploadExfil.key'):
-            os.remove('/HTTPUploadExfil/HTTPUploadExfil.key')
-        if os.path.isfile('/HTTPUploadExfil/HTTPUploadExfil.csr'):
-            os.remove('/HTTPUploadExfil/HTTPUploadExfil.csr')
-        output = {'outcome': 'success', 'message': 'http_exfil_server stopped', 'forward_log': 'True'}
+        output = {'outcome': 'success', 'message': 'listener stopped', 'forward_log': 'True'}
         return output
     
     def cert_gen(self):

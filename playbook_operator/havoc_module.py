@@ -67,15 +67,34 @@ class Action:
 
     def __init__(self):
         self.action_dict = {
+            'instruct_task': {},
             'download_from_workspace': {}, 
             'sync_to_workspace': {}, 
             'sync_from_workspace': {}, 
-            'node_download_file': {}, 
-            'node_execute_command': {}, 
+            'task_download_file': {}, 
+            'task_execute_command': {}, 
             'execute_agent_module': {},
             'execute_agent_shell_command': {}
         }
 
+    def instruct_task(self, object_name, action, **object_parameters):
+        if action == 'create':
+            task_name = object_parameters['task_name']
+            instruct_command = object_parameters['instruct_command']
+            instruct_args = object_parameters['instruct_args']
+            interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+            if not interact_with_task_response:
+                return 'action_instruct_task_create_failed'
+            self.action_dict['instruct_task'][object_name] = {key: value for key, value in object_parameters.items()}
+            return 'action_instruct_task_create_completed'
+        if action == 'delete':
+            del self.action_dict['instruct_task'][object_name]
+            return 'action_instruct_task_delete_completed'
+        if action == 'read':
+            new_path = re.search('action.instruct_task.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.action_dict['instruct_task'], path)
+        
     def download_from_workspace(self, object_name, action, **object_parameters):
         if action == 'create':
             task_name = object_parameters['task_name']
@@ -134,54 +153,54 @@ class Action:
             path = re.sub('\.', '/', new_path.group(1))
             return dpath.get(self.action_dict['sync_from_workspace'], path)
     
-    def node_download_file(self, object_name, action, **object_parameters):
+    def task_download_file(self, object_name, action, **object_parameters):
         if action == 'create':
-            node_name = object_parameters['node_name']
+            task_name = object_parameters['task_name']
             url = object_parameters['url']
             file_name = object_parameters['file_name']
-            instruct_command = 'node_download_file'
+            instruct_command = 'task_download_file'
             instruct_args = {'url': url, 'file_name': file_name}
-            interact_with_node_response = self.havoc_client.interact_with_node(node_name, instruct_command, instruct_args=instruct_args)
-            if not interact_with_node_response:
-                return 'action_node_download_file_create_failed'
-            self.action_dict['node_download_file'][object_name] = {key: value for key, value in interact_with_node_response.items()}
-            return 'action_node_download_file_create_completed'
+            interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+            if not interact_with_task_response:
+                return 'action_task_download_file_create_failed'
+            self.action_dict['task_download_file'][object_name] = {key: value for key, value in interact_with_task_response.items()}
+            return 'action_task_download_file_create_completed'
         if action == 'delete':
-            node_name = object_parameters['node_name']
+            task_name = object_parameters['task_name']
             file_name = object_parameters['file_name']
             instruct_command = 'del'
             instruct_args = {'file_name': file_name}
-            interact_with_node_response = self.havoc_client.interact_with_node(node_name, instruct_command, instruct_args=instruct_args)
-            del self.action_dict['node_download_file'][object_name]
-            return 'action_node_download_file_delete_completed'
+            interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+            del self.action_dict['task_download_file'][object_name]
+            return 'action_task_download_file_delete_completed'
         if action == 'read':
-            new_path = re.search('action.node_download_file.(.*)', object_parameters['path'])
+            new_path = re.search('action.task_download_file.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.action_dict['node_download_file'], path)
+            return dpath.get(self.action_dict['task_download_file'], path)
     
-    def node_execute_command(self, object_name, action, **object_parameters):
+    def task_execute_command(self, object_name, action, **object_parameters):
         if action == 'create':
-            node_name = object_parameters['node_name']
+            task_name = object_parameters['task_name']
             command = object_parameters['command']
-            instruct_command = 'node_execute_command'
+            instruct_command = 'task_execute_command'
             instruct_args = {'command': command}
-            interact_with_node_response = self.havoc_client.interact_with_node(node_name, instruct_command, instruct_args=instruct_args)
-            if not interact_with_node_response:
-                return 'action_node_execute_command_create_failed'
-            self.action_dict['node_execute_command'][object_name] = {key: value for key, value in interact_with_node_response.items()}
-            return 'action_node_execute_command_create_completed'
+            interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+            if not interact_with_task_response:
+                return 'action_task_execute_command_create_failed'
+            self.action_dict['task_execute_command'][object_name] = {key: value for key, value in interact_with_task_response.items()}
+            return 'action_task_execute_command_create_completed'
         if action == 'delete':
-            node_name = object_parameters['node_name']
+            task_name = object_parameters['task_name']
             command = object_parameters['command']
             instruct_command = 'kill_command'
             instruct_args = {'command': command}
-            interact_with_node_response = self.havoc_client.interact_with_node(node_name, instruct_command, instruct_args=instruct_args)
-            del self.action_dict['node_execute_command'][object_name]
-            return 'action_node_execute_command_delete_completed'
+            interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+            del self.action_dict['task_execute_command'][object_name]
+            return 'action_task_execute_command_delete_completed'
         if action == 'read':
-            new_path = re.search('action.node_execute_command.(.*)', object_parameters['path'])
+            new_path = re.search('action.task_execute_command.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.action_dict['node_execute_command'], path)
+            return dpath.get(self.action_dict['task_execute_command'], path)
     
     def execute_agent_module(self, object_name, action, **object_parameters):
         if action == 'create':
@@ -285,21 +304,6 @@ class Data:
             path = re.sub('\.', '/', new_path.group(1))
             return dpath.get(self.data_dict['files'], path)
     
-    def nodes(self, object_name, action, **object_parameters):
-        if action == 'create':
-            get_node_response = self.havoc_client.get_node(**object_parameters)
-            if not get_node_response:
-                return 'data_nodes_retrieve_failed'
-            self.data_dict['nodes'][object_name] = {key: value for key, value in get_node_response.items()}
-            return 'data_nodes_retrieved'
-        if action == 'delete':
-            del self.data_dict['nodes'][object_name]
-            return 'data_nodes_deleted'
-        if action == 'read':
-            new_path = re.search('data.nodes.(.*)', object_parameters['path'])
-            path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.data_dict['nodes'], path)
-    
     def portgroups(self, object_name, action, **object_parameters):
         if action == 'create':
             get_portgroup_response = self.havoc_client.get_portgroup(**object_parameters)
@@ -398,7 +402,7 @@ class Resource:
             if not create_file_response:
                 return 'resource_file_create_failed'
             self.resource_dict['file'][object_name] = {key: value for key, value in object_parameters.items()}
-            return 'resource_file_created'
+            return self.resource_dict['file'][object_name]
         if action == 'delete':
             delete_file_response = self.havoc_client.delete_file(**object_parameters)
             if not delete_file_response:
@@ -416,7 +420,7 @@ class Resource:
             length = object_parameters['length']
             result = ''.join(random.choice(string.digits) for i in range(length))
             self.resource_dict['random_integer'][object_name]['result'] = result
-            return 'resource_random_integer_created'
+            return self.resource_dict['random_integer'][object_name]
         if action == 'delete':
             del self.resource_dict['random_integer'][object_name]
             return 'resource_random_integer_deleted'
@@ -435,7 +439,7 @@ class Resource:
                 string_seed = string.ascii_letters
             result = ''.join(random.choice(string_seed) for i in range(length))
             self.resource_dict['random_string'][object_name]['result'] = result
-            return 'resource_random_string_created'
+            return self.resource_dict['random_string'][object_name]
         if action == 'delete':
             del self.resource_dict['random_string'][object_name]
             return 'resource_random_string_deleted'
@@ -458,7 +462,7 @@ class Resource:
                 return 'resource_portgroup_update_failed'
             get_portgroup_response = self.havoc_client.get_portgroup(portgroup_name=portgroup_name)
             self.resource_dict['portgroup'][object_name] = {key: value for key, value in get_portgroup_response.items()}
-            return 'resource_portgroup_created'
+            return self.resource_dict['portgroup'][object_name]
         if action == 'delete':
             delete_portgroup_response = self.havoc_client.delete_portgroup(portgroup_name=portgroup_name)
             if not delete_portgroup_response:
@@ -506,7 +510,7 @@ class Resource:
                 if not create_stager_response:
                     return 'resource_stager_create_failed'
                 self.resource_dict['task'][object_name] = {key: value for key, value in create_stager_response['stager'].items()}
-            return 'resource_task_created'
+            return self.resource_dict['task'][object_name]
         if action == 'delete':
             task_name = self.resource_dict['task'][object_name]['task_name']
             task_shutdown_response = self.havoc_client.task_shutdown(task_name)
@@ -566,14 +570,13 @@ class call_object(ExecutionOrder, Action, Data, Local, Resource):
             'download_from_workspace': super().download_from_workspace,
             'sync_to_workspace': super().sync_to_workspace,
             'sync_from_workspace': super().sync_from_workspace,
-            'node_download_file': super().node_download_file,
-            'node_execute_command': super().node_execute_command,
+            'task_download_file': super().task_download_file,
+            'task_execute_command': super().task_execute_command,
             'execute_agent_module': super().execute_agent_module,
             'execute_agent_shell_command': super().execute_agent_shell_command,
             'agents': super().agents,
             'domains': super().domains,
             'files': super().files,
-            'nodes': super().nodes,
             'portgroups': super().portgroups,
             'tasks': super().tasks,
             'task_types': super().task_types,
@@ -622,11 +625,11 @@ class call_object(ExecutionOrder, Action, Data, Local, Resource):
                             method_result = method(object_name, 'create', **value)
                             operator_command = f'create {node_path}'
                             if 'failed' not in method_result:
-                                send_response({'outcome': 'success'}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
-                                            operator_command, value, self.end_time)
+                                send_response({'outcome': 'success', 'details': method_result}, 'True', self.user_id, self.playbook_name, 
+                                              self.playbook_operator_version, operator_command, value, self.end_time)
                             else:
                                 send_response({'outcome': 'failed'}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
-                                            operator_command, value, self.end_time)
+                                              operator_command, value, self.end_time)
                             super().next_exec_rule(node_path)
                         
     def destroyer(self, playbook_config, execution_list):
@@ -654,10 +657,10 @@ class call_object(ExecutionOrder, Action, Data, Local, Resource):
                             operator_command = f'delete {node_path}'
                             if 'failed' not in method_result:
                                 send_response({'outcome': 'success'}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
-                                            operator_command, value, self.end_time)
+                                              operator_command, value, self.end_time)
                             else:
                                 send_response({'outcome': 'failed'}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
-                                            operator_command, value, self.end_time)
+                                              operator_command, value, self.end_time)
                             super().prev_exec_rule(node_path)
 
     def execute_playbook(self):
@@ -712,7 +715,12 @@ class call_object(ExecutionOrder, Action, Data, Local, Resource):
             return [{"rule_name": node, "exec_order": min(depth) + abs(max_depth)} for node, depth in dep_depth_map]
 
         playbook_config_source = download_playbook()
-        playbook_config = hcl2.load(playbook_config_source)
+        try:
+            playbook_config = json.loads(playbook_config_source)
+        except:
+            pass
+        if not playbook_config:
+            playbook_config = hcl2.load(playbook_config_source)
 
         DG = nx.DiGraph()
         action_blocks = None

@@ -12,6 +12,8 @@ RUN pip3 install Twisted
 RUN pip3 install requests
 RUN pip3 install urllib3
 RUN pip3 install awscli
+RUN pip3 install python-hcl2
+RUN pip3 install dpath
 
 # Install havoc library
 RUN pip3 install git+https://github.com/havocsh/havoc-pkg.git@$VERSION
