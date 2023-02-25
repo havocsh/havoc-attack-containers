@@ -505,7 +505,7 @@ class Resource:
                 create_listener_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'create_listener', instruct_args=listener_args)
                 if not create_listener_response:
                     return 'resource_listener_create_failed'
-                self.resource_dict['task'][object_name] = {key: value for key, value in create_listener_response['listener'][0].items()}
+                self.resource_dict['task'][object_name] = {key: value for key, value in create_listener_response['listener'].items()}
             if 'stager' in object_parameters:
                 stager_args = {}
                 for k, v in object_parameters['stager'][0].items():

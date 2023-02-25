@@ -27,8 +27,11 @@ class HttpServer:
             return output
         port = self.args['Port']
         if not isinstance(port, int):
-            output = {'outcome': 'failed', 'message': 'Port must be type int', 'forward_log': 'False'}
-            return output
+            try:
+                port = int(port)
+            except:
+                output = {'outcome': 'failed', 'message': 'Port must be a number', 'forward_log': 'False'}
+                return output
 
         if listener_type == 'https':
             ssl_cert = Path('/opt/havoc/server-priv.key')

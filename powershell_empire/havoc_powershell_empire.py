@@ -80,7 +80,7 @@ class call_powershell_empire:
         if create_listener_response.status_code == 200:
             get_listener_uri = f'{self.server_uri}api/listeners/{listener_name}?token={self.token}'
             get_listener_response = requests.get(get_listener_uri, verify=False)
-            listener = get_listener_response.json()['listeners']
+            listener = get_listener_response.json()['listeners'][0]
             output = {'outcome': 'success', 'listener': listener, 'forward_log': 'True'}
         else:
             message = create_listener_response.json()
