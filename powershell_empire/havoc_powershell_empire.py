@@ -131,10 +131,17 @@ class call_powershell_empire:
         if 'StagerName' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing StagerName', 'forward_log': 'False'}
             return output
+        stager_name = self.args['StagerName']
         create_stager_uri = f'{self.server_uri}api/stagers?token={self.token}'
         create_stager_response = requests.post(create_stager_uri, json=self.args, verify=False)
         if create_stager_response.status_code == 200:
-            stager = create_stager_response.json()
+            stager = {}
+            stager_details = create_stager_response.json()[stager_name]
+            for k, v in stager_details.items():
+                if 'Value' in v:
+                    stager[k] = v['Value']
+                else:
+                    stager[k] = v
             output = {'outcome': 'success', 'stager': stager, 'forward_log': 'True'}
         else:
             output = {'outcome': 'failed', 'message': create_stager_response.json(), 'forward_log': 'False'}
