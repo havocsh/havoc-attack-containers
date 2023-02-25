@@ -134,7 +134,7 @@ class call_powershell_empire:
         create_stager_uri = f'{self.server_uri}api/stagers?token={self.token}'
         create_stager_response = requests.post(create_stager_uri, json=self.args, verify=False)
         if create_stager_response.status_code == 200:
-            stager = create_stager_response.json()['launcher']
+            stager = create_stager_response.json()
             output = {'outcome': 'success', 'stager': stager, 'forward_log': 'True'}
         else:
             output = {'outcome': 'failed', 'message': create_stager_response.json(), 'forward_log': 'False'}

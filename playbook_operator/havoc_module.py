@@ -513,7 +513,7 @@ class Resource:
                 create_stager_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'create_stager', instruct_args=stager_args)
                 if not create_stager_response:
                     return 'resource_stager_create_failed'
-                self.resource_dict['task'][object_name] = {key: value for key, value in create_stager_response['launcher'].items()}
+                self.resource_dict['task'][object_name] = {key: value for key, value in create_stager_response['stager'].items()}
             return self.resource_dict['task'][object_name]
         if action == 'delete':
             task_name = self.resource_dict['task'][object_name]['task_name']
