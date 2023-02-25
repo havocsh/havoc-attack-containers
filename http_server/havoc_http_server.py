@@ -71,7 +71,7 @@ class HttpServer:
             output = {'outcome': 'failed', 'message': twisted_message, 'forward_log': 'False'}
             return output
         else:
-            output = {'outcome': 'success', 'message': 'HTTP server started', 'forward_log': 'True'}
+            output = {'outcome': 'success', 'listener': {'listener_type': listener_type, 'Port': port}, 'forward_log': 'True'}
             return output
 
     def kill_listener(self):

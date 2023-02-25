@@ -41,7 +41,7 @@ class CallExfilkit:
                 output = {'outcome': 'failed', 'message': 'listener did not start, requested port may be in use', 'forward_log': 'False'}
                 return output
             else:
-                output = {'outcome': 'success', 'message': 'listener is running', 'forward_log': 'True'}
+                output = {'outcome': 'success', 'listener': {'listener_type': listener_type, 'Port': port}, 'forward_log': 'True'}
                 return output
         else:
             output = {'outcome': 'failed', 'message': 'listener_type must be http', 'forward_log': 'False'}
