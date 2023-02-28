@@ -179,13 +179,13 @@ def file_transfer_http(rt, sync_direction, file_name):
 
 
 def send_response(rt, task_response, forward_log, user_id, task_name, task_context, task_type, task_version, 
-                  instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip, local_ip, end_time):
+                  instruct_user_id, instruct_instance, instruct_command, instruct_args, public_ip, local_ip, end_time):
     stime = datetime.now(timezone.utc).strftime('%s')
     output = {
         'instruct_command_output': task_response, 'user_id': user_id, 'task_name': task_name,
         'task_context': task_context, 'task_type': task_type, 'task_version': task_version,
         'instruct_user_id': instruct_user_id, 'instruct_instance': instruct_instance, 'instruct_command': instruct_command,
-        'instruct_args': instruct_args, 'attack_ip': attack_ip, 'local_ip': local_ip, 'end_time': end_time, 
+        'instruct_args': instruct_args, 'public_ip': public_ip, 'local_ip': local_ip, 'end_time': end_time, 
         'forward_log': forward_log, 'timestamp': stime
     }
     if rt.check:
@@ -196,7 +196,7 @@ def send_response(rt, task_response, forward_log, user_id, task_name, task_conte
 
 @inlineCallbacks
 def action(deployment_name, user_id, task_type, task_version, task_commands, task_name, task_context, rt, end_time, command_list,
-           attack_ip, hostname, local_ip):
+           public_ip, hostname, local_ip):
     metasploit = {}
     current_sessions = []
 
@@ -233,7 +233,7 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
                     response_kv = ['outcome', 'success']
                 send_response(rt, {response_kv[0]: response_kv[1], 'local_directory_contents': file_list},
                               'True', user_id, task_name, task_context, task_type, task_version, instruct_user_id,
-                              instruct_instance, instruct_command, instruct_args, attack_ip, local_ip, end_time)
+                              instruct_instance, instruct_command, instruct_args, public_ip, local_ip, end_time)
             elif instruct_command == 'ls':
                 file_list = []
                 for root, subdirs, files in os.walk('/opt/havoc/shared'):
@@ -241,7 +241,7 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
                         file_list.append(filename)
                 send_response(rt, {'outcome': 'success', 'local_directory_contents': file_list}, 'False',
                               user_id, task_name, task_context, task_type, task_version, instruct_user_id, 
-                              instruct_instance, instruct_command, instruct_args, attack_ip, local_ip, end_time)
+                              instruct_instance, instruct_command, instruct_args, public_ip, local_ip, end_time)
             elif instruct_command == 'del':
                 if 'file_name' in instruct_args:
                     file_name = instruct_args['file_name']
@@ -250,15 +250,15 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
                         os.remove(path)
                         send_response(rt, {'outcome': 'success'}, 'True', user_id, task_name, task_context, task_type,
                                       task_version, instruct_user_id, instruct_instance, instruct_command, instruct_args,
-                                      attack_ip, local_ip, end_time)
+                                      public_ip, local_ip, end_time)
                     else:
                         send_response(rt, {'outcome': 'failed', 'message': 'File not found'}, 'False', user_id,
                                       task_name, task_context, task_type, task_version, instruct_user_id, instruct_instance,
-                                      instruct_command, instruct_args, attack_ip, local_ip, end_time)
+                                      instruct_command, instruct_args, public_ip, local_ip, end_time)
                 else:
                     send_response(rt, {'outcome': 'failed', 'message': 'Missing file_name'}, 'False',
                                   user_id, task_name, task_context, task_type, task_version, instruct_user_id,
-                                  instruct_instance, instruct_command, instruct_args, attack_ip, local_ip, end_time)
+                                  instruct_instance, instruct_command, instruct_args, public_ip, local_ip, end_time)
             elif instruct_command == 'sync_to_workspace':
                 if not rt.check:
                     file_list = []
@@ -271,7 +271,7 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
                     file_list = sync_workspace_http(rt, 'sync_to_workspace')
                 send_response(rt, {'outcome': 'success', 'local_directory_contents': file_list}, 'False', user_id,
                               task_name, task_context, task_type, task_version, instruct_user_id, instruct_instance, 
-                              instruct_command, instruct_args, attack_ip, local_ip, end_time)
+                              instruct_command, instruct_args, public_ip, local_ip, end_time)
             elif instruct_command == 'upload_to_workspace':
                 if 'file_name' in instruct_args:
                     file_name = instruct_args['file_name']
@@ -285,15 +285,15 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
                             file_transfer_http(rt, 'upload_to_workspace', file_name)
                         send_response(rt, {'outcome': 'success'}, 'True', user_id, task_name, task_context, task_type,
                                       task_version, instruct_user_id, instruct_instance, instruct_command, instruct_args,
-                                      attack_ip, local_ip, end_time)
+                                      public_ip, local_ip, end_time)
                     else:
                         send_response(rt, {'outcome': 'failed', 'message': 'File not found'}, 'False', user_id,
                                       task_name, task_context, task_type, task_version, instruct_user_id, instruct_instance,
-                                      instruct_command, instruct_args, attack_ip, local_ip, end_time)
+                                      instruct_command, instruct_args, public_ip, local_ip, end_time)
                 else:
                     send_response(rt, {'outcome': 'failed', 'message': 'Missing file_name'}, 'False',
                                   user_id, task_name, task_context, task_type, task_version, instruct_user_id,
-                                  instruct_instance, instruct_command, instruct_args, attack_ip, local_ip, end_time)
+                                  instruct_instance, instruct_command, instruct_args, public_ip, local_ip, end_time)
             elif instruct_command == 'download_from_workspace':
                 if 'file_name' in instruct_args:
                     file_name = instruct_args['file_name']
@@ -311,19 +311,19 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
                     if file_not_found:
                         send_response(rt, {'outcome': 'failed', 'message': 'File not found'}, 'False', user_id,
                                       task_name, task_context, task_type, task_version, instruct_user_id, instruct_instance,
-                                      instruct_command, instruct_args, attack_ip, local_ip, end_time)
+                                      instruct_command, instruct_args, public_ip, local_ip, end_time)
                     else:
                         send_response(rt, {'outcome': 'success'}, 'True', user_id, task_name, task_context, task_type,
                                       task_version, instruct_user_id, instruct_instance, instruct_command, instruct_args,
-                                      attack_ip, local_ip, end_time)
+                                      public_ip, local_ip, end_time)
                 else:
                     send_response(rt, {'outcome': 'failed', 'message': 'Missing file_name'}, 'False', user_id, task_name,
                                   task_context, task_type, task_version, instruct_user_id, instruct_instance, instruct_command,
-                                  instruct_args, attack_ip, local_ip, end_time)
+                                  instruct_args, public_ip, local_ip, end_time)
             elif instruct_command == 'session_status_monitor':
                 metasploit[instruct_instance] = havoc_metasploit.call_msf(deployment_name)
                 instruct_args = {'current_sessions': current_sessions}
-                metasploit[instruct_instance].set_args(instruct_args, attack_ip, hostname, local_ip)
+                metasploit[instruct_instance].set_args(instruct_args, public_ip, hostname, local_ip)
                 call_session_status_monitor = metasploit[instruct_instance].session_status_monitor()
                 new_sessions = call_session_status_monitor['new_sessions']
                 dead_sessions = call_session_status_monitor['dead_sessions']
@@ -336,7 +336,7 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
                         new_session_response[k] = v
                     send_response(rt, new_session_response, 'True', user_id, task_name, task_context, task_type,
                                   task_version, instruct_user_id, instruct_instance, instruct_command, {'no_args': 'True'},
-                                  attack_ip, local_ip, end_time)
+                                  public_ip, local_ip, end_time)
                 for dead_session in dead_sessions:
                     m = havoc_metasploit.MetasploitParser(dead_session)
                     dead_session_parsed = m.metasploit_parser()
@@ -345,7 +345,7 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
                         dead_session_response[k] = v
                     send_response(rt, dead_session_response, 'True', user_id, task_name, task_context, task_type,
                                   task_version, instruct_user_id, instruct_instance, instruct_command, {'no_args': 'True'},
-                                  attack_ip, local_ip, end_time)
+                                  public_ip, local_ip, end_time)
                     new_current_sessions = []
                     for session in current_sessions:
                         if dead_session['session_id'] != session['session_id']:
@@ -354,13 +354,13 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
             elif instruct_command == 'terminate' or shutdown:
                 send_response(rt, {'outcome': 'success', 'status': 'terminating'}, 'True', user_id, task_name,
                               task_context, task_type, task_version, instruct_user_id, instruct_instance, instruct_command,
-                              instruct_args, attack_ip, local_ip, end_time)
+                              instruct_args, public_ip, local_ip, end_time)
                 subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
             else:
                 if instruct_instance not in metasploit:
                     metasploit[instruct_instance] = havoc_metasploit.call_msf(deployment_name)
                 if instruct_command in task_commands:
-                    metasploit[instruct_instance].set_args(instruct_args, attack_ip, hostname, local_ip)
+                    metasploit[instruct_instance].set_args(instruct_args, public_ip, hostname, local_ip)
                     method = getattr(metasploit[instruct_instance], instruct_command)
                     call_method = method()
                 else:
@@ -375,7 +375,7 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
                 m = havoc_metasploit.MetasploitParser(call_method)
                 task_response = m.metasploit_parser()
                 send_response(rt, task_response, forward_log, user_id, task_name, task_context, task_type, task_version,
-                              instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip, local_ip,
+                              instruct_user_id, instruct_instance, instruct_command, instruct_args, public_ip, local_ip,
                               end_time)
             command_list.remove(c)
         yield sleep(1)
@@ -409,7 +409,7 @@ def main():
     secret = None
     api_domain_name = None
     api_region = None
-    attack_ip = None
+    public_ip = None
 
     # Setup vars
     deployment_name = os.environ['DEPLOYMENT_NAME']
@@ -451,7 +451,7 @@ def main():
     # Get public IP
     try:
         r = requests.get('http://checkip.amazonaws.com/', timeout=10)
-        attack_ip = r.text.rstrip()
+        public_ip = r.text.rstrip()
     except requests.ConnectionError:
         print('Public IP check failed. Exiting...')
         subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
@@ -461,7 +461,7 @@ def main():
     if rt.check:
         try:
             h = havoc.Connect(rt.api_region, rt.api_domain_name, rt.api_key, rt.secret)
-            h.register_task(task_name, task_context, task_type, task_version, attack_ip, local_ip)
+            h.register_task(task_name, task_context, task_type, task_version, public_ip, local_ip)
         except Exception as e:
             print(f'Remote task registration failed with error:\n{e}\nExiting...')
             subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
@@ -472,7 +472,7 @@ def main():
     # Setup coroutines
     get_command_obj(region, deployment_name, task_name, rt, command_list, user_id)
     action(deployment_name, user_id, task_type, task_version, task_commands, task_name, task_context, rt, end_time, command_list,
-           attack_ip, hostname, local_ip)
+           public_ip, hostname, local_ip)
 
 
 if __name__ == "__main__":

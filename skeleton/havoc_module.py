@@ -5,9 +5,9 @@ class call_object:
         self.host_info = None
         self.results = None
 
-    def set_args(self, args, attack_ip, hostname, local_ip):
+    def set_args(self, args, public_ip, hostname, local_ip):
         self.args = args
-        self.host_info = [attack_ip, hostname] + local_ip
+        self.host_info = [public_ip, hostname] + local_ip
         return True
 
     def echo(self):
