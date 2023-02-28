@@ -259,7 +259,17 @@ class Data:
     
     def __init__(self):
         self.havoc_client = None
-        self.data_dict = {'agents': {}, 'domains': {}, 'files': {}, 'nodes': {}, 'portgroups': {}, 'tasks': {}, 'task_types': {}, 'wait_for_c2': {}}
+        self.data_dict = {
+            'agents': {},
+            'domains': {},
+            'files': {},
+            'listeners': {},
+            'nodes': {},
+            'portgroups': {},
+            'tasks': {},
+            'task_types': {},
+            'wait_for_c2': {}
+        }
     
     def agents(self, object_name, action, **object_parameters):
         if action == 'create':
@@ -306,6 +316,21 @@ class Data:
             path = re.sub('\.', '/', new_path.group(1))
             return dpath.get(self.data_dict['files'], path)
     
+    def listeners(self, object_name, action, **object_parameters):
+        if action == 'create':
+            get_listener_response = self.havoc_client.get_listener(**object_parameters)
+            if not get_listener_response:
+                return 'data_listeners_retrieve_failed'
+            self.data_dict['listeners'][object_name] = {key: value for key, value in get_listener_response.items()}
+            return 'data_listeners_retrieved'
+        if action == 'delete':
+            del self.data_dict['listeners'][object_name]
+            return 'data_listeners_deleted'
+        if action == 'read':
+            new_path = re.search('data.listeners.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.data_dict['listeners'], path)
+
     def portgroups(self, object_name, action, **object_parameters):
         if action == 'create':
             get_portgroup_response = self.havoc_client.get_portgroup(**object_parameters)
@@ -395,7 +420,7 @@ class Resource:
     
     def __init__(self):
         self.havoc_client = None
-        self.resource_dict = {'file': {}, 'portgroup': {}, 'random_integer': {}, 'random_string': {}, 'task': {}}
+        self.resource_dict = {'file': {}, 'listener': {}, 'portgroup': {}, 'random_integer': {}, 'random_string': {}, 'task': {}}
     
     def file(self, object_name, action, **object_parameters):
         if action == 'create':
@@ -417,6 +442,43 @@ class Resource:
             path = re.sub('\.', '/', new_path.group(1))
             return dpath.get(self.resource_dict['file'], path)
     
+    def listener(self, object_name, action, **object_parameters):
+        if action == 'create':
+            listener_name = object_parameters['listener_name']
+            listener_type = object_parameters['listener_type']
+            listener_port = object_parameters['listener_port']
+            task_name = object_parameters['task_name']
+            portgroups = object_parameters['portgroups']
+            host_name = None
+            domain_name = None
+            if 'host_name' in object_parameters and 'domain_name' in object_parameters:
+                host_name = object_parameters['host_name']
+                domain_name = object_parameters['domain_name']
+            create_listener_response = self.havoc_client.create_listener(
+                listener_name=listener_name,
+                listener_type=listener_type,
+                listener_port=listener_port,
+                task_name=task_name,
+                portgroups=portgroups,
+                host_name=host_name,
+                domain_name=domain_name
+            )
+            if not create_listener_response:
+                return 'resource_listener_create_failed'
+            self.resource_dict['listeners'][object_name] = {key: value for key, value in create_listener_response.items()}
+            return self.resource_dict['listeners'][object_name]
+        if action == 'delete':
+            listener_name = self.resource_dict['listener'][object_name]['listener_name']
+            delete_listener_response = self.havoc_client.delete_listener(listener_name=listener_name)
+            if not delete_listener_response:
+                return 'resource_listener_delete_failed'
+            del self.resource_dict['listener'][object_name]
+            return 'resource_listener_deleted'
+        if action == 'read':
+            new_path = re.search('resource.listener.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.resource_dict['listener'], path)
+
     def random_integer(self, object_name, action, **object_parameters):
         if action == 'create':
             self.resource_dict['random_integer'][object_name] = {key: value for key, value in object_parameters.items()}
@@ -467,6 +529,7 @@ class Resource:
             self.resource_dict['portgroup'][object_name] = {key: value for key, value in get_portgroup_response.items()}
             return self.resource_dict['portgroup'][object_name]
         if action == 'delete':
+            portgroup_name = self.resource_dict['portgroup'][object_name]['portgroup_name']
             delete_portgroup_response = self.havoc_client.delete_portgroup(portgroup_name=portgroup_name)
             if not delete_portgroup_response:
                 return 'resource_portgroup_delete_failed'
@@ -585,12 +648,14 @@ class call_object():
             'agents': self.data.agents,
             'domains': self.data.domains,
             'files': self.data.files,
+            'listeners': self.data.listeners,
             'portgroups': self.data.portgroups,
             'tasks': self.data.tasks,
             'task_types': self.data.task_types,
             'wait_for_c2': self.data.wait_for_c2,
             'function': self.local.function,
             'file': self.resource.file,
+            'listener': self.resource.listener,
             'random_integer': self.resource.random_integer,
             'random_string': self.resource.random_string,
             'portgroup': self.resource.portgroup,
