@@ -429,6 +429,9 @@ class Resource:
             create_file_response = self.havoc_client.create_file(file_name, file_contents)
             if not create_file_response:
                 return 'resource_file_create_failed'
+            if create_file_response['outcome'] != 'success':
+                print(create_file_response)
+                return 'resource_file_create_failed'
             self.resource_dict['file'][object_name] = {key: value for key, value in object_parameters.items()}
             return self.resource_dict['file'][object_name]
         if action == 'delete':
@@ -464,6 +467,9 @@ class Resource:
                 domain_name=domain_name
             )
             if not create_listener_response:
+                return 'resource_listener_create_failed'
+            if create_listener_response['outcome'] != 'success':
+                print(create_listener_response)
                 return 'resource_listener_create_failed'
             self.resource_dict['listeners'][object_name] = {key: value for key, value in create_listener_response.items()}
             return self.resource_dict['listeners'][object_name]
@@ -522,8 +528,14 @@ class Resource:
             create_portgroup_response = self.havoc_client.create_portgroup(portgroup_name=portgroup_name, portgroup_description=f'Created by playbook operator.')
             if not create_portgroup_response:
                 return 'resource_portgroup_create_failed'
+            if create_portgroup_response['outcome'] != 'success':
+                print(create_portgroup_response)
+                return 'resource_portgroup_create_failed'
             update_portgroup_response = self.havoc_client.update_portgroup_rule(portgroup_name=portgroup_name, portgroup_action='add', ip_ranges=ip_ranges, ip_protocol=ip_protocol, port=port)
             if not update_portgroup_response:
+                return 'resource_portgroup_update_failed'
+            if update_portgroup_response['outcome'] != 'success':
+                print(update_portgroup_response)
                 return 'resource_portgroup_update_failed'
             get_portgroup_response = self.havoc_client.get_portgroup(portgroup_name=portgroup_name)
             self.resource_dict['portgroup'][object_name] = {key: value for key, value in get_portgroup_response.items()}
@@ -555,6 +567,9 @@ class Resource:
                 task_startup['end_time'] = object_parameters['end_time']
             task_startup_response = self.havoc_client.task_startup(**task_startup)
             if not task_startup_response:
+                return 'resource_task_startup_failed'
+            if 'task_status' not in task_startup_response:
+                print(task_startup_response)
                 return 'resource_task_startup_failed'
             self.resource_dict['task'][object_name] = {key: value for key, value in task_startup_response.items()}
             if 'listener' in object_parameters:
