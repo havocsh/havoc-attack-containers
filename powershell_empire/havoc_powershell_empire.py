@@ -405,14 +405,27 @@ class call_powershell_empire:
         return output
 
     def cert_gen(self):
-        if 'subj' not in self.args and 'domain' not in self.args:
-            output = {'outcome': 'failed', 'message': 'Missing subj or domain', 'forward_log': 'False'}
+        if 'cert_type' not in self.args:
+            output = {'outcome': 'failed', 'message': 'Missing cert_type', 'forward_log': 'False'}
             return output
-        if 'subj' in self.args and 'domain' in self.args:
-            output = {'outcome': 'failed', 'message': 'Specify subj or domain but not both', 'forward_log': 'False'}
-            return output
-        if 'subj' in self.args:
-            subj = self.args['subj']
+        cert_type = self.args['cert_type']
+        if cert_type == 'self-signed':
+            required_params = ['cert_country', 'cert_state', 'cert_locale', 'cert_org', 'cert_org_unit', 'cert_host']
+            for param in required_params:
+                if param not in self.args:
+                    output = {'outcome': 'failed', 'message': f'Missing {param}', 'forward_log': 'False'}
+                    return output
+            cert_country = self.args['cert_country']
+            cert_state = self.args['cert_state']
+            cert_locale = self.args['cert_locale']
+            cert_org = self.args['cert_org']
+            cert_org_unit = self.args['cert_org_unit']
+            cert_host = self.args['cert_host']
+            if cert_host == 'public_ip':
+                host = self.host_info[0]
+            if cert_host == 'local_ip':
+                host = self.host_info[2]
+            subj = f'/C={cert_country}/ST={cert_state}/L={cert_locale}/O={cert_org}/OU={cert_org_unit}/CN={host}'
             p = subprocess.Popen(
                 [
                     '/usr/bin/openssl',
@@ -436,11 +449,14 @@ class call_powershell_empire:
             openssl_out = p.communicate()
             openssl_message = openssl_out[1].decode('utf-8')
             if 'problems making Certificate Request' not in openssl_message:
-                output = {'outcome': 'success', 'message': openssl_message, 'forward_log': 'True'}
+                output = {'outcome': 'success', 'tls': {'host': host, 'subj': subj}, 'forward_log': 'True'}
             else:
                 output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'False'}
             return output
-        if 'domain' in self.args:
+        if cert_type == 'ca-signed':
+            if 'domain' not in self.args:
+                output = {'outcome': 'failed', 'message': 'Missing domain for certificate registration', 'forward_log': 'False'}
+                return output
             if 'email' not in self.args:
                 output = {'outcome': 'failed', 'message': 'Missing email for certificate registration', 'forward_log': 'False'}
                 return output
@@ -475,8 +491,10 @@ class call_powershell_empire:
             except Exception as e:
                 output = {'outcome': 'failed', 'message': e, 'forward_log': 'False'}
                 return output
-            output = {'outcome': 'success', 'message': 'Certificate files written to /opt/Empire/empire/server/data/', 'forward_log': 'True'}
+            output = {'outcome': 'success', 'tls': {'domain': domain, 'email': email}, 'forward_log': 'True'}
             return output
+        output = {'outcome': 'failed', 'message': 'cert_type must be self-signed or ca-signed', 'forward_log': 'False'}
+        return output
 
     def agent_status_monitor(self):
         current_agents = self.args['current_agents']

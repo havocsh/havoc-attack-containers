@@ -559,14 +559,29 @@ class Resource:
             self.resource_dict['task'][object_name] = {key: value for key, value in task_startup_response.items()}
             if 'listener' in object_parameters:
                 listener_args = {}
+                listener_tls = None
                 for k in object_parameters['listener'][0].keys():
-                    listener_type = k
+                    if k != 'tls':
+                        listener_type = k
+                    else:
+                        listener_tls = k
+                if listener_tls:
+                    tls_args = {}
+                    for k, v in object_parameters['listener'][0][listener_tls][0].items():
+                        tls_args[k] = v
+                    cert_gen_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'cert_gen', instruct_args=tls_args)
+                    if not cert_gen_response:
+                        return 'resource_listener_create_failed'
+                    self.resource_dict['task'][object_name]['listener'][listener_tls] = cert_gen_response['tls']
                 listener_args['listener_type'] = listener_type
                 listener_args['Name'] = listener_type
                 for k, v in object_parameters['listener'][0][listener_type][0].items():
                     listener_args[k] = v
                 create_listener_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'create_listener', instruct_args=listener_args)
                 if not create_listener_response:
+                    return 'resource_listener_create_failed'
+                if create_listener_response['outcome'] != 'success':
+                    print(create_listener_response)
                     return 'resource_listener_create_failed'
                 self.resource_dict['task'][object_name]['listener'] = create_listener_response['listener']
             if 'stager' in object_parameters:
@@ -575,6 +590,9 @@ class Resource:
                     stager_args[k] = v
                 create_stager_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'create_stager', instruct_args=stager_args)
                 if not create_stager_response:
+                    return 'resource_stager_create_failed'
+                if create_stager_response['outcome'] != 'success':
+                    print(create_stager_response)
                     return 'resource_stager_create_failed'
                 self.resource_dict['task'][object_name]['stager'] = create_stager_response['stager']
             return self.resource_dict['task'][object_name]
