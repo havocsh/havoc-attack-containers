@@ -471,8 +471,8 @@ class Resource:
             if create_listener_response['outcome'] != 'success':
                 print(create_listener_response)
                 return 'resource_listener_create_failed'
-            self.resource_dict['listeners'][object_name] = {key: value for key, value in create_listener_response.items()}
-            return self.resource_dict['listeners'][object_name]
+            self.resource_dict['listener'][object_name] = {key: value for key, value in create_listener_response.items()}
+            return self.resource_dict['listener'][object_name]
         if action == 'delete':
             listener_name = self.resource_dict['listener'][object_name]['listener_name']
             delete_listener_response = self.havoc_client.delete_listener(listener_name=listener_name)
@@ -533,10 +533,10 @@ class Resource:
                 return 'resource_portgroup_create_failed'
             update_portgroup_response = self.havoc_client.update_portgroup_rule(portgroup_name=portgroup_name, portgroup_action='add', ip_ranges=ip_ranges, ip_protocol=ip_protocol, port=port)
             if not update_portgroup_response:
-                return 'resource_portgroup_update_failed'
+                return 'resource_portgroup_create_failed'
             if update_portgroup_response['outcome'] != 'success':
                 print(update_portgroup_response)
-                return 'resource_portgroup_update_failed'
+                return 'resource_portgroup_create_failed'
             get_portgroup_response = self.havoc_client.get_portgroup(portgroup_name=portgroup_name)
             self.resource_dict['portgroup'][object_name] = {key: value for key, value in get_portgroup_response.items()}
             return self.resource_dict['portgroup'][object_name]
@@ -573,8 +573,10 @@ class Resource:
                 return 'resource_task_startup_failed'
             self.resource_dict['task'][object_name] = {key: value for key, value in task_startup_response.items()}
             if 'listener' in object_parameters:
+                self.resource_dict['task'][object_name]['listener'] = {}
                 listener_args = {}
                 listener_tls = None
+                listener_type = None
                 for k in object_parameters['listener'][0].keys():
                     if k != 'tls':
                         listener_type = k
@@ -587,7 +589,9 @@ class Resource:
                     cert_gen_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'cert_gen', instruct_args=tls_args)
                     if not cert_gen_response:
                         return 'resource_listener_create_failed'
-                    self.resource_dict['task'][object_name]['listener'][listener_tls] = cert_gen_response['tls']
+                    if cert_gen_response['outcome'] != 'success':
+                        print(cert_gen_response)
+                        return 'resource_listener_create_failed'
                 listener_args['listener_type'] = listener_type
                 listener_args['Name'] = listener_type
                 for k, v in object_parameters['listener'][0][listener_type][0].items():
@@ -599,6 +603,8 @@ class Resource:
                     print(create_listener_response)
                     return 'resource_listener_create_failed'
                 self.resource_dict['task'][object_name]['listener'] = create_listener_response['listener']
+                if listener_tls:
+                    self.resource_dict['task'][object_name]['listener']['tls'] = cert_gen_response['tls']
             if 'stager' in object_parameters:
                 stager_args = {}
                 for k, v in object_parameters['stager'][0].items():
