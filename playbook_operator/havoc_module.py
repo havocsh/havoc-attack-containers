@@ -848,7 +848,8 @@ class call_object():
         for node in DG.nodes:
             node_list.append(node)
         execution_order = clean_dependencies(get_node_dependencies(DG, node_list))
-        print(f'execution_order rules: {execution_order}')
+        send_response({'outcome': 'success', 'details': execution_order}, 'True', self.user_id, self.playbook_name, 
+                      self.playbook_operator_version, 'set_execution_order', {'no_args': 'True'}, self.end_time)
         self.exec_order.set_rules(execution_order, node_list)
         self.creator(playbook_config, node_list)
 
@@ -856,7 +857,8 @@ class call_object():
         for node in DG.nodes:
             node_list.append(node)
         execution_order = clean_dependencies(get_node_dependencies(DG, node_list))
-        print(f'execution_order rules: {execution_order}')
+        send_response({'outcome': 'success', 'details': execution_order}, 'True', self.user_id, self.playbook_name, 
+                      self.playbook_operator_version, 'set_execution_order', {'no_args': 'True'}, self.end_time)
         self.exec_order.set_rules(execution_order, node_list)
         self.destroyer(playbook_config, node_list)
 
