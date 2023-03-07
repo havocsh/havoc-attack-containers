@@ -27,7 +27,7 @@ class CallExfilkit:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify Port', 'forward_log': 'False'}
             return output
         port = self.args['Port']
-        if listener_type == 'http':
+        if listener_type == 'http' or listener_type == 'https':
             self.http_process = subprocess.Popen(
                 f'/HTTPUploadExfil/httpuploadexfil :{port} /opt/havoc/shared',
                 stdin=subprocess.PIPE,
@@ -44,7 +44,7 @@ class CallExfilkit:
                 output = {'outcome': 'success', 'listener': {'listener_type': listener_type, 'Port': port}, 'forward_log': 'True'}
                 return output
         else:
-            output = {'outcome': 'failed', 'message': 'listener_type must be http', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'listener_type must be http or https', 'forward_log': 'False'}
             return output
 
     def kill_listener(self):
