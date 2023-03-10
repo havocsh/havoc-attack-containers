@@ -908,8 +908,8 @@ class call_object():
         execution_order = clean_dependencies(get_node_dependencies(DG, node_list))
         send_response({'outcome': 'success', 'details': execution_order}, 'True', self.user_id, self.playbook_name, 
                       self.playbook_operator_version, 'set_execution_order', {'no_args': 'True'}, self.end_time)
-        self.exec_order.set_rules(execution_order, node_list, tracking_list)
-        self.creator(playbook_config, node_list)
+        self.exec_order.set_rules(execution_order, node_list)
+        self.creator(playbook_config, node_list, tracking_list)
 
         execution_order = clean_dependencies(get_node_dependencies(DG, tracking_list))
         send_response({'outcome': 'success', 'details': execution_order}, 'True', self.user_id, self.playbook_name, 
