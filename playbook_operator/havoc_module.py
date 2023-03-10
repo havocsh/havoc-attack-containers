@@ -235,10 +235,12 @@ class Action:
                 return 'action_task_execute_command_create_failed'
             self.action_dict['task_execute_command'][object_name] = {key: value for key, value in interact_with_task_response.items()}
             if 'action_function' in object_parameters:
-                called_action_function = object_parameters['action_function'][0]['function_name']
+                for k in object_parameters['action_function'][0].keys():
+                    called_action_function = k
                 function_parameters = {}
-                if 'function_parameters' in object_parameters:
-                    function_parameters = object_parameters['action_function'][0]['function_parameters'][0]
+                if object_parameters['action_function'][0][called_action_function]:
+                    for k, v in object_parameters['action_function'][0][called_action_function].items():
+                        function_parameters[k] = v
                     print(f'function_parameters: {function_parameters}')
                 action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 if 'failed' in action_function_response:
