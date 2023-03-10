@@ -92,7 +92,7 @@ class Action:
                 function_parameters = {}
                 if 'function_parameters' in object_parameters:
                     function_parameters = object_parameters['action_function'][0]['function_parameters'][0]
-                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, **function_parameters)
+                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 if 'failed' in action_function_response:
                     return 'action_instruct_task_create_failed'
                 self.action_dict['instruct_task'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
@@ -119,7 +119,7 @@ class Action:
                 function_parameters = {}
                 if 'function_parameters' in object_parameters:
                     function_parameters = object_parameters['action_function'][0]['function_parameters'][0]
-                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, **function_parameters)
+                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 if 'failed' in action_function_response:
                     return 'action_download_from_workspace_create_failed'
                 self.action_dict['download_from_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
@@ -151,7 +151,7 @@ class Action:
                 function_parameters = {}
                 if 'function_parameters' in object_parameters:
                     function_parameters = object_parameters['action_function'][0]['function_parameters'][0]
-                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, **function_parameters)
+                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 if 'failed' in action_function_response:
                     return 'action_sync_to_workspace_create_failed'
                 self.action_dict['sync_to_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
@@ -177,7 +177,7 @@ class Action:
                 function_parameters = {}
                 if 'function_parameters' in object_parameters:
                     function_parameters = object_parameters['action_function'][0]['function_parameters'][0]
-                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, **function_parameters)
+                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 if 'failed' in action_function_response:
                     return 'action_sync_from_workspace_create_failed'
                 self.action_dict['sync_from_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
@@ -206,7 +206,7 @@ class Action:
                 function_parameters = {}
                 if 'function_parameters' in object_parameters:
                     function_parameters = object_parameters['action_function'][0]['function_parameters'][0]
-                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, **function_parameters)
+                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 if 'failed' in action_function_response:
                     return 'action_task_download_file_create_failed'
                 self.action_dict['task_download_file'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
@@ -239,7 +239,7 @@ class Action:
                 function_parameters = {}
                 if 'function_parameters' in object_parameters:
                     function_parameters = object_parameters['action_function'][0]['function_parameters'][0]
-                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, **function_parameters)
+                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 if 'failed' in action_function_response:
                     return 'action_task_execute_command_create_failed'
                 self.action_dict['task_execute_command'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
@@ -282,7 +282,7 @@ class Action:
                 function_parameters = {}
                 if 'function_parameters' in object_parameters:
                     function_parameters = object_parameters['action_function'][0]['function_parameters'][0]
-                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, **function_parameters)
+                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 if 'failed' in action_function_response:
                     return 'action_execute_agent_module_create_failed'
                 self.action_dict['execute_agent_module'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
@@ -315,7 +315,7 @@ class Action:
                 function_parameters = {}
                 if 'function_parameters' in object_parameters:
                     function_parameters = object_parameters['action_function'][0]['function_parameters'][0]
-                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, **function_parameters)
+                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 if 'failed' in action_function_response:
                     return 'action_execute_agent_shell_command_create_failed'
                 self.action_dict['execute_agent_shell_command'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
@@ -791,6 +791,7 @@ class call_object():
                             else:
                                 send_response({'outcome': 'failed'}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
                                               operator_command, value, self.end_time)
+                                break
                             self.exec_order.next_exec_rule(node_path)
                         
     def destroyer(self, playbook_config, executed_list):
