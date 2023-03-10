@@ -817,7 +817,7 @@ class call_object():
                     new_path = re.search('\d+/(.*)', path).group(1)
                     dot_path = re.sub('/', '.', new_path)
                     node_path = f'{section}.{dot_path}'
-                    if node_path in execution_list:
+                    if node_path in execution_list and 'depends_on' not in node_path:
                         execution_order, current_rule = self.exec_order.get_exec_order(node_path)
                         if execution_order == current_rule:
                             execution_list.remove(node_path)
