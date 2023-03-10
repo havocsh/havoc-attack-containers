@@ -831,7 +831,7 @@ class call_object():
                                     dep_value = dep_method(dep_object, 'read', path=dep_match)
                                     re_sub = re.compile('\${' + dep_match + '}')
                                     json_value = re.sub(re_sub, dep_value, json_value)
-                            value = json.loads(json_value)
+                            value = json.loads(json_value, strict=False)
                             method_result = method(object_name, 'create', **value)
                             operator_command = f'create {node_path}'
                             if 'failed' not in method_result:
