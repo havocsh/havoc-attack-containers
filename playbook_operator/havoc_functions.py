@@ -128,7 +128,6 @@ def local_function(function, attributes=[]):
 
 
 def action_function(havoc_client, function, attributes={}):
-    print(f'attributes: {attributes}')
     if function == 'wait_for_c2':
         task_name = attributes['task_name']
         wait_for_c2_response = havoc_client.wait_for_c2(task_name)
