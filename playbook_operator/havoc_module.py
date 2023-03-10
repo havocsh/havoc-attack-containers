@@ -239,7 +239,7 @@ class Action:
                     called_action_function = k
                 function_parameters = {}
                 if object_parameters['action_function'][0][called_action_function]:
-                    for k, v in object_parameters['action_function'][0][called_action_function].items():
+                    for k, v in object_parameters['action_function'][0][called_action_function][0].items():
                         function_parameters[k] = v
                     print(f'function_parameters: {function_parameters}')
                 action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
