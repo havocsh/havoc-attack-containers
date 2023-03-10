@@ -21,7 +21,7 @@ class HttpServer:
         if 'listener_type' not in self.args:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify listener_type', 'forward_log': 'False'}
             return output
-        listener_type = self.args['listener_type']
+        listener_type = self.args['listener_type'].lower()
         if 'Port' not in self.args:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify Port', 'forward_log': 'False'}
             return output
