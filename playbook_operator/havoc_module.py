@@ -98,7 +98,7 @@ class Action:
                 if 'failed' in action_function_response:
                     return 'action_instruct_task_create_failed'
                 self.action_dict['instruct_task'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            return 'action_instruct_task_create_completed'
+            return self.action_dict['instruct_task'][object_name]
         if action == 'delete':
             del self.action_dict['instruct_task'][object_name]
             return 'action_instruct_task_delete_completed'
@@ -127,7 +127,7 @@ class Action:
                 if 'failed' in action_function_response:
                     return 'action_download_from_workspace_create_failed'
                 self.action_dict['download_from_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            return 'action_download_from_workspace_create_completed'
+            return self.action_dict['download_from_workspace'][object_name]
         if action == 'delete':
             task_name = object_parameters['task_name']
             instruct_command = 'del'
@@ -161,7 +161,7 @@ class Action:
                 if 'failed' in action_function_response:
                     return 'action_sync_to_workspace_create_failed'
                 self.action_dict['sync_to_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            return 'action_sync_to_workspace_create_completed'
+            return self.action_dict['sync_to_workspace'][object_name]
         if action == 'delete':
             del self.action_dict['sync_to_workspace'][object_name]
             return 'action_sync_to_workspace_delete_completed'
@@ -189,7 +189,7 @@ class Action:
                 if 'failed' in action_function_response:
                     return 'action_sync_from_workspace_create_failed'
                 self.action_dict['sync_from_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            return 'action_sync_from_workspace_create_completed'
+            return self.action_dict['sync_from_workspace'][object_name]
         if action == 'delete':
             del self.action_dict['sync_from_workspace'][object_name]
             return 'action_sync_from_workspace_delete_completed'
@@ -220,7 +220,7 @@ class Action:
                 if 'failed' in action_function_response:
                     return 'action_task_download_file_create_failed'
                 self.action_dict['task_download_file'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            return 'action_task_download_file_create_completed'
+            return self.action_dict['task_download_file'][object_name]
         if action == 'delete':
             task_name = object_parameters['task_name']
             file_name = object_parameters['file_name']
@@ -255,7 +255,7 @@ class Action:
                 if 'failed' in action_function_response:
                     return 'action_task_execute_command_create_failed'
                 self.action_dict['task_execute_command'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            return 'action_task_execute_command_create_completed'
+            return self.action_dict['task_execute_command'][object_name]
         if action == 'delete':
             task_name = object_parameters['task_name']
             command = object_parameters['command']
@@ -300,7 +300,7 @@ class Action:
                 if 'failed' in action_function_response:
                     return 'action_execute_agent_module_create_failed'
                 self.action_dict['execute_agent_module'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            return 'action_execute_agent_module_create_completed'
+            return self.action_dict['execute_agent_module'][object_name]
         if action == 'delete':
             del self.action_dict['execute_agent_module'][object_name]
             return 'action_execute_agent_module_delete_completed'
@@ -335,7 +335,7 @@ class Action:
                 if 'failed' in action_function_response:
                     return 'action_execute_agent_shell_command_create_failed'
                 self.action_dict['execute_agent_shell_command'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            return 'action_execute_agent_shell_command_create_completed'
+            return self.action_dict['execute_agent_shell_command'][object_name]
         if action == 'delete':
             del self.action_dict['execute_agent_shell_command'][object_name]
             return 'action_execute_agent_shell_command_delete_completed'
@@ -366,7 +366,7 @@ class Data:
             if not get_agent_response:
                 return 'data_agents_retrieve_failed'
             self.data_dict['agents'][object_name] = {key: value for key, value in get_agent_response.items()}
-            return 'data_agents_retrieved'
+            return self.data_dict['agents'][object_name]
         if action == 'delete':
             del self.data_dict['agents'][object_name]
             return 'data_agents_deleted'
@@ -381,7 +381,7 @@ class Data:
             if not get_domain_response:
                 return 'data_domains_retrieve_failed'
             self.data_dict['domains'][object_name] = {key: value for key, value in get_domain_response.items()}
-            return 'data_domains_retrieved'
+            return self.data_dict['domains'][object_name]
         if action == 'delete':
             del self.data_dict['domains'][object_name]
             return 'data_domains_deleted'
@@ -396,7 +396,7 @@ class Data:
             if not get_file_response:
                 return 'data_files_retrieve_failed'
             self.data_dict['files'][object_name] = {key: value for key, value in get_file_response.items()}
-            return 'data_files_retrieved'
+            return self.data_dict['files'][object_name]
         if action == 'delete':
             del self.data_dict['files'][object_name]
             return 'data_files_deleted'
@@ -411,7 +411,7 @@ class Data:
             if not get_listener_response:
                 return 'data_listeners_retrieve_failed'
             self.data_dict['listeners'][object_name] = {key: value for key, value in get_listener_response.items()}
-            return 'data_listeners_retrieved'
+            return self.data_dict['listeners'][object_name]
         if action == 'delete':
             del self.data_dict['listeners'][object_name]
             return 'data_listeners_deleted'
@@ -426,7 +426,7 @@ class Data:
             if not get_portgroup_response:
                 return 'data_portgroups_retrieve_failed'
             self.data_dict['portgroups'][object_name] = {key: value for key, value in get_portgroup_response.items()}
-            return 'data_portgroups_retrieved'
+            return self.data_dict['portgroups'][object_name]
         if action == 'delete':
             del self.data_dict['portgroups'][object_name]
             return 'data_portgroups_deleted'
@@ -441,7 +441,7 @@ class Data:
             if not get_task_response:
                 return 'data_tasks_retrieve_failed'
             self.data_dict['tasks'][object_name] = {key: value for key, value in get_task_response.items()}
-            return 'data_tasks_retrieved'
+            return self.data_dict['tasks'][object_name]
         if action == 'delete':
             del self.data_dict['tasks'][object_name]
             return 'data_tasks_deleted'
@@ -456,7 +456,7 @@ class Data:
             if not get_task_type_response:
                 return 'data_task_types_retrieve_failed'
             self.data_dict['task_types'][object_name] = {key: value for key, value in get_task_type_response.items()}
-            return 'data_task_types_retrieved'
+            return self.data_dict['task_types'][object_name]
         if action == 'delete':
             del self.data_dict['task_types'][object_name]
             return 'data_task_types_deleted'
