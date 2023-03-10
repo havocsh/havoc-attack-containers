@@ -8,6 +8,7 @@ import havoc_functions
 import hcl2
 import networkx as nx
 import boto3, botocore
+import time as t
 from datetime import datetime, timezone
 
 
@@ -80,6 +81,10 @@ class Action:
 
     def instruct_task(self, object_name, action, **object_parameters):
         if action == 'create':
+            if 'delay' in object_parameters:
+                delay = object_parameters['delay']
+                if isinstance(int(delay), int):
+                    t.sleep(int(delay))
             task_name = object_parameters['task_name']
             instruct_command = object_parameters['instruct_command']
             instruct_args = object_parameters['instruct_args']
@@ -109,6 +114,10 @@ class Action:
         
     def download_from_workspace(self, object_name, action, **object_parameters):
         if action == 'create':
+            if 'delay' in object_parameters:
+                delay = object_parameters['delay']
+                if isinstance(int(delay), int):
+                    t.sleep(int(delay))
             task_name = object_parameters['task_name']
             instruct_command = 'download_from_workspace'
             instruct_args = {'file_name': object_parameters['file_name']}
@@ -144,6 +153,10 @@ class Action:
     
     def sync_to_workspace(self, object_name, action, **object_parameters):
         if action == 'create':
+            if 'delay' in object_parameters:
+                delay = object_parameters['delay']
+                if isinstance(int(delay), int):
+                    t.sleep(int(delay))
             task_name = object_parameters['task_name']
             instruct_command = 'sync_to_workspace'
             interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command)
@@ -172,6 +185,10 @@ class Action:
     
     def sync_from_workspace(self, object_name, action, **object_parameters):
         if action == 'create':
+            if 'delay' in object_parameters:
+                delay = object_parameters['delay']
+                if isinstance(int(delay), int):
+                    t.sleep(int(delay))
             task_name = object_parameters['task_name']
             instruct_command = 'sync_from_workspace'
             interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command)
@@ -200,6 +217,10 @@ class Action:
     
     def task_download_file(self, object_name, action, **object_parameters):
         if action == 'create':
+            if 'delay' in object_parameters:
+                delay = object_parameters['delay']
+                if isinstance(int(delay), int):
+                    t.sleep(int(delay))
             task_name = object_parameters['task_name']
             url = object_parameters['url']
             file_name = object_parameters['file_name']
@@ -236,6 +257,10 @@ class Action:
     
     def task_execute_command(self, object_name, action, **object_parameters):
         if action == 'create':
+            if 'delay' in object_parameters:
+                delay = object_parameters['delay']
+                if isinstance(int(delay), int):
+                    t.sleep(int(delay))
             task_name = object_parameters['task_name']
             command = object_parameters['command']
             instruct_command = 'task_execute_command'
@@ -271,6 +296,10 @@ class Action:
     
     def execute_agent_module(self, object_name, action, **object_parameters):
         if action == 'create':
+            if 'delay' in object_parameters:
+                delay = object_parameters['delay']
+                if isinstance(int(delay), int):
+                    t.sleep(int(delay))
             task_name = object_parameters['task_name']
             agent_name = object_parameters['agent_name']
             module = object_parameters['module']
@@ -288,7 +317,7 @@ class Action:
             )
             if not execute_agent_module_response:
                 return 'action_execute_agent_module_create_failed'
-            self.action_dict['execute_agent_module'][object_name] = {key: value for key, value in execute_agent_module_response.items()}
+            self.action_dict['execute_agent_module'][object_name] = execute_agent_module_response
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'][0].keys():
                     called_action_function = k
@@ -311,6 +340,10 @@ class Action:
     
     def execute_agent_shell_command(self, object_name, action, **object_parameters):
         if action == 'create':
+            if 'delay' in object_parameters:
+                delay = object_parameters['delay']
+                if isinstance(int(delay), int):
+                    t.sleep(int(delay))
             task_name = object_parameters['task_name']
             agent_name = object_parameters['agent_name']
             command = object_parameters['command']
@@ -323,7 +356,7 @@ class Action:
             execute_agent_shell_command_response = self.havoc_client.execute_agent_shell_command(task_name, agent_name, command, wait_for_results=wait_for_results, completion_string=completion_string)
             if not execute_agent_shell_command_response:
                 return 'action_execute_agent_shell_command_create_failed'
-            self.action_dict['execute_agent_shell_command'][object_name] = {key: value for key, value in execute_agent_shell_command_response.items()}
+            self.action_dict['execute_agent_shell_command'][object_name] = execute_agent_shell_command_response
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'][0].keys():
                     called_action_function = k
