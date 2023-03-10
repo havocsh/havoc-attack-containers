@@ -818,7 +818,6 @@ class call_object():
                     dot_path = re.sub('/', '.', new_path)
                     node_path = f'{section}.{dot_path}'
                     if node_path in execution_list and 'depends_on' not in value:
-                        print(f'node_path: {node_path}, value: {value}')
                         execution_order, current_rule = self.exec_order.get_exec_order(node_path)
                         if execution_order == current_rule:
                             execution_list.remove(node_path)
@@ -843,6 +842,9 @@ class call_object():
                                               operator_command, value, self.end_time)
                                 break
                             self.exec_order.next_exec_rule(node_path)
+                    else:
+                        execution_list.remove(node_path)
+
                         
     def destroyer(self, playbook_config, executed_list):
         while executed_list:
