@@ -87,6 +87,15 @@ class Action:
             if not interact_with_task_response:
                 return 'action_instruct_task_create_failed'
             self.action_dict['instruct_task'][object_name] = {key: value for key, value in object_parameters.items()}
+            if 'action_function' in object_parameters:
+                called_action_function = object_parameters['action_function']
+                function_parameters = {}
+                if 'function_parameters' in object_parameters:
+                    function_parameters = object_parameters['function_parameters']
+                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, **function_parameters)
+                if 'failed' in action_function_response:
+                    return 'action_instruct_task_create_failed'
+                self.action_dict['instruct_task'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return 'action_instruct_task_create_completed'
         if action == 'delete':
             del self.action_dict['instruct_task'][object_name]
@@ -105,6 +114,15 @@ class Action:
             if not interact_with_task_response:
                 return 'action_download_from_workspace_create_failed'
             self.action_dict['download_from_workspace'][object_name] = {key: value for key, value in object_parameters.items()}
+            if 'action_function' in object_parameters:
+                called_action_function = object_parameters['action_function']
+                function_parameters = {}
+                if 'function_parameters' in object_parameters:
+                    function_parameters = object_parameters['function_parameters']
+                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, **function_parameters)
+                if 'failed' in action_function_response:
+                    return 'action_download_from_workspace_create_failed'
+                self.action_dict['download_from_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return 'action_download_from_workspace_create_completed'
         if action == 'delete':
             task_name = object_parameters['task_name']
@@ -128,6 +146,15 @@ class Action:
             if not interact_with_task_response:
                 return 'action_sync_to_workspace_create_failed'
             self.action_dict['sync_to_workspace'][object_name] = {key: value for key, value in object_parameters.items()}
+            if 'action_function' in object_parameters:
+                called_action_function = object_parameters['action_function']
+                function_parameters = {}
+                if 'function_parameters' in object_parameters:
+                    function_parameters = object_parameters['function_parameters']
+                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, **function_parameters)
+                if 'failed' in action_function_response:
+                    return 'action_sync_to_workspace_create_failed'
+                self.action_dict['sync_to_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return 'action_sync_to_workspace_create_completed'
         if action == 'delete':
             del self.action_dict['sync_to_workspace'][object_name]
@@ -145,6 +172,15 @@ class Action:
             if not interact_with_task_response:
                 return 'action_sync_from_workspace_create_failed'
             self.action_dict['sync_from_workspace'][object_name] = {key: value for key, value in object_parameters.items()}
+            if 'action_function' in object_parameters:
+                called_action_function = object_parameters['action_function']
+                function_parameters = {}
+                if 'function_parameters' in object_parameters:
+                    function_parameters = object_parameters['function_parameters']
+                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, **function_parameters)
+                if 'failed' in action_function_response:
+                    return 'action_sync_from_workspace_create_failed'
+                self.action_dict['sync_from_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return 'action_sync_from_workspace_create_completed'
         if action == 'delete':
             del self.action_dict['sync_from_workspace'][object_name]
@@ -165,6 +201,15 @@ class Action:
             if not interact_with_task_response:
                 return 'action_task_download_file_create_failed'
             self.action_dict['task_download_file'][object_name] = {key: value for key, value in interact_with_task_response.items()}
+            if 'action_function' in object_parameters:
+                called_action_function = object_parameters['action_function']
+                function_parameters = {}
+                if 'function_parameters' in object_parameters:
+                    function_parameters = object_parameters['function_parameters']
+                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, **function_parameters)
+                if 'failed' in action_function_response:
+                    return 'action_task_download_file_create_failed'
+                self.action_dict['task_download_file'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return 'action_task_download_file_create_completed'
         if action == 'delete':
             task_name = object_parameters['task_name']
@@ -189,6 +234,15 @@ class Action:
             if not interact_with_task_response:
                 return 'action_task_execute_command_create_failed'
             self.action_dict['task_execute_command'][object_name] = {key: value for key, value in interact_with_task_response.items()}
+            if 'action_function' in object_parameters:
+                called_action_function = object_parameters['action_function']
+                function_parameters = {}
+                if 'function_parameters' in object_parameters:
+                    function_parameters = object_parameters['function_parameters']
+                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, **function_parameters)
+                if 'failed' in action_function_response:
+                    return 'action_task_execute_command_create_failed'
+                self.action_dict['task_execute_command'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return 'action_task_execute_command_create_completed'
         if action == 'delete':
             task_name = object_parameters['task_name']
@@ -217,10 +271,21 @@ class Action:
                 completion_string = object_parameters['completion_string']
             if 'module_args' in object_parameters:
                 module_args = object_parameters['module_args']
-            execute_agent_module_response = self.havoc_client.execute_agent_module(task_name, agent_name, module, module_args, wait_for_results=wait_for_results, completion_string=completion_string)
+            execute_agent_module_response = self.havoc_client.execute_agent_module(
+                task_name, agent_name, module, module_args, wait_for_results=wait_for_results, completion_string=completion_string
+            )
             if not execute_agent_module_response:
                 return 'action_execute_agent_module_create_failed'
             self.action_dict['execute_agent_module'][object_name] = {key: value for key, value in execute_agent_module_response.items()}
+            if 'action_function' in object_parameters:
+                called_action_function = object_parameters['action_function']
+                function_parameters = {}
+                if 'function_parameters' in object_parameters:
+                    function_parameters = object_parameters['function_parameters']
+                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, **function_parameters)
+                if 'failed' in action_function_response:
+                    return 'action_execute_agent_module_create_failed'
+                self.action_dict['execute_agent_module'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return 'action_execute_agent_module_create_completed'
         if action == 'delete':
             del self.action_dict['execute_agent_module'][object_name]
@@ -245,6 +310,15 @@ class Action:
             if not execute_agent_shell_command_response:
                 return 'action_execute_agent_shell_command_create_failed'
             self.action_dict['execute_agent_shell_command'][object_name] = {key: value for key, value in execute_agent_shell_command_response.items()}
+            if 'action_function' in object_parameters:
+                called_action_function = object_parameters['action_function']
+                function_parameters = {}
+                if 'function_parameters' in object_parameters:
+                    function_parameters = object_parameters['function_parameters']
+                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, **function_parameters)
+                if 'failed' in action_function_response:
+                    return 'action_execute_agent_shell_command_create_failed'
+                self.action_dict['execute_agent_shell_command'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return 'action_execute_agent_shell_command_create_completed'
         if action == 'delete':
             del self.action_dict['execute_agent_shell_command'][object_name]
@@ -267,8 +341,7 @@ class Data:
             'nodes': {},
             'portgroups': {},
             'tasks': {},
-            'task_types': {},
-            'wait_for_c2': {}
+            'task_types': {}
         }
     
     def agents(self, object_name, action, **object_parameters):
@@ -375,22 +448,6 @@ class Data:
             new_path = re.search('data.task_types.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
             return dpath.get(self.data_dict['task_types'], path)
-    
-    def wait_for_c2(self, object_name, action, **object_parameters):
-        if action == 'create':
-            task_name = object_parameters['task_name']
-            wait_for_c2_response = self.havoc_client.wait_for_c2(task_name)
-            if not wait_for_c2_response:
-                return 'data_wait_for_c2_retrieve_failed'
-            self.data_dict['wait_for_c2'][object_name] = {key: value for key, value in wait_for_c2_response.items()}
-            return 'data_wait_for_c2_retrieved'
-        if action == 'delete':
-            del self.data_dict['wait_for_c2'][object_name]
-            return 'data_wait_for_c2_deleted'
-        if action == 'read':
-            new_path = re.search('data.wait_for_c2.(.*)', object_parameters['path'])
-            path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.data_dict['wait_for_c2'], path)
 
 class Local:
     
@@ -404,7 +461,7 @@ class Local:
             function_name = object_parameters['function_name']
             if 'function_parameters' in object_parameters:
                 function_parameters = object_parameters['function_parameters']
-            result = havoc_functions.perform_function(function_name, function_parameters)
+            result = havoc_functions.local_function(function_name, function_parameters)
             self.local_dict['function'][object_name] = result
             return result
         if action == 'delete':
@@ -691,7 +748,6 @@ class call_object():
             'portgroups': self.data.portgroups,
             'tasks': self.data.tasks,
             'task_types': self.data.task_types,
-            'wait_for_c2': self.data.wait_for_c2,
             'function': self.local.function,
             'file': self.resource.file,
             'listener': self.resource.listener,
@@ -705,7 +761,7 @@ class call_object():
         object_name=object_def[2]
         return methods[method_name], object_name
     
-    def creator(self, playbook_config, execution_list):
+    def creator(self, playbook_config, execution_list, executed_list):
         while execution_list:
             for section in playbook_config:
                 for (path, value) in dpath.search(playbook_config[section], '*/*/*', yielded=True):
@@ -716,6 +772,7 @@ class call_object():
                         execution_order, current_rule = self.exec_order.get_exec_order(node_path)
                         if execution_order == current_rule:
                             execution_list.remove(node_path)
+                            executed_list.append(node_path)
                             method, object_name = self.object_resolver(node_path)
                             json_value = json.dumps(value)
                             dep_matches = re.findall('\${([^}]+)}', json_value)
@@ -736,17 +793,17 @@ class call_object():
                                               operator_command, value, self.end_time)
                             self.exec_order.next_exec_rule(node_path)
                         
-    def destroyer(self, playbook_config, execution_list):
-        while execution_list:
+    def destroyer(self, playbook_config, executed_list):
+        while executed_list:
             for section in playbook_config:
                 for (path, value) in dpath.search(playbook_config[section], '*/*/*', yielded=True):
                     new_path = re.search('\d+/(.*)', path).group(1)
                     dot_path = re.sub('/', '.', new_path)
                     node_path = f'{section}.{dot_path}'
-                    if node_path in execution_list:
+                    if node_path in executed_list:
                         execution_order, current_rule = self.exec_order.get_exec_order(node_path)
                         if execution_order == current_rule:
-                            execution_list.remove(node_path)
+                            executed_list.remove(node_path)
                             method, object_name = self.object_resolver(node_path)
                             value = {'destroy_all_resources': True}
                             method_result = method(object_name, 'delete', **value)
@@ -845,22 +902,20 @@ class call_object():
             add_dependency_edges(resource_blocks, 'resource')
 
         node_list = []
+        tracking_list = []
         for node in DG.nodes:
             node_list.append(node)
         execution_order = clean_dependencies(get_node_dependencies(DG, node_list))
         send_response({'outcome': 'success', 'details': execution_order}, 'True', self.user_id, self.playbook_name, 
                       self.playbook_operator_version, 'set_execution_order', {'no_args': 'True'}, self.end_time)
-        self.exec_order.set_rules(execution_order, node_list)
+        self.exec_order.set_rules(execution_order, node_list, tracking_list)
         self.creator(playbook_config, node_list)
 
-        node_list = []
-        for node in DG.nodes:
-            node_list.append(node)
-        execution_order = clean_dependencies(get_node_dependencies(DG, node_list))
+        execution_order = clean_dependencies(get_node_dependencies(DG, tracking_list))
         send_response({'outcome': 'success', 'details': execution_order}, 'True', self.user_id, self.playbook_name, 
                       self.playbook_operator_version, 'set_execution_order', {'no_args': 'True'}, self.end_time)
-        self.exec_order.set_rules(execution_order, node_list)
-        self.destroyer(playbook_config, node_list)
+        self.exec_order.set_rules(execution_order, tracking_list)
+        self.destroyer(playbook_config, tracking_list)
 
         output = {'outcome': 'success', 'message': 'playbook executed', 'forward_log': 'True'}
         return output

@@ -4,7 +4,7 @@ import base64
 import datetime
 import urllib.parse
 
-def perform_function(function, attributes=[]):
+def local_function(function, attributes=[]):
     encoding_functions = ['base64decode', 'base64encode', 'urlencode']
     native_functions = {'abs': abs, 'int': int, 'len': len, 'max': max, 'min': min, 'pow': pow}
     math_functions = {'ceil': math.ceil, 'floor': math.floor, 'log': math.log}
@@ -125,3 +125,12 @@ def perform_function(function, attributes=[]):
     
     else:
         return 'function_not_supported'
+
+
+def action_function(havoc_client, function, attributes={}):
+    if function == 'wait_for_c2':
+        task_name = attributes['task_name']
+        wait_for_c2_response = havoc_client.wait_for_c2(task_name)
+        if not wait_for_c2_response:
+            return 'wait_for_c2_function_failed'
+        return wait_for_c2_response
