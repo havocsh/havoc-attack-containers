@@ -304,16 +304,19 @@ class Action:
             agent_name = object_parameters['agent_name']
             module = object_parameters['module']
             wait_for_results = None
+            beginning_string = None
             completion_string = None
             module_args = {}
             if 'wait_for_results' in object_parameters:
                 wait_for_results = object_parameters['wait_for_results']
+            if 'beginning_string' in object_parameters:
+                beginning_string = object_parameters['beginning_string']
             if 'completion_string' in object_parameters:
                 completion_string = object_parameters['completion_string']
             if 'module_args' in object_parameters:
                 module_args = object_parameters['module_args']
             execute_agent_module_response = self.havoc_client.execute_agent_module(
-                task_name, agent_name, module, module_args, wait_for_results=wait_for_results, completion_string=completion_string
+                task_name, agent_name, module, module_args, wait_for_results=wait_for_results, beginning_string=beginning_string, completion_string=completion_string
             )
             if not execute_agent_module_response:
                 return 'action_execute_agent_module_create_failed'
@@ -348,12 +351,17 @@ class Action:
             agent_name = object_parameters['agent_name']
             command = object_parameters['command']
             wait_for_results = None
+            beginning_string = None
             completion_string = None
             if 'wait_for_results' in object_parameters:
                 wait_for_results = object_parameters['wait_for_results']
+            if 'beginning_string' in object_parameters:
+                beginning_string = object_parameters['beginning_string']
             if 'completion_string' in object_parameters:
                 completion_string = object_parameters['completion_string']
-            execute_agent_shell_command_response = self.havoc_client.execute_agent_shell_command(task_name, agent_name, command, wait_for_results=wait_for_results, completion_string=completion_string)
+            execute_agent_shell_command_response = self.havoc_client.execute_agent_shell_command(
+                task_name, agent_name, command, wait_for_results=wait_for_results, beginning_string=beginning_string, completion_string=completion_string
+            )
             if not execute_agent_shell_command_response:
                 return 'action_execute_agent_shell_command_create_failed'
             self.action_dict['execute_agent_shell_command'][object_name] = execute_agent_shell_command_response
