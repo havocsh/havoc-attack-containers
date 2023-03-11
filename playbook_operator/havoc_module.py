@@ -845,11 +845,10 @@ class call_object():
                             dep_matches = re.findall('\${([^}]+)}', json_value)
                             if dep_matches:
                                 for dep_match in dep_matches:
-                                    if 'depends_on' not in json_value:
-                                        dep_method, dep_object = self.object_resolver(dep_match)
-                                        dep_value = dep_method(dep_object, 'read', path=dep_match)
-                                        re_sub = re.compile('\${' + dep_match + '}')
-                                        json_value = re.sub(re_sub, dep_value, json_value)
+                                    dep_method, dep_object = self.object_resolver(dep_match)
+                                    dep_value = dep_method(dep_object, 'read', path=dep_match)
+                                    re_sub = re.compile('\${' + dep_match + '}')
+                                    json_value = re.sub(re_sub, dep_value, json_value)
                             value = json.loads(json_value, strict=False)
                             method_result = method(object_name, 'create', **value)
                             operator_command = f'create {node_path}'
