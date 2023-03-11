@@ -819,6 +819,16 @@ class call_object():
         return methods[method_name], object_name
     
     def creator(self, playbook_config, execution_list, executed_list):
+        
+        # Remove depends_on references from playbook_config
+        depends_on_list = []
+        for (path, value) in dpath.search(playbook_config, '*/*/*/*/*', yielded=True):
+            if 'depends_on' in path:
+                depends_on_list.append(path)
+        for depends_on in depends_on_list:
+            dpath.delete(playbook_config, depends_on)
+        
+        # Proceed with block processing
         while execution_list:
             for section in playbook_config:
                 for (path, value) in dpath.search(playbook_config[section], '*/*/*', yielded=True):
@@ -832,13 +842,13 @@ class call_object():
                             executed_list.append(node_path)
                             method, object_name = self.object_resolver(node_path)
                             json_value = json.dumps(value)
-                            dep_matches = re.findall('"(\S+)":.*\${([^}]+)}', json_value)
+                            dep_matches = re.findall('\${([^}]+)}', json_value)
                             if dep_matches:
                                 for dep_match in dep_matches:
-                                    if 'depends_on' not in dep_match[0]:
-                                        dep_method, dep_object = self.object_resolver(dep_match[1])
-                                        dep_value = dep_method(dep_object, 'read', path=dep_match[1])
-                                        re_sub = re.compile('\${' + dep_match[1] + '}')
+                                    if 'depends_on' not in json_value:
+                                        dep_method, dep_object = self.object_resolver(dep_match)
+                                        dep_value = dep_method(dep_object, 'read', path=dep_match)
+                                        re_sub = re.compile('\${' + dep_match + '}')
                                         json_value = re.sub(re_sub, dep_value, json_value)
                             value = json.loads(json_value, strict=False)
                             method_result = method(object_name, 'create', **value)
