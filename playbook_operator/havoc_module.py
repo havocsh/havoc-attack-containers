@@ -837,8 +837,8 @@ class call_object():
                                 for dep_match in dep_matches:
                                     if 'depends_on' not in dep_match[0]:
                                         dep_method, dep_object = self.object_resolver(dep_match[1])
-                                        dep_value = dep_method(dep_object, 'read', path=dep_match)
-                                        re_sub = re.compile('\${' + dep_match + '}')
+                                        dep_value = dep_method(dep_object, 'read', path=dep_match[1])
+                                        re_sub = re.compile('\${' + dep_match[1] + '}')
                                         json_value = re.sub(re_sub, dep_value, json_value)
                             value = json.loads(json_value, strict=False)
                             method_result = method(object_name, 'create', **value)
