@@ -832,7 +832,7 @@ class call_object():
                             executed_list.append(node_path)
                             method, object_name = self.object_resolver(node_path)
                             json_value = json.dumps(value)
-                            dep_matches = re.findall('(\S+)\s+=\s+\${([^}]+)}', json_value)
+                            dep_matches = re.findall('(\S+)\s+=.*\${([^}]+)}', json_value)
                             if dep_matches:
                                 for dep_match in dep_matches:
                                     if 'depends_on' not in dep_match.group(1):
