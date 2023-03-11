@@ -832,11 +832,11 @@ class call_object():
                             executed_list.append(node_path)
                             method, object_name = self.object_resolver(node_path)
                             json_value = json.dumps(value)
-                            dep_matches = re.findall('(\S+)\s+=.*\${([^}]+)}', json_value)
+                            dep_matches = re.findall('"(\S+)":.*\${([^}]+)}', json_value)
                             if dep_matches:
                                 for dep_match in dep_matches:
-                                    if 'depends_on' not in dep_match.group(1):
-                                        dep_method, dep_object = self.object_resolver(dep_match.group(2))
+                                    if 'depends_on' not in dep_match[0]:
+                                        dep_method, dep_object = self.object_resolver(dep_match[1])
                                         dep_value = dep_method(dep_object, 'read', path=dep_match)
                                         re_sub = re.compile('\${' + dep_match + '}')
                                         json_value = re.sub(re_sub, dep_value, json_value)
