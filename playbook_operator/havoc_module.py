@@ -534,7 +534,7 @@ class Resource:
     
     def __init__(self):
         self.havoc_client = None
-        self.resource_dict = {'file': {}, 'listener': {}, 'portgroup': {}, 'random_integer': {}, 'random_string': {}, 'task': {}}
+        self.resource_dict = {'file': {}, 'listener': {}, 'portgroup': {}, 'portgroup_rule': {}, 'random_integer': {}, 'random_string': {}, 'task': {}}
     
     def file(self, object_name, action, **object_parameters):
         if action == 'create':
@@ -636,23 +636,14 @@ class Resource:
     def portgroup(self, object_name, action, **object_parameters):
         if action == 'create':
             portgroup_name = object_parameters['portgroup_name']
-            ip_ranges = object_parameters['ip_ranges']
-            ip_protocol = object_parameters['ip_protocol']
-            port = object_parameters['port']
             create_portgroup_response = self.havoc_client.create_portgroup(portgroup_name=portgroup_name, portgroup_description=f'Created by playbook operator.')
             if not create_portgroup_response:
                 return 'resource_portgroup_create_failed'
             if create_portgroup_response['outcome'] != 'success':
                 print(create_portgroup_response)
                 return 'resource_portgroup_create_failed'
-            update_portgroup_response = self.havoc_client.update_portgroup_rule(portgroup_name=portgroup_name, portgroup_action='add', ip_ranges=ip_ranges, ip_protocol=ip_protocol, port=port)
-            if not update_portgroup_response:
-                return 'resource_portgroup_create_failed'
-            if update_portgroup_response['outcome'] != 'success':
-                print(update_portgroup_response)
-                return 'resource_portgroup_create_failed'
-            get_portgroup_response = self.havoc_client.get_portgroup(portgroup_name=portgroup_name)
-            self.resource_dict['portgroup'][object_name] = {key: value for key, value in get_portgroup_response.items()}
+            self.resource_dict['portgroup'][object_name] = {}
+            self.resource_dict['portgroup'][object_name]['portgroup_name'] = portgroup_name
             return self.resource_dict['portgroup'][object_name]
         if action == 'delete':
             portgroup_name = self.resource_dict['portgroup'][object_name]['portgroup_name']
@@ -665,6 +656,39 @@ class Resource:
             new_path = re.search('resource.portgroup.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
             return dpath.get(self.resource_dict['portgroup'], path)
+    
+    def portgroup_rule(self, object_name, action, **object_parameters):
+        if action == 'create':
+            portgroup_name = object_parameters['portgroup_name']
+            ip_ranges = object_parameters['ip_ranges']
+            ip_protocol = object_parameters['ip_protocol']
+            port = object_parameters['port']
+            add_portgroup_rule_response = self.havoc_client.update_portgroup_rule(portgroup_name=portgroup_name, portgroup_action='add', ip_ranges=ip_ranges, ip_protocol=ip_protocol, port=port)
+            if not add_portgroup_rule_response:
+                return 'resource_portgroup_rule_create_failed'
+            if add_portgroup_rule_response['outcome'] != 'success':
+                print(add_portgroup_rule_response)
+                return 'resource_portgroup_rule_create_failed'
+            self.resource_dict['portgroup_rule'][object_name] = {}
+            self.resource_dict['portgroup_rule'][object_name]['portgroup_name'] = portgroup_name
+            self.resource_dict['portgroup_rule'][object_name]['ip_ranges'] = ip_ranges
+            self.resource_dict['portgroup_rule'][object_name]['ip_protocol'] = ip_protocol
+            self.resource_dict['portgroup_rule'][object_name]['port'] = port
+            return self.resource_dict['portgroup_rule'][object_name]
+        if action == 'delete':
+            portgroup_name = self.resource_dict['portgroup_rule'][object_name]['portgroup_name']
+            ip_ranges = self.resource_dict['portgroup_rule'][object_name]['ip_ranges']
+            ip_protocol = self.resource_dict['portgroup_rule'][object_name]['ip_protocol']
+            port = self.resource_dict['portgroup_rule'][object_name]['port']
+            delete_portgroup_rule_response = self.havoc_client.update_portgroup_rule(portgroup_name=portgroup_name, portgroup_action='remove', ip_ranges=ip_ranges, ip_protocol=ip_protocol, port=port)
+            if not delete_portgroup_rule_response:
+                return 'resource_portgroup_rule_delete_failed'
+            del self.resource_dict['portgroup_rule'][object_name]
+            return 'resource_portgroup_rule_deleted'
+        if action == 'read':
+            new_path = re.search('resource.portgroup_rule.(.*)', object_parameters['path'])
+            path = re.sub('\.', '/', new_path.group(1))
+            return dpath.get(self.resource_dict['portgroup_rule'], path)
     
     def task(self, object_name, action, **object_parameters):
         if action == 'create':
@@ -811,6 +835,7 @@ class call_object():
             'random_integer': self.resource.random_integer,
             'random_string': self.resource.random_string,
             'portgroup': self.resource.portgroup,
+            'portgroup_rule': self.resource.portgroup_rule,
             'task': self.resource.task
         }
         object_def = object.split('.')
