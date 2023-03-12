@@ -870,6 +870,9 @@ class call_object():
                             dep_matches = re.findall('\${([^}]+)}', json_value)
                             if dep_matches:
                                 for dep_match in dep_matches:
+                                    count_check = re.search('\[(\d+)\]', dep_match)
+                                    if count_check:
+                                        dep_match = re.sub('\[\d+\]', '.' + count_check.group(1), dep_match)
                                     dep_method, dep_object = self.object_resolver(dep_match)
                                     dep_value = dep_method(dep_object, 'read', path=dep_match)
                                     re_sub = re.compile('\${' + dep_match + '}')
