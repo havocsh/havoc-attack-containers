@@ -113,9 +113,9 @@ class Action:
             return 'action_instruct_task_delete_completed'
         if action == 'read':
             new_path = re.search('action.instruct_task.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.action_dict['instruct_task'], path)
@@ -165,9 +165,9 @@ class Action:
             return 'action_download_from_workspace_delete_completed'
         if action == 'read':
             new_path = re.search('action.download_from_workspace.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.action_dict['download_from_workspace'], path)
@@ -207,9 +207,9 @@ class Action:
             return 'action_sync_to_workspace_delete_completed'
         if action == 'read':
             new_path = re.search('action.sync_to_workspace.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.action_dict['sync_to_workspace'], path)
@@ -249,9 +249,9 @@ class Action:
             return 'action_sync_from_workspace_delete_completed'
         if action == 'read':
             new_path = re.search('action.sync_from_workspace.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.action_dict['sync_from_workspace'], path)
@@ -299,9 +299,9 @@ class Action:
             return 'action_task_download_file_delete_completed'
         if action == 'read':
             new_path = re.search('action.task_download_file.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.action_dict['task_download_file'], path)
@@ -348,9 +348,9 @@ class Action:
             return 'action_task_execute_command_delete_completed'
         if action == 'read':
             new_path = re.search('action.task_execute_command.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.action_dict['task_execute_command'], path)
@@ -405,9 +405,9 @@ class Action:
             return 'action_execute_agent_module_delete_completed'
         if action == 'read':
             new_path = re.search('action.execute_agent_module.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.action_dict['execute_agent_module'], path)
@@ -459,9 +459,9 @@ class Action:
             return 'action_execute_agent_shell_command_delete_completed'
         if action == 'read':
             new_path = re.search('action.execute_agent_shell_command.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.action_dict['execute_agent_shell_command'], path)
@@ -499,9 +499,9 @@ class Data:
             return 'data_agents_deleted'
         if action == 'read':
             new_path = re.search('data.agents.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.data_dict['agents'], path)
@@ -523,9 +523,9 @@ class Data:
             return 'data_domains_deleted'
         if action == 'read':
             new_path = re.search('data.domains.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.data_dict['domains'], path)
@@ -547,9 +547,9 @@ class Data:
             return 'data_files_deleted'
         if action == 'read':
             new_path = re.search('data.files.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.data_dict['files'], path)
@@ -571,9 +571,9 @@ class Data:
             return 'data_listeners_deleted'
         if action == 'read':
             new_path = re.search('data.listeners.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.data_dict['listeners'], path)
@@ -595,9 +595,9 @@ class Data:
             return 'data_portgroups_deleted'
         if action == 'read':
             new_path = re.search('data.portgroups.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.data_dict['portgroups'], path)
@@ -619,9 +619,9 @@ class Data:
             return 'data_tasks_deleted'
         if action == 'read':
             new_path = re.search('data.tasks.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.data_dict['tasks'], path)
@@ -643,9 +643,9 @@ class Data:
             return 'data_task_types_deleted'
         if action == 'read':
             new_path = re.search('data.task_types.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.data_dict['task_types'], path)
@@ -675,9 +675,9 @@ class Local:
             return 'function_deleted'
         if action == 'read':
             new_path = re.search('local.function.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.local_dict['function'], path)
@@ -714,9 +714,9 @@ class Resource:
             return 'resource_file_deleted'
         if action == 'read':
             new_path = re.search('resource.file.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.resource_dict['file'], path)
@@ -763,9 +763,9 @@ class Resource:
             return 'resource_listener_deleted'
         if action == 'read':
             new_path = re.search('resource.listener.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.resource_dict['listener'], path)
@@ -784,9 +784,9 @@ class Resource:
             return 'resource_random_integer_deleted'
         if action == 'read':
             new_path = re.search('resource.random_integer.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.resource_dict['random_integer'], path)
@@ -809,9 +809,9 @@ class Resource:
             return 'resource_random_string_deleted'
         if action == 'read':
             new_path = re.search('resource.random_string.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.resource_dict['random_string'], path)
@@ -842,9 +842,9 @@ class Resource:
             return 'resource_portgroup_deleted'
         if action == 'read':
             new_path = re.search('resource.portgroup.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.resource_dict['portgroup'], path)
@@ -884,9 +884,9 @@ class Resource:
             return 'resource_portgroup_rule_deleted'
         if action == 'read':
             new_path = re.search('resource.portgroup_rule.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.resource_dict['portgroup_rule'], path)
@@ -970,9 +970,9 @@ class Resource:
             return 'resource_task_deleted'
         if action == 'read':
             new_path = re.search('resource.task.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path)
+            count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path)
+                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
             path = re.sub('\.', '/', new_path.group(1))
             try:
                 return dpath.get(self.resource_dict['task'], path)
