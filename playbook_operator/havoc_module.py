@@ -116,7 +116,9 @@ class Action:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.action_dict['instruct_task'], path)
             except Exception as e:
@@ -168,7 +170,9 @@ class Action:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.action_dict['download_from_workspace'], path)
             except Exception as e:
@@ -210,7 +214,9 @@ class Action:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.action_dict['sync_to_workspace'], path)
             except Exception as e:
@@ -252,7 +258,9 @@ class Action:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.action_dict['sync_from_workspace'], path)
             except Exception as e:
@@ -302,7 +310,9 @@ class Action:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.action_dict['task_download_file'], path)
             except Exception as e:
@@ -351,7 +361,9 @@ class Action:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.action_dict['task_execute_command'], path)
             except Exception as e:
@@ -408,7 +420,9 @@ class Action:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.action_dict['execute_agent_module'], path)
             except Exception as e:
@@ -462,7 +476,9 @@ class Action:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.action_dict['execute_agent_shell_command'], path)
             except Exception as e:
@@ -502,7 +518,9 @@ class Data:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.data_dict['agents'], path)
             except Exception as e:
@@ -526,7 +544,9 @@ class Data:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.data_dict['domains'], path)
             except Exception as e:
@@ -550,7 +570,9 @@ class Data:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.data_dict['files'], path)
             except Exception as e:
@@ -574,7 +596,9 @@ class Data:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.data_dict['listeners'], path)
             except Exception as e:
@@ -598,7 +622,9 @@ class Data:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.data_dict['portgroups'], path)
             except Exception as e:
@@ -622,7 +648,9 @@ class Data:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.data_dict['tasks'], path)
             except Exception as e:
@@ -646,7 +674,9 @@ class Data:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.data_dict['task_types'], path)
             except Exception as e:
@@ -678,7 +708,9 @@ class Local:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.local_dict['function'], path)
             except Exception as e:
@@ -717,7 +749,9 @@ class Resource:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.resource_dict['file'], path)
             except Exception as e:
@@ -766,7 +800,9 @@ class Resource:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.resource_dict['listener'], path)
             except Exception as e:
@@ -787,7 +823,9 @@ class Resource:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.resource_dict['random_integer'], path)
             except Exception as e:
@@ -812,7 +850,9 @@ class Resource:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.resource_dict['random_string'], path)
             except Exception as e:
@@ -845,7 +885,9 @@ class Resource:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.resource_dict['portgroup'], path)
             except Exception as e:
@@ -887,7 +929,9 @@ class Resource:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.resource_dict['portgroup_rule'], path)
             except Exception as e:
@@ -973,7 +1017,9 @@ class Resource:
             count_check = re.search('\[(\d+)\]', new_path.group(1))
             if count_check:
                 new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            path = re.sub('\.', '/', new_path.group(1))
+            else:
+                new_path = new_path.group(1)
+            path = re.sub('\.', '/', new_path)
             try:
                 return dpath.get(self.resource_dict['task'], path)
             except Exception as e:
