@@ -1012,8 +1012,10 @@ class call_object():
                                     count_check = re.search('\[(\d+)\]', dep_match)
                                     if count_check:
                                         dep_match = re.sub('\[\d+\]', '.' + count_check.group(1), dep_match)
+                                        print(f'dep_match: {dep_match}')
                                     dep_method, dep_object = self.object_resolver(dep_match)
                                     dep_value = dep_method(dep_object, 'read', path=dep_match)
+                                    print(f'dep_value: {dep_value}')
                                     re_sub = re.compile('\${' + dep_match + '}')
                                     json_value = re.sub(re_sub, dep_value, json_value)
                             value = json.loads(json_value, strict=False)
@@ -1023,7 +1025,7 @@ class call_object():
                                 send_response({'outcome': 'success', 'details': method_result}, 'True', self.user_id, self.playbook_name, 
                                               self.playbook_operator_version, operator_command, value, self.end_time)
                             else:
-                                send_response({'outcome': 'failed'}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
+                                send_response({'outcome': 'failed', 'details': method_result}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
                                               operator_command, value, self.end_time)
                                 break
                             self.exec_order.next_exec_rule(node_path)
