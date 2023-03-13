@@ -991,7 +991,7 @@ class call_object():
                 if value.lower() == 'false':
                     disabled_list.append(path)
         for disabled in disabled_list:
-            disabled_search = re.search('(.*)/enable$', disabled)
+            disabled_search = re.search('(.*)/enable_block$', disabled)
             disabled_path = disabled_search.group(1)
             dpath.delete(playbook_config, disabled_path)
 
