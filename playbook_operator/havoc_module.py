@@ -88,9 +88,12 @@ class Action:
             task_name = object_parameters['task_name']
             instruct_command = object_parameters['instruct_command']
             instruct_args = object_parameters['instruct_args']
-            interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
-            if not interact_with_task_response:
-                return 'action_instruct_task_create_failed'
+            try:
+                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+            except Exception as e:
+                return f'action_instruct_task_create_failed: {e}'
+            if interact_with_task_response['outcome'] == 'failed':
+                return f'action_instruct_task_create_failed: {interact_with_task_response}'
             self.action_dict['instruct_task'][object_name] = {key: value for key, value in object_parameters.items()}
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
@@ -99,9 +102,12 @@ class Action:
                 if object_parameters['action_function'][called_action_function]:
                     for k, v in object_parameters['action_function'][called_action_function].items():
                         function_parameters[k] = v
-                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
-                if 'failed' in action_function_response:
-                    return 'action_instruct_task_create_failed'
+                try:
+                    action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
+                except Exception as e:
+                    return f'action_instruct_task_create_failed: {e}'
+                if action_function_response['outcome'] == 'failed':
+                    return f'action_instruct_task_create_failed: {action_function_response}'
                 self.action_dict['instruct_task'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['instruct_task'][object_name]
         if action == 'delete':
@@ -110,7 +116,10 @@ class Action:
         if action == 'read':
             new_path = re.search('action.instruct_task.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.action_dict['instruct_task'], path)
+            try:
+                return dpath.get(self.action_dict['instruct_task'], path)
+            except Exception as e:
+                return f'action_instruct_task_read_failed: {e}'
         
     def download_from_workspace(self, object_name, action, **object_parameters):
         if action == 'create':
@@ -121,9 +130,12 @@ class Action:
             task_name = object_parameters['task_name']
             instruct_command = 'download_from_workspace'
             instruct_args = {'file_name': object_parameters['file_name']}
-            interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
-            if not interact_with_task_response:
-                return 'action_download_from_workspace_create_failed'
+            try:
+                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+            except Exception as e:
+                return f'action_download_from_workspace_create_failed: {e}'
+            if interact_with_task_response['outcome'] == 'failed':
+                return f'action_download_from_workspace_create_failed: {interact_with_task_response}'
             self.action_dict['download_from_workspace'][object_name] = {key: value for key, value in object_parameters.items()}
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
@@ -132,24 +144,33 @@ class Action:
                 if object_parameters['action_function'][called_action_function]:
                     for k, v in object_parameters['action_function'][called_action_function].items():
                         function_parameters[k] = v
-                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
-                if 'failed' in action_function_response:
-                    return 'action_download_from_workspace_create_failed'
+                try:
+                    action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
+                except Exception as e:
+                    return f'action_download_from_workspace_create_failed: {e}'
+                if action_function_response['outcome'] == 'failed':
+                    return f'action_download_from_workspace_create_failed: {action_function_response}'
                 self.action_dict['download_from_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['download_from_workspace'][object_name]
         if action == 'delete':
             task_name = object_parameters['task_name']
             instruct_command = 'del'
             instruct_args = {'file_name': object_parameters['file_name']}
-            interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
-            if not interact_with_task_response:
-                return 'action_download_from_workspace_delete_failed'
+            try:
+                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+            except Exception as e:
+                return f'action_download_from_workspace_delete_failed: {e}'
+            if interact_with_task_response['outcome'] == 'failed':
+                return f'action_download_from_workspace_delete_failed: {interact_with_task_response}'
             del self.action_dict['download_from_workspace'][object_name]
             return 'action_download_from_workspace_delete_completed'
         if action == 'read':
             new_path = re.search('action.download_from_workspace.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.action_dict['download_from_workspace'], path)
+            try:
+                return dpath.get(self.action_dict['download_from_workspace'], path)
+            except Exception as e:
+                return f'action_download_from_workspace_read_failed: {e}'
     
     def sync_to_workspace(self, object_name, action, **object_parameters):
         if action == 'create':
@@ -159,9 +180,12 @@ class Action:
                     t.sleep(int(delay))
             task_name = object_parameters['task_name']
             instruct_command = 'sync_to_workspace'
-            interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command)
-            if not interact_with_task_response:
-                return 'action_sync_to_workspace_create_failed'
+            try:
+                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command)
+            except Exception as e:
+                return f'action_sync_to_workspace_create_failed: {e}'
+            if interact_with_task_response['outcome'] == 'failed':
+                return f'action_sync_to_workspace_create_failed: {interact_with_task_response}'
             self.action_dict['sync_to_workspace'][object_name] = {key: value for key, value in object_parameters.items()}
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
@@ -170,9 +194,12 @@ class Action:
                 if object_parameters['action_function'][called_action_function]:
                     for k, v in object_parameters['action_function'][called_action_function].items():
                         function_parameters[k] = v
-                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
-                if 'failed' in action_function_response:
-                    return 'action_sync_to_workspace_create_failed'
+                try:
+                    action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
+                except Exception as e:
+                    return f'action_sync_to_workspace_create_failed: {e}'
+                if action_function_response['outcome'] == 'failed':
+                    return f'action_sync_to_workspace_create_failed: {action_function_response}'
                 self.action_dict['sync_to_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['sync_to_workspace'][object_name]
         if action == 'delete':
@@ -181,7 +208,10 @@ class Action:
         if action == 'read':
             new_path = re.search('action.sync_to_workspace.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.action_dict['sync_to_workspace'], path)
+            try:
+                return dpath.get(self.action_dict['sync_to_workspace'], path)
+            except Exception as e:
+                return f'action_sync_to_workspace_read_failed: {e}'
     
     def sync_from_workspace(self, object_name, action, **object_parameters):
         if action == 'create':
@@ -191,9 +221,12 @@ class Action:
                     t.sleep(int(delay))
             task_name = object_parameters['task_name']
             instruct_command = 'sync_from_workspace'
-            interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command)
-            if not interact_with_task_response:
-                return 'action_sync_from_workspace_create_failed'
+            try:
+                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command)
+            except Exception as e:
+                return f'action_sync_from_workspace_create_failed: {e}'
+            if interact_with_task_response['outcome'] == 'failed':
+                return f'action_sync_from_workspace_create_failed: {interact_with_task_response}'
             self.action_dict['sync_from_workspace'][object_name] = {key: value for key, value in object_parameters.items()}
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
@@ -202,9 +235,12 @@ class Action:
                 if object_parameters['action_function'][called_action_function]:
                     for k, v in object_parameters['action_function'][called_action_function].items():
                         function_parameters[k] = v
-                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
-                if 'failed' in action_function_response:
-                    return 'action_sync_from_workspace_create_failed'
+                try:
+                    action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
+                except Exception as e:
+                    return f'action_sync_from_workspace_create_failed: {e}'
+                if action_function_response['outcome'] == 'failed':
+                    return f'action_sync_from_workspace_create_failed: {action_function_response}'
                 self.action_dict['sync_from_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['sync_from_workspace'][object_name]
         if action == 'delete':
@@ -213,7 +249,10 @@ class Action:
         if action == 'read':
             new_path = re.search('action.sync_from_workspace.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.action_dict['sync_from_workspace'], path)
+            try:
+                return dpath.get(self.action_dict['sync_from_workspace'], path)
+            except Exception as e:
+                return f'action_sync_from_workspace_read_failed: {e}'
     
     def task_download_file(self, object_name, action, **object_parameters):
         if action == 'create':
@@ -226,9 +265,12 @@ class Action:
             file_name = object_parameters['file_name']
             instruct_command = 'task_download_file'
             instruct_args = {'url': url, 'file_name': file_name}
-            interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
-            if not interact_with_task_response:
-                return 'action_task_download_file_create_failed'
+            try:
+                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+            except Exception as e:
+                return f'action_task_download_file_create_failed: {e}'
+            if interact_with_task_response['outcome'] == 'failed':
+                return f'action_task_download_file_create_failed: {interact_with_task_response}'
             self.action_dict['task_download_file'][object_name] = {key: value for key, value in interact_with_task_response.items()}
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
@@ -237,9 +279,12 @@ class Action:
                 if object_parameters['action_function'][called_action_function]:
                     for k, v in object_parameters['action_function'][called_action_function].items():
                         function_parameters[k] = v
-                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
-                if 'failed' in action_function_response:
-                    return 'action_task_download_file_create_failed'
+                try:
+                    action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
+                except Exception as e:
+                    return f'action_task_download_file_create_failed: {e}'
+                if action_function_response['outcome'] == 'failed':
+                    return f'action_task_download_file_create_failed: {action_function_response}'
                 self.action_dict['task_download_file'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['task_download_file'][object_name]
         if action == 'delete':
@@ -253,7 +298,10 @@ class Action:
         if action == 'read':
             new_path = re.search('action.task_download_file.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.action_dict['task_download_file'], path)
+            try:
+                return dpath.get(self.action_dict['task_download_file'], path)
+            except Exception as e:
+                return f'action_task_download_file_read_failed: {e}'
     
     def task_execute_command(self, object_name, action, **object_parameters):
         if action == 'create':
@@ -265,9 +313,12 @@ class Action:
             command = object_parameters['command']
             instruct_command = 'task_execute_command'
             instruct_args = {'command': command}
-            interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
-            if not interact_with_task_response:
-                return 'action_task_execute_command_create_failed'
+            try:
+                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+            except Exception as e:
+                return f'action_task_execute_command_create_failed: {e}'
+            if interact_with_task_response['outcome'] == 'failed':
+                return f'action_task_execute_command_create_failed: {interact_with_task_response}'
             self.action_dict['task_execute_command'][object_name] = {key: value for key, value in interact_with_task_response.items()}
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
@@ -276,9 +327,12 @@ class Action:
                 if object_parameters['action_function'][called_action_function]:
                     for k, v in object_parameters['action_function'][called_action_function].items():
                         function_parameters[k] = v
-                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
-                if 'failed' in action_function_response:
-                    return 'action_task_execute_command_create_failed'
+                try:
+                    action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
+                except Exception as e:
+                    return f'action_task_execute_command_create_failed: {e}'
+                if action_function_response['outcome'] == 'failed':
+                    return f'action_task_execute_command_create_failed: {action_function_response}'
                 self.action_dict['task_execute_command'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['task_execute_command'][object_name]
         if action == 'delete':
@@ -292,7 +346,10 @@ class Action:
         if action == 'read':
             new_path = re.search('action.task_execute_command.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.action_dict['task_execute_command'], path)
+            try:
+                return dpath.get(self.action_dict['task_execute_command'], path)
+            except Exception as e:
+                return f'action_task_execute_command_read_failed: {e}'
     
     def execute_agent_module(self, object_name, action, **object_parameters):
         if action == 'create':
@@ -315,11 +372,14 @@ class Action:
                 completion_string = object_parameters['completion_string']
             if 'module_args' in object_parameters:
                 module_args = object_parameters['module_args']
-            execute_agent_module_response = self.havoc_client.execute_agent_module(
-                task_name, agent_name, module, module_args, wait_for_results=wait_for_results, beginning_string=beginning_string, completion_string=completion_string
-            )
-            if not execute_agent_module_response:
-                return 'action_execute_agent_module_create_failed'
+            try:
+                execute_agent_module_response = self.havoc_client.execute_agent_module(
+                    task_name, agent_name, module, module_args, wait_for_results=wait_for_results, beginning_string=beginning_string, completion_string=completion_string
+                )
+            except Exception as e:
+                return f'action_execute_agent_module_create_failed: {e}'
+            if execute_agent_module_response['outcome'] == 'failed':
+                return f'action_execute_agent_module_create_failed: {execute_agent_module_response}'
             self.action_dict['execute_agent_module'][object_name] = execute_agent_module_response
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
@@ -328,9 +388,12 @@ class Action:
                 if object_parameters['action_function'][called_action_function]:
                     for k, v in object_parameters['action_function'][called_action_function].items():
                         function_parameters[k] = v
-                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
-                if 'failed' in action_function_response:
-                    return 'action_execute_agent_module_create_failed'
+                try:
+                    action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
+                except Exception as e:
+                    return f'action_execute_agent_module_create_failed: {e}'
+                if action_function_response['outcome'] == 'failed':
+                    return f'action_execute_agent_module_create_failed: {action_function_response}'
                 self.action_dict['execute_agent_module'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['execute_agent_module'][object_name]
         if action == 'delete':
@@ -339,7 +402,10 @@ class Action:
         if action == 'read':
             new_path = re.search('action.execute_agent_module.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.action_dict['execute_agent_module'], path)
+            try:
+                return dpath.get(self.action_dict['execute_agent_module'], path)
+            except Exception as e:
+                return f'action_execute_agent_module_read_failed: {e}'
     
     def execute_agent_shell_command(self, object_name, action, **object_parameters):
         if action == 'create':
@@ -359,11 +425,14 @@ class Action:
                 beginning_string = object_parameters['beginning_string']
             if 'completion_string' in object_parameters:
                 completion_string = object_parameters['completion_string']
-            execute_agent_shell_command_response = self.havoc_client.execute_agent_shell_command(
-                task_name, agent_name, command, wait_for_results=wait_for_results, beginning_string=beginning_string, completion_string=completion_string
-            )
-            if not execute_agent_shell_command_response:
-                return 'action_execute_agent_shell_command_create_failed'
+            try:
+                execute_agent_shell_command_response = self.havoc_client.execute_agent_shell_command(
+                    task_name, agent_name, command, wait_for_results=wait_for_results, beginning_string=beginning_string, completion_string=completion_string
+                )
+            except Exception as e:
+                return f'action_execute_agent_shell_command_create_failed: {e}'
+            if execute_agent_shell_command_response['outcome'] == 'failed':
+                return f'action_execute_agent_shell_command_create_failed: {execute_agent_shell_command_response}'
             self.action_dict['execute_agent_shell_command'][object_name] = execute_agent_shell_command_response
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
@@ -372,9 +441,12 @@ class Action:
                 if object_parameters['action_function'][called_action_function]:
                     for k, v in object_parameters['action_function'][called_action_function].items():
                         function_parameters[k] = v
-                action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
-                if 'failed' in action_function_response:
-                    return 'action_execute_agent_shell_command_create_failed'
+                try:
+                    action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
+                except Exception as e:
+                    return f'action_execute_agent_shell_command_create_failed: {e}'
+                if action_function_response['outcome'] == 'failed':
+                    return f'action_execute_agent_shell_command_create_failed: {action_function_response}'
                 self.action_dict['execute_agent_shell_command'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['execute_agent_shell_command'][object_name]
         if action == 'delete':
@@ -383,7 +455,10 @@ class Action:
         if action == 'read':
             new_path = re.search('action.execute_agent_shell_command.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.action_dict['execute_agent_shell_command'], path)
+            try:
+                return dpath.get(self.action_dict['execute_agent_shell_command'], path)
+            except Exception as e:
+                return f'action_execute_agent_shell_command_read_failed: {e}'
 
 
 class Data:
@@ -403,9 +478,12 @@ class Data:
     
     def agents(self, object_name, action, **object_parameters):
         if action == 'create':
-            get_agent_response = self.havoc_client.get_agent(**object_parameters)
-            if not get_agent_response:
-                return 'data_agents_retrieve_failed'
+            try:
+                get_agent_response = self.havoc_client.get_agent(**object_parameters)
+            except Exception as e:
+                return f'data_agents_create_failed: {e}'
+            if get_agent_response['outcome'] == 'failed':
+                return f'data_agents_create_failed: {get_agent_response}'
             self.data_dict['agents'][object_name] = {key: value for key, value in get_agent_response.items()}
             return self.data_dict['agents'][object_name]
         if action == 'delete':
@@ -414,13 +492,19 @@ class Data:
         if action == 'read':
             new_path = re.search('data.agents.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.data_dict['agents'], path)
+            try:
+                return dpath.get(self.data_dict['agents'], path)
+            except Exception as e:
+                return f'data_agents_read_failed: {e}'
     
     def domains(self, object_name, action, **object_parameters):
         if action == 'create':
-            get_domain_response = self.havoc_client.get_domain(**object_parameters)
-            if not get_domain_response:
-                return 'data_domains_retrieve_failed'
+            try:
+                get_domain_response = self.havoc_client.get_domain(**object_parameters)
+            except Exception as e:
+                return f'data_domains_create_failed: {e}'
+            if get_domain_response['outcome'] == 'failed':
+                return f'data_domains_create_failed: {get_domain_response}'
             self.data_dict['domains'][object_name] = {key: value for key, value in get_domain_response.items()}
             return self.data_dict['domains'][object_name]
         if action == 'delete':
@@ -429,13 +513,19 @@ class Data:
         if action == 'read':
             new_path = re.search('data.domains.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.data_dict['domains'], path)
+            try:
+                return dpath.get(self.data_dict['domains'], path)
+            except Exception as e:
+                return f'data_domains_read_failed: {e}'
     
     def files(self, object_name, action, **object_parameters):
         if action == 'create':
-            get_file_response = self.havoc_client.get_file(**object_parameters)
-            if not get_file_response:
-                return 'data_files_retrieve_failed'
+            try:
+                get_file_response = self.havoc_client.get_file(**object_parameters)
+            except Exception as e:
+                return f'data_files_create_failed: {e}'
+            if get_file_response['outcome'] == 'failed':
+                return f'data_files_create_failed: {get_file_response}'
             self.data_dict['files'][object_name] = {key: value for key, value in get_file_response.items()}
             return self.data_dict['files'][object_name]
         if action == 'delete':
@@ -444,13 +534,19 @@ class Data:
         if action == 'read':
             new_path = re.search('data.files.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.data_dict['files'], path)
+            try:
+                return dpath.get(self.data_dict['files'], path)
+            except Exception as e:
+                return f'data_files_read_failed: {e}'
     
     def listeners(self, object_name, action, **object_parameters):
         if action == 'create':
-            get_listener_response = self.havoc_client.get_listener(**object_parameters)
-            if not get_listener_response:
-                return 'data_listeners_retrieve_failed'
+            try:
+                get_listener_response = self.havoc_client.get_listener(**object_parameters)
+            except Exception as e:
+                return f'data_listeners_create_failed: {e}'
+            if get_listener_response['outcome'] == 'failed':
+                return f'data_listeners_create_failed: {get_listener_response}'
             self.data_dict['listeners'][object_name] = {key: value for key, value in get_listener_response.items()}
             return self.data_dict['listeners'][object_name]
         if action == 'delete':
@@ -459,13 +555,19 @@ class Data:
         if action == 'read':
             new_path = re.search('data.listeners.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.data_dict['listeners'], path)
+            try:
+                return dpath.get(self.data_dict['listeners'], path)
+            except Exception as e:
+                return f'data_listeners_read_failed: {e}'
 
     def portgroups(self, object_name, action, **object_parameters):
         if action == 'create':
-            get_portgroup_response = self.havoc_client.get_portgroup(**object_parameters)
-            if not get_portgroup_response:
-                return 'data_portgroups_retrieve_failed'
+            try:
+                get_portgroup_response = self.havoc_client.get_portgroup(**object_parameters)
+            except Exception as e:
+                return f'data_portgroups_create_failed: {e}'
+            if get_portgroup_response['outcome'] == 'failed':
+                return f'data_portgroups_create_failed: {get_portgroup_response}'
             self.data_dict['portgroups'][object_name] = {key: value for key, value in get_portgroup_response.items()}
             return self.data_dict['portgroups'][object_name]
         if action == 'delete':
@@ -474,13 +576,19 @@ class Data:
         if action == 'read':
             new_path = re.search('data.portgroups.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.data_dict['portgroups'], path)
+            try:
+                return dpath.get(self.data_dict['portgroups'], path)
+            except Exception as e:
+                return f'data_portgroups_read_failed: {e}'
     
     def tasks(self, object_name, action, **object_parameters):
         if action == 'create':
-            get_task_response = self.havoc_client.get_task(**object_parameters)
-            if not get_task_response:
-                return 'data_tasks_retrieve_failed'
+            try:
+                get_task_response = self.havoc_client.get_task(**object_parameters)
+            except Exception as e:
+                return f'data_tasks_create_failed: {e}'
+            if get_task_response['outcome'] == 'failed':
+                return f'data_tasks_create_failed: {get_task_response}'
             self.data_dict['tasks'][object_name] = {key: value for key, value in get_task_response.items()}
             return self.data_dict['tasks'][object_name]
         if action == 'delete':
@@ -489,13 +597,19 @@ class Data:
         if action == 'read':
             new_path = re.search('data.tasks.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.data_dict['tasks'], path)
+            try:
+                return dpath.get(self.data_dict['tasks'], path)
+            except Exception as e:
+                return f'data_tasks_read_failed: {e}'
     
     def task_types(self, object_name, action, **object_parameters):
         if action == 'create':
-            get_task_type_response = self.havoc_client.get_task_type(**object_parameters)
-            if not get_task_type_response:
-                return 'data_task_types_retrieve_failed'
+            try:
+                get_task_type_response = self.havoc_client.get_task_type(**object_parameters)
+            except Exception as e:
+                return f'data_task_types_create_failed: {e}'
+            if get_task_type_response['outcome'] == 'failed':
+                return f'data_task_types_create_failed: {get_task_type_response}'
             self.data_dict['task_types'][object_name] = {key: value for key, value in get_task_type_response.items()}
             return self.data_dict['task_types'][object_name]
         if action == 'delete':
@@ -504,7 +618,10 @@ class Data:
         if action == 'read':
             new_path = re.search('data.task_types.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.data_dict['task_types'], path)
+            try:
+                return dpath.get(self.data_dict['task_types'], path)
+            except Exception as e:
+                return f'data_task_types_read_failed: {e}'
 
 class Local:
     
@@ -518,7 +635,10 @@ class Local:
             function_name = object_parameters['function_name']
             if 'function_parameters' in object_parameters:
                 function_parameters = object_parameters['function_parameters']
-            result = havoc_functions.local_function(function_name, function_parameters)
+            try:
+                result = havoc_functions.local_function(function_name, function_parameters)
+            except Exception as e:
+                return f'function_create_failed: {e}'
             self.local_dict['function'][object_name] = result
             return result
         if action == 'delete':
@@ -527,7 +647,10 @@ class Local:
         if action == 'read':
             new_path = re.search('local.function.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.local_dict['function'], path)
+            try:
+                return dpath.get(self.local_dict['function'], path)
+            except Exception as e:
+                return f'function_read_failed: {e}'
 
 
 class Resource:
@@ -540,24 +663,30 @@ class Resource:
         if action == 'create':
             file_name = object_parameters['file_name']
             file_contents = object_parameters['file_contents'].encode()
-            create_file_response = self.havoc_client.create_file(file_name, file_contents)
-            if not create_file_response:
-                return 'resource_file_create_failed'
-            if create_file_response['outcome'] != 'success':
-                print(create_file_response)
-                return 'resource_file_create_failed'
+            try:
+                create_file_response = self.havoc_client.create_file(file_name, file_contents)
+            except Exception as e:
+                return f'resource_file_create_failed: {e}'
+            if create_file_response['outcome'] == 'failed':
+                return f'resource_file_create_failed: {create_file_response}'
             self.resource_dict['file'][object_name] = {key: value for key, value in object_parameters.items()}
             return self.resource_dict['file'][object_name]
         if action == 'delete':
-            delete_file_response = self.havoc_client.delete_file(**object_parameters)
-            if not delete_file_response:
-                return 'resource_file_delete_failed'
+            try:
+                delete_file_response = self.havoc_client.delete_file(**object_parameters)
+            except Exception as e:
+                return f'resource_file_delete_failed: {e}'
+            if delete_file_response['outcome'] == 'failed':
+                return f'resource_file_delete_failed: {delete_file_response}'
             del self.resource_dict['file'][object_name]
             return 'resource_file_deleted'
         if action == 'read':
             new_path = re.search('resource.file.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.resource_dict['file'], path)
+            try:
+                return dpath.get(self.resource_dict['file'], path)
+            except Exception as e:
+                return f'resource_file_read_failed: {e}'
     
     def listener(self, object_name, action, **object_parameters):
         if action == 'create':
@@ -571,33 +700,39 @@ class Resource:
             if 'host_name' in object_parameters and 'domain_name' in object_parameters:
                 host_name = object_parameters['host_name']
                 domain_name = object_parameters['domain_name']
-            create_listener_response = self.havoc_client.create_listener(
-                listener_name=listener_name,
-                listener_type=listener_type,
-                listener_port=listener_port,
-                task_name=task_name,
-                portgroups=portgroups,
-                host_name=host_name,
-                domain_name=domain_name
-            )
-            if not create_listener_response:
-                return 'resource_listener_create_failed'
-            if create_listener_response['outcome'] != 'success':
-                print(create_listener_response)
-                return 'resource_listener_create_failed'
+            try:
+                create_listener_response = self.havoc_client.create_listener(
+                    listener_name=listener_name,
+                    listener_type=listener_type,
+                    listener_port=listener_port,
+                    task_name=task_name,
+                    portgroups=portgroups,
+                    host_name=host_name,
+                    domain_name=domain_name
+                )
+            except Exception as e:
+                return f'resource_listener_create_failed: {e}'
+            if create_listener_response['outcome'] == 'failed':
+                return f'resource_listener_create_failed: {create_listener_response}'
             self.resource_dict['listener'][object_name] = {key: value for key, value in create_listener_response.items()}
             return self.resource_dict['listener'][object_name]
         if action == 'delete':
             listener_name = self.resource_dict['listener'][object_name]['listener_name']
-            delete_listener_response = self.havoc_client.delete_listener(listener_name=listener_name)
-            if not delete_listener_response:
-                return 'resource_listener_delete_failed'
+            try:
+                delete_listener_response = self.havoc_client.delete_listener(listener_name=listener_name)
+            except Exception as e:
+                return f'resource_listener_delete_failed: {e}'
+            if delete_listener_response['outcome'] == 'failed':
+                return f'resource_listener_delete_failed: {delete_listener_response}'
             del self.resource_dict['listener'][object_name]
             return 'resource_listener_deleted'
         if action == 'read':
             new_path = re.search('resource.listener.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.resource_dict['listener'], path)
+            try:
+                return dpath.get(self.resource_dict['listener'], path)
+            except Exception as e:
+                return f'resource_listener_read_failed: {e}'
 
     def random_integer(self, object_name, action, **object_parameters):
         if action == 'create':
@@ -612,7 +747,10 @@ class Resource:
         if action == 'read':
             new_path = re.search('resource.random_integer.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.resource_dict['random_integer'], path)
+            try:
+                return dpath.get(self.resource_dict['random_integer'], path)
+            except Exception as e:
+                return f'resource_random_integer_read_failed: {e}'
     
     def random_string(self, object_name, action, **object_parameters):
         if action == 'create':
@@ -631,31 +769,40 @@ class Resource:
         if action == 'read':
             new_path = re.search('resource.random_string.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.resource_dict['random_string'], path)
+            try:
+                return dpath.get(self.resource_dict['random_string'], path)
+            except Exception as e:
+                return f'resource_random_string_read_failed: {e}'
     
     def portgroup(self, object_name, action, **object_parameters):
         if action == 'create':
             portgroup_name = object_parameters['portgroup_name']
-            create_portgroup_response = self.havoc_client.create_portgroup(portgroup_name=portgroup_name, portgroup_description=f'Created by playbook operator.')
-            if not create_portgroup_response:
-                return 'resource_portgroup_create_failed'
-            if create_portgroup_response['outcome'] != 'success':
-                print(create_portgroup_response)
-                return 'resource_portgroup_create_failed'
+            try:
+                create_portgroup_response = self.havoc_client.create_portgroup(portgroup_name=portgroup_name, portgroup_description=f'Created by playbook operator.')
+            except Exception as e:
+                return f'resource_portgroup_create_failed: {e}'
+            if create_portgroup_response['outcome'] == 'failed':
+                return f'resource_portgroup_create_failed: {create_portgroup_response}'
             self.resource_dict['portgroup'][object_name] = {}
             self.resource_dict['portgroup'][object_name]['portgroup_name'] = portgroup_name
             return self.resource_dict['portgroup'][object_name]
         if action == 'delete':
             portgroup_name = self.resource_dict['portgroup'][object_name]['portgroup_name']
-            delete_portgroup_response = self.havoc_client.delete_portgroup(portgroup_name=portgroup_name)
-            if not delete_portgroup_response:
-                return 'resource_portgroup_delete_failed'
+            try:
+                delete_portgroup_response = self.havoc_client.delete_portgroup(portgroup_name=portgroup_name)
+            except Exception as e:
+                return f'resource_portgroup_delete_failed: {e}'
+            if delete_portgroup_response['outcome'] == 'failed':
+                return f'resource_portgroup_delete_failed: {delete_portgroup_response}'
             del self.resource_dict['portgroup'][object_name]
             return 'resource_portgroup_deleted'
         if action == 'read':
             new_path = re.search('resource.portgroup.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.resource_dict['portgroup'], path)
+            try:
+                return dpath.get(self.resource_dict['portgroup'], path)
+            except Exception as e:
+                return f'resource_portgroup_read_failed: {e}'
     
     def portgroup_rule(self, object_name, action, **object_parameters):
         if action == 'create':
@@ -663,12 +810,12 @@ class Resource:
             ip_ranges = object_parameters['ip_ranges']
             ip_protocol = object_parameters['ip_protocol']
             port = object_parameters['port']
-            add_portgroup_rule_response = self.havoc_client.update_portgroup_rule(portgroup_name=portgroup_name, portgroup_action='add', ip_ranges=ip_ranges, ip_protocol=ip_protocol, port=port)
-            if not add_portgroup_rule_response:
-                return 'resource_portgroup_rule_create_failed'
-            if add_portgroup_rule_response['outcome'] != 'success':
-                print(add_portgroup_rule_response)
-                return 'resource_portgroup_rule_create_failed'
+            try:
+                add_portgroup_rule_response = self.havoc_client.update_portgroup_rule(portgroup_name=portgroup_name, portgroup_action='add', ip_ranges=ip_ranges, ip_protocol=ip_protocol, port=port)
+            except Exception as e:
+                return f'resource_portgroup_rule_create_failed: {e}'
+            if add_portgroup_rule_response['outcome'] == 'failed':
+                return f'resource_portgroup_rule_create_failed: {add_portgroup_rule_response}'
             self.resource_dict['portgroup_rule'][object_name] = {}
             self.resource_dict['portgroup_rule'][object_name]['portgroup_name'] = portgroup_name
             self.resource_dict['portgroup_rule'][object_name]['ip_ranges'] = ip_ranges
@@ -680,15 +827,21 @@ class Resource:
             ip_ranges = self.resource_dict['portgroup_rule'][object_name]['ip_ranges']
             ip_protocol = self.resource_dict['portgroup_rule'][object_name]['ip_protocol']
             port = self.resource_dict['portgroup_rule'][object_name]['port']
-            delete_portgroup_rule_response = self.havoc_client.update_portgroup_rule(portgroup_name=portgroup_name, portgroup_action='remove', ip_ranges=ip_ranges, ip_protocol=ip_protocol, port=port)
-            if not delete_portgroup_rule_response:
-                return 'resource_portgroup_rule_delete_failed'
+            try:
+                delete_portgroup_rule_response = self.havoc_client.update_portgroup_rule(portgroup_name=portgroup_name, portgroup_action='remove', ip_ranges=ip_ranges, ip_protocol=ip_protocol, port=port)
+            except Exception as e:
+                return f'resource_portgroup_rule_delete_failed: {e}'
+            if delete_portgroup_rule_response['outcome'] == 'failed':
+                return f'resource_portgroup_rule_delete_failed: {delete_portgroup_rule_response}'
             del self.resource_dict['portgroup_rule'][object_name]
             return 'resource_portgroup_rule_deleted'
         if action == 'read':
             new_path = re.search('resource.portgroup_rule.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.resource_dict['portgroup_rule'], path)
+            try:
+                return dpath.get(self.resource_dict['portgroup_rule'], path)
+            except Exception as e:
+                return f'resource_portgroup_rule_read_failed: {e}'
     
     def task(self, object_name, action, **object_parameters):
         if action == 'create':
@@ -703,12 +856,12 @@ class Resource:
                 task_startup['portgroups'] = object_parameters['portgroups']
             if 'end_time' in object_parameters:
                 task_startup['end_time'] = object_parameters['end_time']
-            task_startup_response = self.havoc_client.task_startup(**task_startup)
-            if not task_startup_response:
-                return 'resource_task_startup_failed'
-            if 'task_status' not in task_startup_response:
-                print(task_startup_response)
-                return 'resource_task_startup_failed'
+            try:
+                task_startup_response = self.havoc_client.task_startup(**task_startup)
+            except Exception as e:
+                return f'resource_task_startup_failed: {e}'
+            if task_startup_response['outcome'] == 'failed':
+                return f'resource_task_startup_failed: {task_startup_response}'
             self.resource_dict['task'][object_name] = {key: value for key, value in task_startup_response.items()}
             if 'listener' in object_parameters:
                 self.resource_dict['task'][object_name]['listener'] = {}
@@ -724,22 +877,22 @@ class Resource:
                     tls_args = {}
                     for k, v in object_parameters['listener'][listener_tls].items():
                         tls_args[k] = v
-                    cert_gen_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'cert_gen', instruct_args=tls_args)
-                    if not cert_gen_response:
-                        return 'resource_listener_create_failed'
-                    if cert_gen_response['outcome'] != 'success':
-                        print(cert_gen_response)
-                        return 'resource_listener_create_failed'
+                    try:
+                        cert_gen_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'cert_gen', instruct_args=tls_args)
+                    except Exception as e:
+                        return f'resource_listener_create_failed: {e}'
+                    if cert_gen_response['outcome'] == 'failed':
+                        return f'resource_listener_create_failed: {cert_gen_response}'
                 listener_args['listener_type'] = listener_type
                 listener_args['Name'] = listener_type
                 for k, v in object_parameters['listener'][listener_type].items():
                     listener_args[k] = v
-                create_listener_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'create_listener', instruct_args=listener_args)
-                if not create_listener_response:
-                    return 'resource_listener_create_failed'
-                if create_listener_response['outcome'] != 'success':
-                    print(create_listener_response)
-                    return 'resource_listener_create_failed'
+                try:
+                    create_listener_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'create_listener', instruct_args=listener_args)
+                except Exception as e:
+                    return f'resource_listener_create_failed: {e}'
+                if create_listener_response['outcome'] == 'failed':
+                    return f'resource_listener_create_failed: {create_listener_response}'
                 self.resource_dict['task'][object_name]['listener'] = create_listener_response['listener']
                 if listener_tls:
                     self.resource_dict['task'][object_name]['listener']['tls'] = cert_gen_response['tls']
@@ -747,25 +900,31 @@ class Resource:
                 stager_args = {}
                 for k, v in object_parameters['stager'].items():
                     stager_args[k] = v
-                create_stager_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'create_stager', instruct_args=stager_args)
-                if not create_stager_response:
-                    return 'resource_stager_create_failed'
-                if create_stager_response['outcome'] != 'success':
-                    print(create_stager_response)
-                    return 'resource_stager_create_failed'
+                try:
+                    create_stager_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'create_stager', instruct_args=stager_args)
+                except Exception as e:
+                    return f'resource_stager_create_failed: {e}'
+                if create_stager_response['outcome'] == 'failed':
+                    return f'resource_stager_create_failed: {create_stager_response}'
                 self.resource_dict['task'][object_name]['stager'] = create_stager_response['stager']
             return self.resource_dict['task'][object_name]
         if action == 'delete':
             task_name = self.resource_dict['task'][object_name]['task_name']
-            task_shutdown_response = self.havoc_client.task_shutdown(task_name)
+            try:
+                task_shutdown_response = self.havoc_client.task_shutdown(task_name)
+            except Exception as e:
+                return f'resource_task_delete_failed: {e}'
             if 'completed' not in task_shutdown_response:
-                return 'resource_task_delete_failed'
+                return f'resource_task_delete_failed: {task_shutdown_response}'
             del self.resource_dict['task'][object_name]
             return 'resource_task_deleted'
         if action == 'read':
             new_path = re.search('resource.task.(.*)', object_parameters['path'])
             path = re.sub('\.', '/', new_path.group(1))
-            return dpath.get(self.resource_dict['task'], path)
+            try:
+                return dpath.get(self.resource_dict['task'], path)
+            except Exception as e:
+                return f'resource_task_read_failed: {e}'
 
 
 class call_object():
