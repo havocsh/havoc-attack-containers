@@ -106,8 +106,6 @@ class Action:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
                     return f'action_instruct_task_create_failed: {e}'
-                if action_function_response['outcome'] == 'failed':
-                    return f'action_instruct_task_create_failed: {action_function_response}'
                 self.action_dict['instruct_task'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['instruct_task'][object_name]
         if action == 'delete':
@@ -148,8 +146,6 @@ class Action:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
                     return f'action_download_from_workspace_create_failed: {e}'
-                if action_function_response['outcome'] == 'failed':
-                    return f'action_download_from_workspace_create_failed: {action_function_response}'
                 self.action_dict['download_from_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['download_from_workspace'][object_name]
         if action == 'delete':
@@ -198,8 +194,6 @@ class Action:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
                     return f'action_sync_to_workspace_create_failed: {e}'
-                if action_function_response['outcome'] == 'failed':
-                    return f'action_sync_to_workspace_create_failed: {action_function_response}'
                 self.action_dict['sync_to_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['sync_to_workspace'][object_name]
         if action == 'delete':
@@ -239,8 +233,6 @@ class Action:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
                     return f'action_sync_from_workspace_create_failed: {e}'
-                if action_function_response['outcome'] == 'failed':
-                    return f'action_sync_from_workspace_create_failed: {action_function_response}'
                 self.action_dict['sync_from_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['sync_from_workspace'][object_name]
         if action == 'delete':
@@ -283,8 +275,6 @@ class Action:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
                     return f'action_task_download_file_create_failed: {e}'
-                if action_function_response['outcome'] == 'failed':
-                    return f'action_task_download_file_create_failed: {action_function_response}'
                 self.action_dict['task_download_file'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['task_download_file'][object_name]
         if action == 'delete':
@@ -331,8 +321,6 @@ class Action:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
                     return f'action_task_execute_command_create_failed: {e}'
-                if action_function_response['outcome'] == 'failed':
-                    return f'action_task_execute_command_create_failed: {action_function_response}'
                 self.action_dict['task_execute_command'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['task_execute_command'][object_name]
         if action == 'delete':
@@ -378,8 +366,6 @@ class Action:
                 )
             except Exception as e:
                 return f'action_execute_agent_module_create_failed: {e}'
-            if execute_agent_module_response['outcome'] == 'failed':
-                return f'action_execute_agent_module_create_failed: {execute_agent_module_response}'
             self.action_dict['execute_agent_module'][object_name] = execute_agent_module_response
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
@@ -392,8 +378,6 @@ class Action:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
                     return f'action_execute_agent_module_create_failed: {e}'
-                if action_function_response['outcome'] == 'failed':
-                    return f'action_execute_agent_module_create_failed: {action_function_response}'
                 self.action_dict['execute_agent_module'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['execute_agent_module'][object_name]
         if action == 'delete':
@@ -431,8 +415,6 @@ class Action:
                 )
             except Exception as e:
                 return f'action_execute_agent_shell_command_create_failed: {e}'
-            if execute_agent_shell_command_response['outcome'] == 'failed':
-                return f'action_execute_agent_shell_command_create_failed: {execute_agent_shell_command_response}'
             self.action_dict['execute_agent_shell_command'][object_name] = execute_agent_shell_command_response
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
@@ -445,8 +427,6 @@ class Action:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
                     return f'action_execute_agent_shell_command_create_failed: {e}'
-                if action_function_response['outcome'] == 'failed':
-                    return f'action_execute_agent_shell_command_create_failed: {action_function_response}'
                 self.action_dict['execute_agent_shell_command'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['execute_agent_shell_command'][object_name]
         if action == 'delete':
