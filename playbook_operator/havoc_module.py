@@ -1015,9 +1015,12 @@ class call_object():
                                 for dep_match in dep_matches:
                                     count_check = re.search('\[(\d+)\]', dep_match)
                                     if count_check:
+                                        print(f'count_check: {count_check}')
                                         dep_match = re.sub('\[\d+\]', '.' + count_check.group(1), dep_match)
+                                        print(f'dep_match: {dep_match}')
                                     dep_method, dep_object = self.object_resolver(dep_match)
                                     dep_value = dep_method(dep_object, 'read', path=dep_match)
+                                    print(f'dep_value: {dep_value}')
                                     if not isinstance(dep_value, str) and not isinstance(dep_value, int):
                                         operator_command = f'create {node_path}'
                                         dep_value_type = type(dep_value)
