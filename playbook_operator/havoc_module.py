@@ -983,18 +983,6 @@ class call_object():
         return methods[method_name], object_name
     
     def creator(self, playbook_config, execution_list, executed_list):
-        
-        # Remove disabled blocks from playbook_config
-        disabled_list = []
-        for (path, value) in dpath.search(playbook_config, '*/*/*/*/*', yielded=True):
-            if 'enable_block' in path:
-                if value.lower() == 'false':
-                    disabled_list.append(path)
-        for disabled in disabled_list:
-            disabled_search = re.search('(.*)/enable_block$', disabled)
-            if disabled_search:
-                disabled_path = disabled_search.group(1)
-                dpath.delete(playbook_config, disabled_path)
 
         # Remove depends_on references from playbook_config
         depends_on_list = []
