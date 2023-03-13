@@ -992,8 +992,9 @@ class call_object():
                     disabled_list.append(path)
         for disabled in disabled_list:
             disabled_search = re.search('(.*)/enable_block$', disabled)
-            disabled_path = disabled_search.group(1)
-            dpath.delete(playbook_config, disabled_path)
+            if disabled_search:
+                disabled_path = disabled_search.group(1)
+                dpath.delete(playbook_config, disabled_path)
 
         # Remove depends_on references from playbook_config
         depends_on_list = []
@@ -1025,8 +1026,8 @@ class call_object():
                                         dep_match = re.sub('\[\d+\]', '.' + count_check.group(1), dep_match)
                                     dep_method, dep_object = self.object_resolver(dep_match)
                                     dep_value = dep_method(dep_object, 'read', path=dep_match)
-                                    operator_command = f'create {node_path}'
                                     if not isinstance(dep_value, str) and not isinstance(dep_value, int):
+                                        operator_command = f'create {node_path}'
                                         dep_value_type = type(dep_value)
                                         send_response({'outcome': 'failed', 'details': f'{dep_match} returned {dep_value_type}: must be str or int'}, 'True', self.user_id, self.playbook_name, 
                                                       self.playbook_operator_version, operator_command, value, self.end_time)
@@ -1035,6 +1036,7 @@ class call_object():
                                     json_value = re.sub(re_sub, str(dep_value), json_value)
                             value = json.loads(json_value, strict=False)
                             method_result = method(object_name, 'create', **value)
+                            operator_command = f'create {node_path}'
                             if 'failed' not in method_result:
                                 send_response({'outcome': 'success', 'details': method_result}, 'True', self.user_id, self.playbook_name, 
                                               self.playbook_operator_version, operator_command, value, self.end_time)
