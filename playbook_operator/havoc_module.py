@@ -366,6 +366,8 @@ class Action:
                 )
             except Exception as e:
                 return f'action_execute_agent_module_create_failed: {e}'
+            if 'outcome' in execute_agent_module_response and execute_agent_module_response['outcome'] == 'failed':
+                return f'action_execute_agent_module_create_failed: {execute_agent_module_response}'
             self.action_dict['execute_agent_module'][object_name] = execute_agent_module_response
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
@@ -415,6 +417,8 @@ class Action:
                 )
             except Exception as e:
                 return f'action_execute_agent_shell_command_create_failed: {e}'
+            if 'error' in execute_agent_shell_command_response:
+                return f'action_execute_agent_shell_command_create_failed: {execute_agent_shell_command_response}'
             self.action_dict['execute_agent_shell_command'][object_name] = execute_agent_shell_command_response
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
