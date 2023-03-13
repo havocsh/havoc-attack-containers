@@ -984,6 +984,17 @@ class call_object():
     
     def creator(self, playbook_config, execution_list, executed_list):
         
+        # Remove disabled blocks from playbook_config
+        disabled_list = []
+        for (path, value) in dpath.search(playbook_config, '*/*/*/*/*', yielded=True):
+            if 'enable_block' in path:
+                if value.lower() == 'false':
+                    disabled_list.append(path)
+        for disabled in disabled_list:
+            disabled_search = re.search('(.*)/enable$', disabled)
+            disabled_path = disabled_search.group(1)
+            dpath.delete(playbook_config, disabled_path)
+
         # Remove depends_on references from playbook_config
         depends_on_list = []
         for (path, value) in dpath.search(playbook_config, '*/*/*/*/*', yielded=True):
@@ -1012,15 +1023,18 @@ class call_object():
                                     count_check = re.search('\[(\d+)\]', dep_match)
                                     if count_check:
                                         dep_match = re.sub('\[\d+\]', '.' + count_check.group(1), dep_match)
-                                        print(f'dep_match: {dep_match}')
                                     dep_method, dep_object = self.object_resolver(dep_match)
                                     dep_value = dep_method(dep_object, 'read', path=dep_match)
-                                    print(f'dep_value: {dep_value}')
+                                    operator_command = f'create {node_path}'
+                                    if not isinstance(dep_value, str) and not isinstance(dep_value, int):
+                                        dep_value_type = type(dep_value)
+                                        send_response({'outcome': 'failed', 'details': f'{dep_match} returned {dep_value_type}: must be str or int'}, 'True', self.user_id, self.playbook_name, 
+                                                      self.playbook_operator_version, operator_command, value, self.end_time)
+                                        break
                                     re_sub = re.compile('\${' + dep_match + '}')
-                                    json_value = re.sub(re_sub, dep_value, json_value)
+                                    json_value = re.sub(re_sub, str(dep_value), json_value)
                             value = json.loads(json_value, strict=False)
                             method_result = method(object_name, 'create', **value)
-                            operator_command = f'create {node_path}'
                             if 'failed' not in method_result:
                                 send_response({'outcome': 'success', 'details': method_result}, 'True', self.user_id, self.playbook_name, 
                                               self.playbook_operator_version, operator_command, value, self.end_time)
