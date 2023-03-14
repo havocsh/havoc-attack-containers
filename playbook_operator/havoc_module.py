@@ -303,7 +303,10 @@ class Action:
             file_name = object_parameters['file_name']
             instruct_command = 'del'
             instruct_args = {'file_name': file_name}
-            interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+            try:
+                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+            except Exception as e:
+                return f'action_task_download_file_delete_failed: {e}'
             del self.action_dict['task_download_file'][object_name]
             return 'action_task_download_file_delete_completed'
         if action == 'read':
@@ -353,9 +356,12 @@ class Action:
         if action == 'delete':
             task_name = self.action_dict['task_execute_command'][object_name]['task_name']
             command = self.action_dict['task_execute_command'][object_name]['command']
-            instruct_command = 'kill_command'
+            instruct_command = 'task_kill_command'
             instruct_args = {'command': command}
-            interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+            try:
+                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+            except Exception as e:
+                return f'action_task_execute_command_delete_failed: {e}'
             del self.action_dict['task_execute_command'][object_name]
             return 'action_task_execute_command_delete_completed'
         if action == 'read':
