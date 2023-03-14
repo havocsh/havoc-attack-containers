@@ -283,6 +283,7 @@ class Action:
                 return f'action_task_download_file_create_failed: {e}'
             if interact_with_task_response['outcome'] == 'failed':
                 return f'action_task_download_file_create_failed: {interact_with_task_response}'
+            self.action_dict['task_download_file'][object_name]['task_name'] = task_name
             self.action_dict['task_download_file'][object_name] = {key: value for key, value in interact_with_task_response.items()}
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
@@ -298,7 +299,7 @@ class Action:
                 self.action_dict['task_download_file'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['task_download_file'][object_name]
         if action == 'delete':
-            task_name = object_parameters['task_name']
+            task_name = self.action_dict['task_download_file'][object_name]['task_name']
             file_name = object_parameters['file_name']
             instruct_command = 'del'
             instruct_args = {'file_name': file_name}
@@ -334,6 +335,7 @@ class Action:
                 return f'action_task_execute_command_create_failed: {e}'
             if interact_with_task_response['outcome'] == 'failed':
                 return f'action_task_execute_command_create_failed: {interact_with_task_response}'
+            self.action_dict['task_execute_command'][object_name]['task_name'] = task_name
             self.action_dict['task_execute_command'][object_name] = {key: value for key, value in interact_with_task_response.items()}
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
@@ -349,8 +351,8 @@ class Action:
                 self.action_dict['task_execute_command'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['task_execute_command'][object_name]
         if action == 'delete':
-            task_name = object_parameters['task_name']
-            command = object_parameters['command']
+            task_name = self.action_dict['task_execute_command'][object_name]['task_name']
+            command = self.action_dict['task_execute_command'][object_name]['command']
             instruct_command = 'kill_command'
             instruct_args = {'command': command}
             interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
