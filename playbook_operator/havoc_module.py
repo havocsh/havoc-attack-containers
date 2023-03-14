@@ -283,8 +283,8 @@ class Action:
                 return f'action_task_download_file_create_failed: {e}'
             if interact_with_task_response['outcome'] == 'failed':
                 return f'action_task_download_file_create_failed: {interact_with_task_response}'
-            self.action_dict['task_download_file'][object_name]['task_name'] = task_name
             self.action_dict['task_download_file'][object_name] = {key: value for key, value in interact_with_task_response.items()}
+            self.action_dict['task_download_file'][object_name]['task_name'] = task_name
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
                     called_action_function = k
@@ -335,8 +335,8 @@ class Action:
                 return f'action_task_execute_command_create_failed: {e}'
             if interact_with_task_response['outcome'] == 'failed':
                 return f'action_task_execute_command_create_failed: {interact_with_task_response}'
-            self.action_dict['task_execute_command'][object_name]['task_name'] = task_name
             self.action_dict['task_execute_command'][object_name] = {key: value for key, value in interact_with_task_response.items()}
+            self.action_dict['task_execute_command'][object_name]['task_name'] = task_name
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
                     called_action_function = k
