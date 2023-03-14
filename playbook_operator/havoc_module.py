@@ -300,7 +300,7 @@ class Action:
             return self.action_dict['task_download_file'][object_name]
         if action == 'delete':
             task_name = self.action_dict['task_download_file'][object_name]['task_name']
-            file_name = object_parameters['file_name']
+            file_name = self.action_dict['task_download_file'][object_name]['file_name']
             instruct_command = 'del'
             instruct_args = {'file_name': file_name}
             try:
