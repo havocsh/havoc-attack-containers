@@ -1138,7 +1138,7 @@ class call_object():
                                         send_response({'outcome': 'failed', 'details': f'{dep_match} returned {dep_value_type}: must be str or int'}, 'True', self.user_id, self.playbook_name, 
                                                       self.playbook_operator_version, operator_command, value, self.end_time)
                                         break
-                                    re_sub = re.compile('\${' + dep_match + '}')
+                                    re_sub = re.compile('\${' + re.escape(dep_match) + '}')
                                     print(f're_sub: {re_sub}')
                                     json_value = re.sub(re_sub, str(dep_value), json_value)
                                     print(f'json_value: {json_value}')
