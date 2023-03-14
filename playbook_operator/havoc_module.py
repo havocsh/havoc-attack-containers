@@ -1130,10 +1130,8 @@ class call_object():
                             dep_matches = re.findall('\${([^}]+)}', json_value)
                             if dep_matches:
                                 for dep_match in dep_matches:
-                                    print(f'dep_match: {dep_match}')
                                     dep_method, dep_object = self.object_resolver(dep_match)
                                     dep_value = dep_method(dep_object, 'read', path=dep_match)
-                                    print(f'dep_value: {dep_value}')
                                     if not isinstance(dep_value, str) and not isinstance(dep_value, int):
                                         operator_command = f'create {node_path}'
                                         dep_value_type = type(dep_value)
@@ -1141,7 +1139,6 @@ class call_object():
                                                       self.playbook_operator_version, operator_command, value, self.end_time)
                                         break
                                     re_sub = re.compile('\${' + re.escape(dep_match) + '}')
-                                    print(f're_sub: {re_sub}')
                                     json_value = re.sub(re_sub, str(dep_value), json_value)
                                     print(f'json_value: {json_value}')
                             value = json.loads(json_value, strict=False)
