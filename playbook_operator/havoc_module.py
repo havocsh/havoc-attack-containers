@@ -154,9 +154,10 @@ class Action:
                 self.action_dict['download_from_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['download_from_workspace'][object_name]
         if action == 'delete':
-            task_name = object_parameters['task_name']
+            task_name = self.action_dict['download_from_workspace'][object_name]['task_name']
+            file_name = self.action_dict['download_from_workspace'][object_name]['file_name']
             instruct_command = 'del'
-            instruct_args = {'file_name': object_parameters['file_name']}
+            instruct_args = {'file_name': file_name}
             try:
                 interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
             except Exception as e:
@@ -744,8 +745,9 @@ class Resource:
             self.resource_dict['file'][object_name] = {key: value for key, value in object_parameters.items()}
             return self.resource_dict['file'][object_name]
         if action == 'delete':
+            file_name = self.resource_dict['file'][object_name]['file_name']
             try:
-                delete_file_response = self.havoc_client.delete_file(**object_parameters)
+                delete_file_response = self.havoc_client.delete_file(file_name=file_name)
             except Exception as e:
                 return f'resource_file_delete_failed: {e}'
             if delete_file_response['outcome'] == 'failed':
