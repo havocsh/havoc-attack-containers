@@ -1180,6 +1180,7 @@ class call_object():
                             if 'failed' not in method_result:
                                 send_response({'outcome': 'success'}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
                                               operator_command, value, self.end_time)
+                                t.sleep(2)
                             else:
                                 send_response({'outcome': 'failed'}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
                                               operator_command, value, self.end_time)
