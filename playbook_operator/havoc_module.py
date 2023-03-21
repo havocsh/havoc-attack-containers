@@ -1294,7 +1294,6 @@ class call_object():
                         execution_order, current_rule = self.exec_order.get_exec_order(node_path)
                         if execution_order == current_rule:
                             execution_list.remove(node_path)
-                            executed_list.append(node_path)
                             method, object_name = self.object_resolver(node_path)
                             json_value = json.dumps(value)
                             dep_matches = re.findall('\${([^}]+)}', json_value)
@@ -1320,6 +1319,7 @@ class call_object():
                             if 'failed' not in method_result:
                                 send_response({'outcome': 'success', 'details': method_result}, 'True', self.user_id, self.playbook_name, 
                                               self.playbook_operator_version, operator_command, value, self.end_time)
+                                executed_list.append(node_path)
                                 t.sleep(2)
                             if 'failed' in method_result:
                                 send_response({'outcome': 'failed', 'details': method_result}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
