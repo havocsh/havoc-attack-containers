@@ -94,7 +94,7 @@ class Action:
             instruct_args = object_parameters['instruct_args']
             if 'timeout' in object_parameters:
                 timeout = object_parameters['timeout']
-                signal.alarm(timeout)
+                signal.alarm(int(timeout))
             essential = None
             if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
                 essential = True
@@ -121,7 +121,7 @@ class Action:
                         function_parameters[k] = v
                 if 'timeout' in object_parameters['action_function'][called_action_function]:
                     timeout = object_parameters['action_function'][called_action_function]['timeout']
-                    signal.alarm(timeout)
+                    signal.alarm(int(timeout))
                 try:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
@@ -159,7 +159,7 @@ class Action:
             instruct_args = {'file_name': object_parameters['file_name']}
             if 'timeout' in object_parameters:
                 timeout = object_parameters['timeout']
-                signal.alarm(timeout)
+                signal.alarm(int(timeout))
             essential = None
             if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
                 essential = True
@@ -183,7 +183,7 @@ class Action:
                         function_parameters[k] = v
                 if 'timeout' in object_parameters['action_function'][called_action_function]:
                     timeout = object_parameters['action_function'][called_action_function]['timeout']
-                    signal.alarm(timeout)
+                    signal.alarm(int(timeout))
                 try:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
@@ -230,7 +230,7 @@ class Action:
             instruct_command = 'sync_to_workspace'
             if 'timeout' in object_parameters:
                 timeout = object_parameters['timeout']
-                signal.alarm(timeout)
+                signal.alarm(int(timeout))
             essential = None
             if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
                 essential = True
@@ -257,7 +257,7 @@ class Action:
                         function_parameters[k] = v
                 if 'timeout' in object_parameters['action_function'][called_action_function]:
                     timeout = object_parameters['action_function'][called_action_function]['timeout']
-                    signal.alarm(timeout)
+                    signal.alarm(int(timeout))
                 try:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
@@ -294,7 +294,7 @@ class Action:
             instruct_command = 'sync_from_workspace'
             if 'timeout' in object_parameters:
                 timeout = object_parameters['timeout']
-                signal.alarm(timeout)
+                signal.alarm(int(timeout))
             essential = None
             if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
                 essential = True
@@ -321,7 +321,7 @@ class Action:
                         function_parameters[k] = v
                 if 'timeout' in object_parameters['action_function'][called_action_function]:
                     timeout = object_parameters['action_function'][called_action_function]['timeout']
-                    signal.alarm(timeout)
+                    signal.alarm(int(timeout))
                 try:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
@@ -361,7 +361,7 @@ class Action:
             instruct_args = {'url': url, 'file_name': file_name}
             if 'timeout' in object_parameters:
                 timeout = object_parameters['timeout']
-                signal.alarm(timeout)
+                signal.alarm(int(timeout))
             essential = None
             if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
                 essential = True
@@ -389,7 +389,7 @@ class Action:
                         function_parameters[k] = v
                 if 'timeout' in object_parameters['action_function'][called_action_function]:
                     timeout = object_parameters['action_function'][called_action_function]['timeout']
-                    signal.alarm(timeout)
+                    signal.alarm(int(timeout))
                 try:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
@@ -436,7 +436,7 @@ class Action:
             instruct_args = {'command': command}
             if 'timeout' in object_parameters:
                 timeout = object_parameters['timeout']
-                signal.alarm(timeout)
+                signal.alarm(int(timeout))
             essential = None
             if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
                 essential = True
@@ -464,7 +464,7 @@ class Action:
                         function_parameters[k] = v
                 if 'timeout' in object_parameters['action_function'][called_action_function]:
                     timeout = object_parameters['action_function'][called_action_function]['timeout']
-                    signal.alarm(timeout)
+                    signal.alarm(int(timeout))
                 try:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
@@ -522,7 +522,7 @@ class Action:
                 module_args = object_parameters['module_args']
             if 'timeout' in object_parameters:
                 timeout = object_parameters['timeout']
-                signal.alarm(timeout)
+                signal.alarm(int(timeout))
             essential = None
             if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
                 essential = True
@@ -551,7 +551,7 @@ class Action:
                         function_parameters[k] = v
                 if 'timeout' in object_parameters['action_function'][called_action_function]:
                     timeout = object_parameters['action_function'][called_action_function]['timeout']
-                    signal.alarm(timeout)
+                    signal.alarm(int(timeout))
                 try:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
@@ -598,7 +598,7 @@ class Action:
                 completion_string = object_parameters['completion_string']
             if 'timeout' in object_parameters:
                 timeout = object_parameters['timeout']
-                signal.alarm(timeout)
+                signal.alarm(int(timeout))
             essential = None
             if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
                 essential = True
@@ -627,7 +627,7 @@ class Action:
                         function_parameters[k] = v
                 if 'timeout' in object_parameters['action_function'][called_action_function]:
                     timeout = object_parameters['action_function'][called_action_function]['timeout']
-                    signal.alarm(timeout)
+                    signal.alarm(int(timeout))
                 try:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
@@ -1309,7 +1309,7 @@ class call_object():
                                         break
                                     re_sub = re.compile('\${' + re.escape(dep_match) + '}')
                                     json_value = re.sub(re_sub, str(dep_value), json_value)
-                                    print(f'json_value: {json_value}')
+                            print(f'command_input: {json_value}')
                             value = json.loads(json_value, strict=False)
                             method_result = method(object_name, 'create', **value)
                             operator_command = f'create {node_path}'
