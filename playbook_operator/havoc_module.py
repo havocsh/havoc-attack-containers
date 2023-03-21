@@ -1283,6 +1283,7 @@ class call_object():
             dpath.delete(playbook_config, depends_on)
         
         # Proceed with block processing
+        break_out_flag = None
         while execution_list:
             for section in playbook_config:
                 for (path, value) in dpath.search(playbook_config[section], '*/*/*', yielded=True):
