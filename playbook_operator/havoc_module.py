@@ -1075,7 +1075,15 @@ class Resource:
             except Exception as e:
                 return f'resource_portgroup_rule_create_failed: {e}'
             if add_portgroup_rule_response['outcome'] == 'failed':
-                return f'resource_portgroup_rule_create_failed: {add_portgroup_rule_response}'
+                if 'already exists' in add_portgroup_rule_response['message']:
+                    self.resource_dict['portgroup_rule'][object_name] = {}
+                    self.resource_dict['portgroup_rule'][object_name]['portgroup_name'] = portgroup_name
+                    self.resource_dict['portgroup_rule'][object_name]['ip_ranges'] = ip_ranges
+                    self.resource_dict['portgroup_rule'][object_name]['ip_protocol'] = ip_protocol
+                    self.resource_dict['portgroup_rule'][object_name]['port'] = port
+                    return self.resource_dict['portgroup_rule'][object_name]
+                else:
+                    return f'resource_portgroup_rule_create_failed: {add_portgroup_rule_response}'
             self.resource_dict['portgroup_rule'][object_name] = {}
             self.resource_dict['portgroup_rule'][object_name]['portgroup_name'] = portgroup_name
             self.resource_dict['portgroup_rule'][object_name]['ip_ranges'] = ip_ranges
