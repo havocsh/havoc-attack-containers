@@ -982,6 +982,8 @@ class Resource:
     def random_integer(self, object_name, action, **object_parameters):
         if action == 'create':
             self.resource_dict['random_integer'][object_name] = {key: value for key, value in object_parameters.items()}
+            if 'length' not in object_parameters:
+                return 'resource_random_integer_create_failed: length not specified'
             length = object_parameters['length']
             result = ''.join(random.choice(string.digits) for i in range(length))
             self.resource_dict['random_integer'][object_name]['result'] = result
@@ -1005,23 +1007,50 @@ class Resource:
     def random_string(self, object_name, action, **object_parameters):
         if action == 'create':
             self.resource_dict['random_string'][object_name] = {key: value for key, value in object_parameters.items()}
+            if 'length' not in object_parameters:
+                return 'resource_random_string_create_failed: length not specified'
             length = object_parameters['length']
             string_seed = None
             if 'letters' in object_parameters:
-                if object_parameters['letters'].lower() == 'true':
-                    string_seed = string.ascii_letters
+                letters = object_parameters['letters']
+                if isinstance(letters, str):
+                    if letters.lower() == 'true':
+                        string_seed = string.ascii_letters
+                if isinstance(letters, bool):
+                    if letters is True:
+                        string_seed = string.ascii_letters
             if 'digits' in object_parameters:
-                if object_parameters['digits'].lower() == 'true':
-                    string_seed = string_seed + string.digits
+                digits = object_parameters['digits']
+                if isinstance(digits, str):
+                    if digits.lower() == 'true':
+                        string_seed = string_seed + string.digits
+                if isinstance(digits, bool):
+                    if digits is True:
+                        string_seed = string_seed + string.digits
             if 'punctuation' in object_parameters:
-                if object_parameters['punctuation'].lower() == 'true':
-                    string_seed = string_seed + string.punctuation
+                punctuation = object_parameters['punctuation']
+                if isinstance(punctuation, str):
+                    if punctuation.lower() == 'true':
+                        string_seed = string_seed + string.punctuation
+                if isinstance(punctuation, bool):
+                    if punctuation is True:
+                        string_seed = string_seed + string.punctuation
             if 'upper' in object_parameters:
-                if object_parameters['upper'].lower() == 'true':
-                    string_seed = string_seed.upper()
+                upper_val = object_parameters['upper']
+                if isinstance(upper_val, str):
+                    if upper_val.lower() == 'true':
+                        string_seed = string_seed.upper()
+                if isinstance(upper_val, bool):
+                    if upper_val is True:
+                        string_seed = string_seed.upper()
             if 'lower' in object_parameters:
-                if object_parameters['lower'].lower() == 'true':
-                    string_seed = string_seed.lower()
+                lower_val = object_parameters['lower']
+                if isinstance(lower_val, str):
+                    if lower_val.lower() == 'true':
+                        string_seed = string_seed.lower()
+                if isinstance(lower_val, bool):
+                    if lower_val is True:
+                        string_seed = string_seed.lower()
             if string_seed is None:
                 string_seed = string.ascii_letters
             result = ''.join(random.choice(string_seed) for i in range(length))
