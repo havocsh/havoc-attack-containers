@@ -474,6 +474,8 @@ class call_powershell_empire:
             )
             certbot_out = p.communicate()
             certbot_message = certbot_out[0].decode('utf-8')
+            print(certbot_message)
+            print(certbot_out[1].decode('utf-8'))
             if 'Successfully received certificate' not in certbot_message:
                 output = {'outcome': 'failed', 'message': certbot_message, 'forward_log': 'False'}
                 return output
