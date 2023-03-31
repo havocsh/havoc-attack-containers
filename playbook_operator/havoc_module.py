@@ -1006,10 +1006,22 @@ class Resource:
         if action == 'create':
             self.resource_dict['random_string'][object_name] = {key: value for key, value in object_parameters.items()}
             length = object_parameters['length']
-            if object_parameters['special']:
-                string_seed = string.ascii_letters + string.punctuation
-            else:
-                string_seed = string.ascii_letters
+            string_seed = None
+            if 'letters' in object_parameters:
+                if object_parameters['letter'].lower() == 'true':
+                    string_seed = string.ascii_letters
+            if 'digits' in object_parameters:
+                if object_parameters['digit'].lower() == 'true':
+                    string_seed = string_seed + string.digits
+            if 'punctuation' in object_parameters:
+                if object_parameters['punctuation'].lower() == 'true':
+                    string_seed = string_seed + string.punctuation
+            if 'upper' in object_parameters:
+                if object_parameters['upper'].lower() == 'true':
+                    string_seed = string_seed.upper()
+            if 'lower' in object_parameters:
+                if object_parameters['lower'].lower() == 'true':
+                    string_seed = string_seed.lower()
             result = ''.join(random.choice(string_seed) for i in range(length))
             self.resource_dict['random_string'][object_name]['result'] = result
             return self.resource_dict['random_string'][object_name]
