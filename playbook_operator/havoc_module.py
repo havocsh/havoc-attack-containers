@@ -1008,10 +1008,10 @@ class Resource:
             length = object_parameters['length']
             string_seed = None
             if 'letters' in object_parameters:
-                if object_parameters['letter'].lower() == 'true':
+                if object_parameters['letters'].lower() == 'true':
                     string_seed = string.ascii_letters
             if 'digits' in object_parameters:
-                if object_parameters['digit'].lower() == 'true':
+                if object_parameters['digits'].lower() == 'true':
                     string_seed = string_seed + string.digits
             if 'punctuation' in object_parameters:
                 if object_parameters['punctuation'].lower() == 'true':
