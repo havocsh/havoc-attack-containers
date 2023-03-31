@@ -1066,41 +1066,46 @@ class Resource:
     
     def portgroup_rule(self, object_name, action, **object_parameters):
         if action == 'create':
-            portgroup_name = object_parameters['portgroup_name']
+            pg_name = object_parameters['portgroup_name']
+            pg_action = object_parameters['portgroup_action']
             ip_ranges = object_parameters['ip_ranges']
             ip_protocol = object_parameters['ip_protocol']
             port = object_parameters['port']
             try:
-                add_portgroup_rule_response = self.havoc_client.update_portgroup_rule(portgroup_name=portgroup_name, portgroup_action='add', ip_ranges=ip_ranges, ip_protocol=ip_protocol, port=port)
+                pg_rule_response = self.havoc_client.update_portgroup_rule(portgroup_name=pg_name, portgroup_action=pg_action, ip_ranges=ip_ranges, ip_protocol=ip_protocol, port=port)
             except Exception as e:
                 return f'resource_portgroup_rule_create_failed: {e}'
-            if add_portgroup_rule_response['outcome'] == 'failed':
-                if 'already exists' in add_portgroup_rule_response['message']:
+            if pg_rule_response['outcome'] == 'failed':
+                if 'already exists' in pg_rule_response['message'] or 'does not exist' in pg_rule_response['message']:
                     self.resource_dict['portgroup_rule'][object_name] = {}
-                    self.resource_dict['portgroup_rule'][object_name]['portgroup_name'] = portgroup_name
+                    self.resource_dict['portgroup_rule'][object_name]['portgroup_name'] = pg_name
                     self.resource_dict['portgroup_rule'][object_name]['ip_ranges'] = ip_ranges
                     self.resource_dict['portgroup_rule'][object_name]['ip_protocol'] = ip_protocol
                     self.resource_dict['portgroup_rule'][object_name]['port'] = port
                     return self.resource_dict['portgroup_rule'][object_name]
                 else:
-                    return f'resource_portgroup_rule_create_failed: {add_portgroup_rule_response}'
+                    return f'resource_portgroup_rule_create_failed: {pg_rule_response}'
             self.resource_dict['portgroup_rule'][object_name] = {}
-            self.resource_dict['portgroup_rule'][object_name]['portgroup_name'] = portgroup_name
+            self.resource_dict['portgroup_rule'][object_name]['portgroup_name'] = pg_name
             self.resource_dict['portgroup_rule'][object_name]['ip_ranges'] = ip_ranges
             self.resource_dict['portgroup_rule'][object_name]['ip_protocol'] = ip_protocol
             self.resource_dict['portgroup_rule'][object_name]['port'] = port
             return self.resource_dict['portgroup_rule'][object_name]
         if action == 'delete':
-            portgroup_name = self.resource_dict['portgroup_rule'][object_name]['portgroup_name']
+            pg_name = self.resource_dict['portgroup_rule'][object_name]['portgroup_name']
             ip_ranges = self.resource_dict['portgroup_rule'][object_name]['ip_ranges']
             ip_protocol = self.resource_dict['portgroup_rule'][object_name]['ip_protocol']
             port = self.resource_dict['portgroup_rule'][object_name]['port']
             try:
-                delete_portgroup_rule_response = self.havoc_client.update_portgroup_rule(portgroup_name=portgroup_name, portgroup_action='remove', ip_ranges=ip_ranges, ip_protocol=ip_protocol, port=port)
+                pg_rule_response = self.havoc_client.update_portgroup_rule(portgroup_name=pg_name, portgroup_action='remove', ip_ranges=ip_ranges, ip_protocol=ip_protocol, port=port)
             except Exception as e:
                 return f'resource_portgroup_rule_delete_failed: {e}'
-            if delete_portgroup_rule_response['outcome'] == 'failed':
-                return f'resource_portgroup_rule_delete_failed: {delete_portgroup_rule_response}'
+            if pg_rule_response['outcome'] == 'failed':
+                if 'does not exist' in pg_rule_response['message']:
+                    del self.resource_dict['portgroup_rule'][object_name]
+                    return 'resource_portgroup_rule_deleted'
+                else:
+                    return f'resource_portgroup_rule_delete_failed: {pg_rule_response}'
             del self.resource_dict['portgroup_rule'][object_name]
             return 'resource_portgroup_rule_deleted'
         if action == 'read':
