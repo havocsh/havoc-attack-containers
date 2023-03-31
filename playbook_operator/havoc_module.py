@@ -1022,6 +1022,8 @@ class Resource:
             if 'lower' in object_parameters:
                 if object_parameters['lower'].lower() == 'true':
                     string_seed = string_seed.lower()
+            if string_seed is None:
+                string_seed = string.ascii_letters
             result = ''.join(random.choice(string_seed) for i in range(length))
             self.resource_dict['random_string'][object_name]['result'] = result
             return self.resource_dict['random_string'][object_name]
