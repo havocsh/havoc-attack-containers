@@ -460,7 +460,7 @@ class call_powershell_empire:
             if 'email' not in self.args:
                 output = {'outcome': 'failed', 'message': 'Missing email for certificate registration', 'forward_log': 'False'}
                 return output
-            domain = self.args['domain']
+            domain = self.args['domain'].lower()
             email = self.args['email']
             if 'test_cert' in self.args and self.args['test_cert'].lower() == 'true':
                 certbot_command = ['/usr/bin/certbot', 'certonly', '--standalone', '--non-interactive', '--agree-tos', '--test-cert', '-d', domain, '-m', email]
@@ -474,8 +474,6 @@ class call_powershell_empire:
             )
             certbot_out = p.communicate()
             certbot_message = certbot_out[0].decode('utf-8')
-            print(certbot_message)
-            print(certbot_out[1].decode('utf-8'))
             if 'Successfully received certificate' not in certbot_message:
                 output = {'outcome': 'failed', 'message': certbot_message, 'forward_log': 'False'}
                 return output
