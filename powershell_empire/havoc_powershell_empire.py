@@ -423,8 +423,10 @@ class call_powershell_empire:
             cert_host = self.args['cert_host']
             if cert_host == 'public_ip':
                 host = self.host_info[0]
-            if cert_host == 'local_ip':
+            elif cert_host == 'local_ip':
                 host = self.host_info[2]
+            else:
+                host = self.args['cert_host']
             subj = f'/C={cert_country}/ST={cert_state}/L={cert_locale}/O={cert_org}/OU={cert_org_unit}/CN={host}'
             p = subprocess.Popen(
                 [
