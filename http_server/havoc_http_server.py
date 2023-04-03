@@ -10,7 +10,7 @@ class HttpServer:
         self.args = None
         self.host_info = None
         self.results = None
-        self.twisted_process = None
+        self.server_process = None
 
     def set_args(self, args, public_ip, hostname, local_ip):
         self.args = args
@@ -34,17 +34,18 @@ class HttpServer:
                 return output
 
         if listener_type == 'https':
-            ssl_cert = Path('/opt/havoc/server-priv.key')
+            ssl_cert = Path('/opt/havoc/server.pem')
             if ssl_cert.is_file():
-                self.twisted_process = subprocess.Popen(
+                self.server_process = subprocess.Popen(
                     [
-                        '/usr/local/bin/twistd',
-                        '-no',
-                        'web',
-                        f'--listen=ssl:{port}'
-                        ':privateKey=/opt/havoc/server-priv.key'
-                        ':certKey=/opt/havoc/server-chain.pem',
-                        '--path=/opt/havoc/shared/'
+                        '/usr/local/bin/python3',
+                        '-m',
+                        'uploadserver',
+                        port,
+                        '--server-certificate',
+                        '/opt/havoc/server.pem',
+                        '--directory',
+                        '/opt/havoc/shared/'
                     ],
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
@@ -55,8 +56,8 @@ class HttpServer:
                           'forward_log': 'False'}
                 return output
         elif listener_type == 'http':
-            self.twisted_process = subprocess.Popen(
-                ['/usr/local/bin/twistd', '-no', 'web', f'--listen=tcp:{port}', '--path=/opt/havoc/shared/'],
+            self.server_process = subprocess.Popen(
+                ['/usr/local/bin/python3', '-m', 'uploadserver', port, '--directory', '/opt/havoc/shared/'],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
@@ -65,20 +66,20 @@ class HttpServer:
             output = {'outcome': 'failed', 'message': 'listener_type must be http or https', 'forward_log': 'False'}
             return output
         time.sleep(3)
-        if self.twisted_process.poll():
-            twisted_process_out = self.twisted_process.communicate()
-            twisted_message = twisted_process_out[0].decode('utf-8')
-            output = {'outcome': 'failed', 'message': twisted_message, 'forward_log': 'False'}
+        if self.server_process.poll():
+            server_process_out = self.server_process.communicate()
+            server_message = server_process_out[0].decode('utf-8')
+            output = {'outcome': 'failed', 'message': server_message, 'forward_log': 'False'}
             return output
         else:
             output = {'outcome': 'success', 'listener': {'listener_type': listener_type, 'Port': port}, 'forward_log': 'True'}
             return output
 
     def kill_listener(self):
-        if not self.twisted_process:
+        if not self.server_process:
             output = {'outcome': 'failed', 'message': 'no listener is running', 'forward_log': 'False'}
             return output
-        self.twisted_process.terminate()
+        self.server_process.terminate()
         output = {'outcome': 'success', 'message': 'listener stopped', 'forward_log': 'True'}
         return output
 
@@ -105,8 +106,8 @@ class HttpServer:
                 host = self.host_info[2]
             subj = f'/C={cert_country}/ST={cert_state}/L={cert_locale}/O={cert_org}/OU={cert_org_unit}/CN={host}'
             p = subprocess.Popen(
-                ['/usr/bin/openssl', 'req', '-new', '-x509', '-keyout', '/opt/havoc/server-priv.key',
-                 '-out', '/opt/havoc/server-chain.pem', '-days', '365', '-nodes', '-subj', f'{subj}'],
+                ['/usr/bin/openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', '/opt/havoc/server.pem',
+                 '-out', '/opt/havoc/server.pem', '-days', '365', '-nodes', '-sha256', '-subj', subj],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
@@ -143,15 +144,21 @@ class HttpServer:
                 output = {'outcome': 'failed', 'message': certbot_message, 'forward_log': 'False'}
                 return output
             try:
-                shutil.copyfile(f'/etc/letsencrypt/live/{domain}/fullchain.pem', '/opt/havoc/server-chain.pem')
+                with open(f'/etc/letsencrypt/live/{domain}/privkey.pem', 'r') as privkey_f:
+                    privkey = privkey_f.read()
             except Exception as e:
                 output = {'outcome': 'failed', 'message': e, 'forward_log': 'False'}
                 return output
             try:
-                shutil.copyfile(f'/etc/letsencrypt/live/{domain}/privkey.pem', '/opt/havoc/server-priv.key')
+                with open(f'/etc/letsencrypt/live/{domain}/fullchain.pem', 'r') as fullchain_f:
+                    fullchain = fullchain_f.read()
             except Exception as e:
                 output = {'outcome': 'failed', 'message': e, 'forward_log': 'False'}
                 return output
+            
+            with open('/opt/havoc/server.pem', 'w+') as server_f:
+                server_f.write(privkey)
+                server_f.write(fullchain)
             output = {'outcome': 'success', 'tls': {'domain': domain, 'email': email}, 'forward_log': 'True'}
             return output
         output = {'outcome': 'failed', 'message': 'cert_type must be self-signed or ca-signed', 'forward_log': 'False'}
