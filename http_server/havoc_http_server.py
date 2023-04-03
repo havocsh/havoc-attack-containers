@@ -38,7 +38,7 @@ class HttpServer:
             if ssl_cert.is_file():
                 self.server_process = subprocess.Popen(
                     [
-                        '/usr/local/bin/python3',
+                        '/usr/bin/python3',
                         '-m',
                         'uploadserver',
                         str(port),
@@ -57,7 +57,7 @@ class HttpServer:
                 return output
         elif listener_type == 'http':
             self.server_process = subprocess.Popen(
-                ['/usr/local/bin/python3', '-m', 'uploadserver', str(port), '--directory', '/opt/havoc/shared/'],
+                ['/usr/bin/python3', '-m', 'uploadserver', str(port), '--directory', '/opt/havoc/shared/'],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
