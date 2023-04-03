@@ -28,7 +28,7 @@ class HttpServer:
         port = self.args['Port']
         if not isinstance(port, int):
             try:
-                port = int(port)
+                int(port)
             except:
                 output = {'outcome': 'failed', 'message': 'Port must be a number', 'forward_log': 'False'}
                 return output
@@ -41,7 +41,7 @@ class HttpServer:
                         '/usr/local/bin/python3',
                         '-m',
                         'uploadserver',
-                        port,
+                        str(port),
                         '--server-certificate',
                         '/opt/havoc/server.pem',
                         '--directory',
@@ -57,7 +57,7 @@ class HttpServer:
                 return output
         elif listener_type == 'http':
             self.server_process = subprocess.Popen(
-                ['/usr/local/bin/python3', '-m', 'uploadserver', port, '--directory', '/opt/havoc/shared/'],
+                ['/usr/local/bin/python3', '-m', 'uploadserver', str(port), '--directory', '/opt/havoc/shared/'],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
