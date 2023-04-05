@@ -20,9 +20,9 @@ def send_response(playbook_operator_response, forward_log, user_id, playbook_nam
                   operator_command, command_args, end_time):
     stime = datetime.now(timezone.utc).strftime('%s')
     output = {
-        'command_output': playbook_operator_response, 'user_id': user_id, 'playbook_operator_version': playbook_operator_version, 
-        'playbook_name': playbook_name, 'operator_command': operator_command, 'command_args': command_args, 'end_time': end_time,
-        'forward_log': forward_log, 'timestamp': stime
+        'operator_command': operator_command, 'command_output': playbook_operator_response, 'user_id': user_id, 
+        'playbook_operator_version': playbook_operator_version, 'playbook_name': playbook_name,
+        'command_args': command_args, 'end_time': end_time, 'forward_log': forward_log, 'timestamp': stime
     }
     print(output)
 
@@ -89,9 +89,6 @@ class Action:
                 delay = object_parameters['delay']
                 if isinstance(int(delay), int):
                     t.sleep(int(delay))
-            task_name = object_parameters['task_name']
-            instruct_command = object_parameters['instruct_command']
-            instruct_args = object_parameters['instruct_args']
             if 'timeout' in object_parameters:
                 timeout = object_parameters['timeout']
                 signal.alarm(int(timeout))
@@ -99,6 +96,9 @@ class Action:
             if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
                 essential = True
             try:
+                task_name = object_parameters['task_name']
+                instruct_command = object_parameters['instruct_command']
+                instruct_args = object_parameters['instruct_args']
                 interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
             except Exception as e:
                 if essential:
@@ -133,17 +133,20 @@ class Action:
                 self.action_dict['instruct_task'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['instruct_task'][object_name]
         if action == 'delete':
-            del self.action_dict['instruct_task'][object_name]
-            return 'action_instruct_task_delete_completed'
-        if action == 'read':
-            new_path = re.search('action.instruct_task.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                del self.action_dict['instruct_task'][object_name]
+                return 'action_instruct_task_delete_completed'
+            except Exception as e:
+                return f'action_instruct_task_delete_failed: {e}'
+        if action == 'read':
+            try:
+                new_path = re.search('action.instruct_task.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.action_dict['instruct_task'], path)
             except Exception as e:
                 return f'action_instruct_task_read_failed: {e}'
@@ -154,9 +157,6 @@ class Action:
                 delay = object_parameters['delay']
                 if isinstance(int(delay), int):
                     t.sleep(int(delay))
-            task_name = object_parameters['task_name']
-            instruct_command = 'download_from_workspace'
-            instruct_args = {'file_name': object_parameters['file_name']}
             if 'timeout' in object_parameters:
                 timeout = object_parameters['timeout']
                 signal.alarm(int(timeout))
@@ -164,6 +164,9 @@ class Action:
             if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
                 essential = True
             try:
+                task_name = object_parameters['task_name']
+                instruct_command = 'download_from_workspace'
+                instruct_args = {'file_name': object_parameters['file_name']}
                 interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
             except Exception as e:
                 if essential:
@@ -195,11 +198,11 @@ class Action:
                 self.action_dict['download_from_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['download_from_workspace'][object_name]
         if action == 'delete':
-            task_name = self.action_dict['download_from_workspace'][object_name]['task_name']
-            file_name = self.action_dict['download_from_workspace'][object_name]['file_name']
-            instruct_command = 'del'
-            instruct_args = {'file_name': file_name}
             try:
+                task_name = self.action_dict['download_from_workspace'][object_name]['task_name']
+                file_name = self.action_dict['download_from_workspace'][object_name]['file_name']
+                instruct_command = 'del'
+                instruct_args = {'file_name': file_name}
                 interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
             except Exception as e:
                 return f'action_download_from_workspace_delete_failed: {e}'
@@ -208,14 +211,14 @@ class Action:
             del self.action_dict['download_from_workspace'][object_name]
             return 'action_download_from_workspace_delete_completed'
         if action == 'read':
-            new_path = re.search('action.download_from_workspace.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                new_path = re.search('action.download_from_workspace.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.action_dict['download_from_workspace'], path)
             except Exception as e:
                 return f'action_download_from_workspace_read_failed: {e}'
@@ -226,8 +229,6 @@ class Action:
                 delay = object_parameters['delay']
                 if isinstance(int(delay), int):
                     t.sleep(int(delay))
-            task_name = object_parameters['task_name']
-            instruct_command = 'sync_to_workspace'
             if 'timeout' in object_parameters:
                 timeout = object_parameters['timeout']
                 signal.alarm(int(timeout))
@@ -235,6 +236,8 @@ class Action:
             if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
                 essential = True
             try:
+                task_name = object_parameters['task_name']
+                instruct_command = 'sync_to_workspace'
                 interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command)
             except Exception as e:
                 if essential:
@@ -269,17 +272,20 @@ class Action:
                 self.action_dict['sync_to_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['sync_to_workspace'][object_name]
         if action == 'delete':
-            del self.action_dict['sync_to_workspace'][object_name]
-            return 'action_sync_to_workspace_delete_completed'
-        if action == 'read':
-            new_path = re.search('action.sync_to_workspace.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                del self.action_dict['sync_to_workspace'][object_name]
+                return 'action_sync_to_workspace_delete_completed'
+            except Exception as e:
+                return f'action_sync_to_workspace_delete_failed: {e}'
+        if action == 'read':
+            try:
+                new_path = re.search('action.sync_to_workspace.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.action_dict['sync_to_workspace'], path)
             except Exception as e:
                 return f'action_sync_to_workspace_read_failed: {e}'
@@ -290,8 +296,6 @@ class Action:
                 delay = object_parameters['delay']
                 if isinstance(int(delay), int):
                     t.sleep(int(delay))
-            task_name = object_parameters['task_name']
-            instruct_command = 'sync_from_workspace'
             if 'timeout' in object_parameters:
                 timeout = object_parameters['timeout']
                 signal.alarm(int(timeout))
@@ -299,6 +303,8 @@ class Action:
             if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
                 essential = True
             try:
+                task_name = object_parameters['task_name']
+                instruct_command = 'sync_from_workspace'
                 interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command)
             except Exception as e:
                 if essential:
@@ -333,17 +339,20 @@ class Action:
                 self.action_dict['sync_from_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['sync_from_workspace'][object_name]
         if action == 'delete':
-            del self.action_dict['sync_from_workspace'][object_name]
-            return 'action_sync_from_workspace_delete_completed'
-        if action == 'read':
-            new_path = re.search('action.sync_from_workspace.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                del self.action_dict['sync_from_workspace'][object_name]
+                return 'action_sync_from_workspace_delete_completed'
+            except Exception as e:
+                return f'action_sync_from_workspace_delete_failed: {e}'
+        if action == 'read':
+            try:
+                new_path = re.search('action.sync_from_workspace.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.action_dict['sync_from_workspace'], path)
             except Exception as e:
                 return f'action_sync_from_workspace_read_failed: {e}'
@@ -354,11 +363,6 @@ class Action:
                 delay = object_parameters['delay']
                 if isinstance(int(delay), int):
                     t.sleep(int(delay))
-            task_name = object_parameters['task_name']
-            url = object_parameters['url']
-            file_name = object_parameters['file_name']
-            instruct_command = 'task_download_file'
-            instruct_args = {'url': url, 'file_name': file_name}
             if 'timeout' in object_parameters:
                 timeout = object_parameters['timeout']
                 signal.alarm(int(timeout))
@@ -366,6 +370,11 @@ class Action:
             if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
                 essential = True
             try:
+                task_name = object_parameters['task_name']
+                url = object_parameters['url']
+                file_name = object_parameters['file_name']
+                instruct_command = 'task_download_file'
+                instruct_args = {'url': url, 'file_name': file_name}
                 interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
             except Exception as e:
                 if essential:
@@ -401,25 +410,25 @@ class Action:
                 self.action_dict['task_download_file'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['task_download_file'][object_name]
         if action == 'delete':
-            task_name = self.action_dict['task_download_file'][object_name]['task_name']
-            file_name = self.action_dict['task_download_file'][object_name]['file_name']
-            instruct_command = 'del'
-            instruct_args = {'file_name': file_name}
             try:
+                task_name = self.action_dict['task_download_file'][object_name]['task_name']
+                file_name = self.action_dict['task_download_file'][object_name]['file_name']
+                instruct_command = 'del'
+                instruct_args = {'file_name': file_name}
                 interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
             except Exception as e:
                 return f'action_task_download_file_delete_failed: {e}'
             del self.action_dict['task_download_file'][object_name]
             return 'action_task_download_file_delete_completed'
         if action == 'read':
-            new_path = re.search('action.task_download_file.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                new_path = re.search('action.task_download_file.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.action_dict['task_download_file'], path)
             except Exception as e:
                 return f'action_task_download_file_read_failed: {e}'
@@ -430,10 +439,6 @@ class Action:
                 delay = object_parameters['delay']
                 if isinstance(int(delay), int):
                     t.sleep(int(delay))
-            task_name = object_parameters['task_name']
-            command = object_parameters['command']
-            instruct_command = 'task_execute_command'
-            instruct_args = {'command': command}
             if 'timeout' in object_parameters:
                 timeout = object_parameters['timeout']
                 signal.alarm(int(timeout))
@@ -441,6 +446,10 @@ class Action:
             if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
                 essential = True
             try:
+                task_name = object_parameters['task_name']
+                command = object_parameters['command']
+                instruct_command = 'task_execute_command'
+                instruct_args = {'command': command}
                 interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
             except Exception as e:
                 if essential:
@@ -476,25 +485,25 @@ class Action:
                 self.action_dict['task_execute_command'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['task_execute_command'][object_name]
         if action == 'delete':
-            task_name = self.action_dict['task_execute_command'][object_name]['task_name']
-            command = self.action_dict['task_execute_command'][object_name]['command']
-            instruct_command = 'task_kill_command'
-            instruct_args = {'command': command}
             try:
+                task_name = self.action_dict['task_execute_command'][object_name]['task_name']
+                command = self.action_dict['task_execute_command'][object_name]['command']
+                instruct_command = 'task_kill_command'
+                instruct_args = {'command': command}
                 interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
             except Exception as e:
                 return f'action_task_execute_command_delete_failed: {e}'
             del self.action_dict['task_execute_command'][object_name]
             return 'action_task_execute_command_delete_completed'
         if action == 'read':
-            new_path = re.search('action.task_execute_command.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                new_path = re.search('action.task_execute_command.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.action_dict['task_execute_command'], path)
             except Exception as e:
                 return f'action_task_execute_command_read_failed: {e}'
@@ -505,9 +514,12 @@ class Action:
                 delay = object_parameters['delay']
                 if isinstance(int(delay), int):
                     t.sleep(int(delay))
-            task_name = object_parameters['task_name']
-            agent_name = object_parameters['agent_name']
-            module = object_parameters['module']
+            if 'timeout' in object_parameters:
+                timeout = object_parameters['timeout']
+                signal.alarm(int(timeout))
+            essential = None
+            if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
+                essential = True
             wait_for_results = None
             beginning_string = None
             completion_string = None
@@ -520,13 +532,10 @@ class Action:
                 completion_string = object_parameters['completion_string']
             if 'module_args' in object_parameters:
                 module_args = object_parameters['module_args']
-            if 'timeout' in object_parameters:
-                timeout = object_parameters['timeout']
-                signal.alarm(int(timeout))
-            essential = None
-            if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
-                essential = True
             try:
+                task_name = object_parameters['task_name']
+                agent_name = object_parameters['agent_name']
+                module = object_parameters['module']
                 execute_agent_module_response = self.havoc_client.execute_agent_module(
                     task_name, agent_name, module, module_args, wait_for_results=wait_for_results, beginning_string=beginning_string, completion_string=completion_string
                 )
@@ -563,17 +572,20 @@ class Action:
                 self.action_dict['execute_agent_module'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['execute_agent_module'][object_name]
         if action == 'delete':
-            del self.action_dict['execute_agent_module'][object_name]
-            return 'action_execute_agent_module_delete_completed'
-        if action == 'read':
-            new_path = re.search('action.execute_agent_module.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                del self.action_dict['execute_agent_module'][object_name]
+                return 'action_execute_agent_module_delete_completed'
+            except Exception as e:
+                return f'action_execute_agent_module_delete_failed: {e}'
+        if action == 'read':
+            try:
+                new_path = re.search('action.execute_agent_module.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.action_dict['execute_agent_module'], path)
             except Exception as e:
                 return f'action_execute_agent_module_read_failed: {e}'
@@ -584,9 +596,12 @@ class Action:
                 delay = object_parameters['delay']
                 if isinstance(int(delay), int):
                     t.sleep(int(delay))
-            task_name = object_parameters['task_name']
-            agent_name = object_parameters['agent_name']
-            command = object_parameters['command']
+            if 'timeout' in object_parameters:
+                timeout = object_parameters['timeout']
+                signal.alarm(int(timeout))
+            essential = None
+            if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
+                essential = True
             wait_for_results = None
             beginning_string = None
             completion_string = None
@@ -596,13 +611,10 @@ class Action:
                 beginning_string = object_parameters['beginning_string']
             if 'completion_string' in object_parameters:
                 completion_string = object_parameters['completion_string']
-            if 'timeout' in object_parameters:
-                timeout = object_parameters['timeout']
-                signal.alarm(int(timeout))
-            essential = None
-            if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
-                essential = True
             try:
+                task_name = object_parameters['task_name']
+                agent_name = object_parameters['agent_name']
+                command = object_parameters['command']
                 execute_agent_shell_command_response = self.havoc_client.execute_agent_shell_command(
                     task_name, agent_name, command, wait_for_results=wait_for_results, beginning_string=beginning_string, completion_string=completion_string
                 )
@@ -639,17 +651,20 @@ class Action:
                 self.action_dict['execute_agent_shell_command'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
             return self.action_dict['execute_agent_shell_command'][object_name]
         if action == 'delete':
-            del self.action_dict['execute_agent_shell_command'][object_name]
-            return 'action_execute_agent_shell_command_delete_completed'
-        if action == 'read':
-            new_path = re.search('action.execute_agent_shell_command.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                del self.action_dict['execute_agent_shell_command'][object_name]
+                return 'action_execute_agent_shell_command_delete_completed'
+            except Exception as e:
+                return f'action_execute_agent_shell_command_delete_failed: {e}'
+        if action == 'read':
+            try:
+                new_path = re.search('action.execute_agent_shell_command.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.action_dict['execute_agent_shell_command'], path)
             except Exception as e:
                 return f'action_execute_agent_shell_command_read_failed: {e}'
@@ -673,25 +688,28 @@ class Data:
     def agents(self, object_name, action, **object_parameters):
         if action == 'create':
             try:
-                get_agent_response = self.havoc_client.get_agent(**object_parameters)
+                get_agents_response = self.havoc_client.get_agents(**object_parameters)
             except Exception as e:
                 return f'data_agents_create_failed: {e}'
-            if get_agent_response['outcome'] == 'failed':
-                return f'data_agents_create_failed: {get_agent_response}'
-            self.data_dict['agents'][object_name] = {key: value for key, value in get_agent_response.items()}
+            if get_agents_response['outcome'] == 'failed':
+                return f'data_agents_create_failed: {get_agents_response}'
+            self.data_dict['agents'][object_name] = {key: value for key, value in get_agents_response.items()}
             return self.data_dict['agents'][object_name]
         if action == 'delete':
-            del self.data_dict['agents'][object_name]
-            return 'data_agents_deleted'
-        if action == 'read':
-            new_path = re.search('data.agents.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                del self.data_dict['agents'][object_name]
+                return 'data_agents_deleted'
+            except Exception as e:
+                return f'data_agents_delete_failed: {e}'
+        if action == 'read':
+            try:
+                new_path = re.search('data.agents.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.data_dict['agents'], path)
             except Exception as e:
                 return f'data_agents_read_failed: {e}'
@@ -707,17 +725,20 @@ class Data:
             self.data_dict['domains'][object_name] = {key: value for key, value in get_domain_response.items()}
             return self.data_dict['domains'][object_name]
         if action == 'delete':
-            del self.data_dict['domains'][object_name]
-            return 'data_domains_deleted'
-        if action == 'read':
-            new_path = re.search('data.domains.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                del self.data_dict['domains'][object_name]
+                return 'data_domains_deleted'
+            except Exception as e:
+                return f'data_domains_delete_failed: {e}'
+        if action == 'read':
+            try:
+                new_path = re.search('data.domains.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.data_dict['domains'], path)
             except Exception as e:
                 return f'data_domains_read_failed: {e}'
@@ -733,17 +754,20 @@ class Data:
             self.data_dict['files'][object_name] = {key: value for key, value in get_file_response.items()}
             return self.data_dict['files'][object_name]
         if action == 'delete':
-            del self.data_dict['files'][object_name]
-            return 'data_files_deleted'
-        if action == 'read':
-            new_path = re.search('data.files.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                del self.data_dict['files'][object_name]
+                return 'data_files_deleted'
+            except Exception as e:
+                return f'data_files_delete_failed: {e}'
+        if action == 'read':
+            try:
+                new_path = re.search('data.files.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.data_dict['files'], path)
             except Exception as e:
                 return f'data_files_read_failed: {e}'
@@ -759,17 +783,20 @@ class Data:
             self.data_dict['listeners'][object_name] = {key: value for key, value in get_listener_response.items()}
             return self.data_dict['listeners'][object_name]
         if action == 'delete':
-            del self.data_dict['listeners'][object_name]
-            return 'data_listeners_deleted'
-        if action == 'read':
-            new_path = re.search('data.listeners.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                del self.data_dict['listeners'][object_name]
+                return 'data_listeners_deleted'
+            except Exception as e:
+                return f'data_listeners_delete_failed: {e}'
+        if action == 'read':
+            try:
+                new_path = re.search('data.listeners.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.data_dict['listeners'], path)
             except Exception as e:
                 return f'data_listeners_read_failed: {e}'
@@ -785,17 +812,20 @@ class Data:
             self.data_dict['portgroups'][object_name] = {key: value for key, value in get_portgroup_response.items()}
             return self.data_dict['portgroups'][object_name]
         if action == 'delete':
-            del self.data_dict['portgroups'][object_name]
-            return 'data_portgroups_deleted'
-        if action == 'read':
-            new_path = re.search('data.portgroups.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                del self.data_dict['portgroups'][object_name]
+                return 'data_portgroups_deleted'
+            except Exception as e:
+                return f'data_portgroups_delete_failed: {e}'
+        if action == 'read':
+            try:
+                new_path = re.search('data.portgroups.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.data_dict['portgroups'], path)
             except Exception as e:
                 return f'data_portgroups_read_failed: {e}'
@@ -837,17 +867,20 @@ class Data:
             self.data_dict['task_types'][object_name] = {key: value for key, value in get_task_type_response.items()}
             return self.data_dict['task_types'][object_name]
         if action == 'delete':
-            del self.data_dict['task_types'][object_name]
-            return 'data_task_types_deleted'
-        if action == 'read':
-            new_path = re.search('data.task_types.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                del self.data_dict['task_types'][object_name]
+                return 'data_task_types_deleted'
+            except Exception as e:
+                return f'data_task_types_delete_failed: {e}'
+        if action == 'read':
+            try:
+                new_path = re.search('data.task_types.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.data_dict['task_types'], path)
             except Exception as e:
                 return f'data_task_types_read_failed: {e}'
@@ -858,30 +891,32 @@ class Local:
         self.local_dict = {'function': {}}
     
     def function(self, object_name, action, **object_parameters):
-        function_name = None
         function_parameters = []
         if action == 'create':
-            function_name = object_parameters['function_name']
             if 'function_parameters' in object_parameters:
                 function_parameters = object_parameters['function_parameters']
             try:
+                function_name = object_parameters['function_name']
                 result = havoc_functions.local_function(function_name, function_parameters)
             except Exception as e:
                 return f'function_create_failed: {e}'
             self.local_dict['function'][object_name] = result
             return result
         if action == 'delete':
-            del self.local_dict['function'][object_name]
-            return 'function_deleted'
-        if action == 'read':
-            new_path = re.search('local.function.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                del self.local_dict['function'][object_name]
+                return 'function_deleted'
+            except Exception as e:
+                return f'function_delete_failed: {e}'
+        if action == 'read':
+            try:
+                new_path = re.search('local.function.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.local_dict['function'], path)
             except Exception as e:
                 return f'function_read_failed: {e}'
@@ -895,9 +930,9 @@ class Resource:
     
     def file(self, object_name, action, **object_parameters):
         if action == 'create':
-            file_name = object_parameters['file_name']
-            file_contents = object_parameters['file_contents'].encode()
             try:
+                file_name = object_parameters['file_name']
+                file_contents = object_parameters['file_contents'].encode()
                 create_file_response = self.havoc_client.create_file(file_name, file_contents)
             except Exception as e:
                 return f'resource_file_create_failed: {e}'
@@ -906,8 +941,8 @@ class Resource:
             self.resource_dict['file'][object_name] = {key: value for key, value in object_parameters.items()}
             return self.resource_dict['file'][object_name]
         if action == 'delete':
-            file_name = self.resource_dict['file'][object_name]['file_name']
             try:
+                file_name = self.resource_dict['file'][object_name]['file_name']
                 delete_file_response = self.havoc_client.delete_file(file_name=file_name)
             except Exception as e:
                 return f'resource_file_delete_failed: {e}'
@@ -916,31 +951,31 @@ class Resource:
             del self.resource_dict['file'][object_name]
             return 'resource_file_deleted'
         if action == 'read':
-            new_path = re.search('resource.file.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                new_path = re.search('resource.file.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.resource_dict['file'], path)
             except Exception as e:
                 return f'resource_file_read_failed: {e}'
     
     def listener(self, object_name, action, **object_parameters):
         if action == 'create':
-            listener_name = object_parameters['listener_name']
-            listener_type = object_parameters['listener_type']
-            listener_port = object_parameters['listener_port']
-            task_name = object_parameters['task_name']
-            portgroups = object_parameters['portgroups']
             host_name = None
             domain_name = None
             if 'host_name' in object_parameters and 'domain_name' in object_parameters:
                 host_name = object_parameters['host_name']
                 domain_name = object_parameters['domain_name']
             try:
+                listener_name = object_parameters['listener_name']
+                listener_type = object_parameters['listener_type']
+                listener_port = object_parameters['listener_port']
+                task_name = object_parameters['task_name']
+                portgroups = object_parameters['portgroups']
                 create_listener_response = self.havoc_client.create_listener(
                     listener_name=listener_name,
                     listener_type=listener_type,
@@ -957,8 +992,8 @@ class Resource:
             self.resource_dict['listener'][object_name] = {key: value for key, value in create_listener_response.items()}
             return self.resource_dict['listener'][object_name]
         if action == 'delete':
-            listener_name = self.resource_dict['listener'][object_name]['listener_name']
             try:
+                listener_name = self.resource_dict['listener'][object_name]['listener_name']
                 delete_listener_response = self.havoc_client.delete_listener(listener_name=listener_name)
             except Exception as e:
                 return f'resource_listener_delete_failed: {e}'
@@ -967,14 +1002,14 @@ class Resource:
             del self.resource_dict['listener'][object_name]
             return 'resource_listener_deleted'
         if action == 'read':
-            new_path = re.search('resource.listener.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                new_path = re.search('resource.listener.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.resource_dict['listener'], path)
             except Exception as e:
                 return f'resource_listener_read_failed: {e}'
@@ -982,24 +1017,28 @@ class Resource:
     def random_integer(self, object_name, action, **object_parameters):
         if action == 'create':
             self.resource_dict['random_integer'][object_name] = {key: value for key, value in object_parameters.items()}
-            if 'length' not in object_parameters:
-                return 'resource_random_integer_create_failed: length not specified'
-            length = object_parameters['length']
-            result = ''.join(random.choice(string.digits) for i in range(length))
+            try:
+                length = object_parameters['length']
+                result = ''.join(random.choice(string.digits) for i in range(length))
+            except Exception as e:
+                return f'resource_random_integer_create_failed: {e}'
             self.resource_dict['random_integer'][object_name]['result'] = result
             return self.resource_dict['random_integer'][object_name]
         if action == 'delete':
-            del self.resource_dict['random_integer'][object_name]
-            return 'resource_random_integer_deleted'
-        if action == 'read':
-            new_path = re.search('resource.random_integer.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                del self.resource_dict['random_integer'][object_name]
+                return 'resource_random_integer_deleted'
+            except Exception as e:
+                return f'resource_random_integer_delete_failed: {e}'
+        if action == 'read':
+            try:
+                new_path = re.search('resource.random_integer.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.resource_dict['random_integer'], path)
             except Exception as e:
                 return f'resource_random_integer_read_failed: {e}'
@@ -1007,9 +1046,6 @@ class Resource:
     def random_string(self, object_name, action, **object_parameters):
         if action == 'create':
             self.resource_dict['random_string'][object_name] = {key: value for key, value in object_parameters.items()}
-            if 'length' not in object_parameters:
-                return 'resource_random_string_create_failed: length not specified'
-            length = object_parameters['length']
             string_seed = None
             if 'letters' in object_parameters:
                 letters = object_parameters['letters']
@@ -1053,29 +1089,36 @@ class Resource:
                         string_seed = string_seed.lower()
             if string_seed is None:
                 string_seed = string.ascii_letters
-            result = ''.join(random.choice(string_seed) for i in range(length))
+            try:
+                length = object_parameters['length']
+                result = ''.join(random.choice(string_seed) for i in range(length))
+            except Exception as e:
+                return f'resource_random_string_create_failed: {e}'
             self.resource_dict['random_string'][object_name]['result'] = result
             return self.resource_dict['random_string'][object_name]
         if action == 'delete':
-            del self.resource_dict['random_string'][object_name]
-            return 'resource_random_string_deleted'
-        if action == 'read':
-            new_path = re.search('resource.random_string.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                del self.resource_dict['random_string'][object_name]
+                return 'resource_random_string_deleted'
+            except Exception as e:
+                return f'resource_random_string_delete_failed: {e}'
+        if action == 'read':
+            try:
+                new_path = re.search('resource.random_string.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.resource_dict['random_string'], path)
             except Exception as e:
                 return f'resource_random_string_read_failed: {e}'
     
     def portgroup(self, object_name, action, **object_parameters):
         if action == 'create':
-            portgroup_name = object_parameters['portgroup_name']
             try:
+                portgroup_name = object_parameters['portgroup_name']
                 create_portgroup_response = self.havoc_client.create_portgroup(portgroup_name=portgroup_name, portgroup_description=f'Created by playbook operator.')
             except Exception as e:
                 return f'resource_portgroup_create_failed: {e}'
@@ -1085,8 +1128,8 @@ class Resource:
             self.resource_dict['portgroup'][object_name]['portgroup_name'] = portgroup_name
             return self.resource_dict['portgroup'][object_name]
         if action == 'delete':
-            portgroup_name = self.resource_dict['portgroup'][object_name]['portgroup_name']
             try:
+                portgroup_name = self.resource_dict['portgroup'][object_name]['portgroup_name']
                 delete_portgroup_response = self.havoc_client.delete_portgroup(portgroup_name=portgroup_name)
             except Exception as e:
                 return f'resource_portgroup_delete_failed: {e}'
@@ -1095,26 +1138,26 @@ class Resource:
             del self.resource_dict['portgroup'][object_name]
             return 'resource_portgroup_deleted'
         if action == 'read':
-            new_path = re.search('resource.portgroup.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                new_path = re.search('resource.portgroup.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.resource_dict['portgroup'], path)
             except Exception as e:
                 return f'resource_portgroup_read_failed: {e}'
     
     def portgroup_rule(self, object_name, action, **object_parameters):
         if action == 'create':
-            pg_name = object_parameters['portgroup_name']
-            pg_action = object_parameters['portgroup_action']
-            ip_ranges = object_parameters['ip_ranges']
-            ip_protocol = object_parameters['ip_protocol']
-            port = object_parameters['port']
             try:
+                pg_name = object_parameters['portgroup_name']
+                pg_action = object_parameters['portgroup_action']
+                ip_ranges = object_parameters['ip_ranges']
+                ip_protocol = object_parameters['ip_protocol']
+                port = object_parameters['port']
                 pg_rule_response = self.havoc_client.update_portgroup_rule(portgroup_name=pg_name, portgroup_action=pg_action, ip_ranges=ip_ranges, ip_protocol=ip_protocol, port=port)
             except Exception as e:
                 return f'resource_portgroup_rule_create_failed: {e}'
@@ -1135,11 +1178,11 @@ class Resource:
             self.resource_dict['portgroup_rule'][object_name]['port'] = port
             return self.resource_dict['portgroup_rule'][object_name]
         if action == 'delete':
-            pg_name = self.resource_dict['portgroup_rule'][object_name]['portgroup_name']
-            ip_ranges = self.resource_dict['portgroup_rule'][object_name]['ip_ranges']
-            ip_protocol = self.resource_dict['portgroup_rule'][object_name]['ip_protocol']
-            port = self.resource_dict['portgroup_rule'][object_name]['port']
             try:
+                pg_name = self.resource_dict['portgroup_rule'][object_name]['portgroup_name']
+                ip_ranges = self.resource_dict['portgroup_rule'][object_name]['ip_ranges']
+                ip_protocol = self.resource_dict['portgroup_rule'][object_name]['ip_protocol']
+                port = self.resource_dict['portgroup_rule'][object_name]['port']
                 pg_rule_response = self.havoc_client.update_portgroup_rule(portgroup_name=pg_name, portgroup_action='remove', ip_ranges=ip_ranges, ip_protocol=ip_protocol, port=port)
             except Exception as e:
                 return f'resource_portgroup_rule_delete_failed: {e}'
@@ -1152,14 +1195,14 @@ class Resource:
             del self.resource_dict['portgroup_rule'][object_name]
             return 'resource_portgroup_rule_deleted'
         if action == 'read':
-            new_path = re.search('resource.portgroup_rule.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                new_path = re.search('resource.portgroup_rule.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.resource_dict['portgroup_rule'], path)
             except Exception as e:
                 return f'resource_portgroup_rule_read_failed: {e}'
@@ -1167,8 +1210,6 @@ class Resource:
     def task(self, object_name, action, **object_parameters):
         if action == 'create':
             task_startup = {}
-            task_startup['task_name'] = object_parameters['task_name']
-            task_startup['task_type'] = object_parameters['task_type']
             if 'task_host_name' in object_parameters:
                 task_startup['task_host_name'] = object_parameters['task_host_name']
             if 'task_domain_name' in object_parameters:
@@ -1178,6 +1219,8 @@ class Resource:
             if 'end_time' in object_parameters:
                 task_startup['end_time'] = object_parameters['end_time']
             try:
+                task_startup['task_name'] = object_parameters['task_name']
+                task_startup['task_type'] = object_parameters['task_type']
                 task_startup_response = self.havoc_client.task_startup(**task_startup)
             except Exception as e:
                 return f'resource_task_startup_failed: {e}'
@@ -1230,8 +1273,8 @@ class Resource:
                 self.resource_dict['task'][object_name]['stager'] = create_stager_response['stager']
             return self.resource_dict['task'][object_name]
         if action == 'delete':
-            task_name = self.resource_dict['task'][object_name]['task_name']
             try:
+                task_name = self.resource_dict['task'][object_name]['task_name']
                 task_shutdown_response = self.havoc_client.task_shutdown(task_name)
             except Exception as e:
                 return f'resource_task_delete_failed: {e}'
@@ -1240,14 +1283,14 @@ class Resource:
             del self.resource_dict['task'][object_name]
             return 'resource_task_deleted'
         if action == 'read':
-            new_path = re.search('resource.task.(.*)', object_parameters['path'])
-            count_check = re.search('\[(\d+)\]', new_path.group(1))
-            if count_check:
-                new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-            else:
-                new_path = new_path.group(1)
-            path = re.sub('\.', '/', new_path)
             try:
+                new_path = re.search('resource.task.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
                 return dpath.get(self.resource_dict['task'], path)
             except Exception as e:
                 return f'resource_task_read_failed: {e}'
@@ -1339,7 +1382,6 @@ class call_object():
             dpath.delete(playbook_config, depends_on)
         
         # Proceed with block processing
-        break_out_flag = None
         while execution_list:
             for section in playbook_config:
                 for (path, value) in dpath.search(playbook_config[section], '*/*/*', yielded=True):
@@ -1358,39 +1400,31 @@ class call_object():
                                     dep_method, dep_object = self.object_resolver(dep_match)
                                     dep_value = dep_method(dep_object, 'read', path=dep_match)
                                     if not isinstance(dep_value, str) and not isinstance(dep_value, int):
-                                        operator_command = f'create {node_path}'
                                         dep_value_type = type(dep_value)
-                                        send_response({'outcome': 'failed', 'details': f'{dep_match} returned {dep_value_type}: must be str or int'}, 'True', self.user_id, self.playbook_name, 
-                                                      self.playbook_operator_version, operator_command, value, self.end_time)
-                                        break_out_flag = True
-                                        break
+                                        send_response({'outcome': 'failed', 'details': f'{dep_match} returned {dep_value_type}: must be str or int'},
+                                                      'True', self.user_id, self.playbook_name, self.playbook_operator_version, f'configure {node_path}',
+                                                      value, self.end_time)
+                                        return
                                     re_sub = re.compile('\${' + re.escape(dep_match) + '}')
                                     json_value = re.sub(re_sub, str(dep_value), json_value)
-                            if break_out_flag:
-                                break
-                            print(f'command_input: {json_value}')
+                            send_response({'outcome': 'success', 'details': json_value}, 'True', self.user_id,
+                                          self.playbook_name, self.playbook_operator_version, f'configure {node_path}', value, self.end_time)
                             value = json.loads(json_value, strict=False)
-                            method_result = method(object_name, 'create', **value)
                             operator_command = f'create {node_path}'
+                            method_result = method(object_name, 'create', **value)
                             if 'failed' not in method_result:
-                                send_response({'outcome': 'success', 'details': method_result}, 'True', self.user_id, self.playbook_name, 
-                                              self.playbook_operator_version, operator_command, value, self.end_time)
+                                send_response({'outcome': 'success', 'details': method_result}, 'True', self.user_id,
+                                              self.playbook_name, self.playbook_operator_version, operator_command, value, self.end_time)
                                 executed_list.append(node_path)
                                 t.sleep(2)
                             if 'failed' in method_result:
-                                send_response({'outcome': 'failed', 'details': method_result}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
-                                              operator_command, value, self.end_time)
+                                send_response({'outcome': 'failed', 'details': method_result}, 'True', self.user_id, self.playbook_name,
+                                              self.playbook_operator_version, operator_command, value, self.end_time)
                                 if 'action' in method_result and 'essential' in method_result:
-                                    break_out_flag = True
-                                    break
+                                    return
                                 if 'action' not in method_result:
-                                    break_out_flag = True
-                                    break
+                                    return
                             self.exec_order.next_exec_rule(node_path)
-                if break_out_flag:
-                    break
-            if break_out_flag:
-                break
                         
     def destroyer(self, playbook_config, executed_list):
         while executed_list:
@@ -1405,15 +1439,17 @@ class call_object():
                             executed_list.remove(node_path)
                             method, object_name = self.object_resolver(node_path)
                             value = {'destroy_all_resources': True}
-                            method_result = method(object_name, 'delete', **value)
+                            send_response({'outcome': 'success'}, 'True', self.user_id, self.playbook_name,
+                                          self.playbook_operator_version, f'configure {node_path}', value, self.end_time)
                             operator_command = f'delete {node_path}'
+                            method_result = method(object_name, 'delete', **value)
                             if 'failed' not in method_result:
-                                send_response({'outcome': 'success'}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
-                                              operator_command, value, self.end_time)
+                                send_response({'outcome': 'success'}, 'True', self.user_id, self.playbook_name,
+                                              self.playbook_operator_version, operator_command, value, self.end_time)
                                 t.sleep(2)
                             else:
-                                send_response({'outcome': 'failed'}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
-                                              operator_command, value, self.end_time)
+                                send_response({'outcome': 'failed'}, 'True', self.user_id, self.playbook_name,
+                                              self.playbook_operator_version, operator_command, value, self.end_time)
                             self.exec_order.prev_exec_rule(node_path)
 
     def execute_playbook(self):
@@ -1510,16 +1546,16 @@ class call_object():
             node_list.append(node)
         execution_order = clean_dependencies(get_node_dependencies(DG, node_list))
         send_response({'outcome': 'success', 'details': execution_order}, 'True', self.user_id, self.playbook_name, 
-                      self.playbook_operator_version, 'set_execution_order', {'no_args': 'True'}, self.end_time)
+                      self.playbook_operator_version, 'create execution order', {'no_args': 'True'}, self.end_time)
         self.exec_order.set_rules(execution_order, node_list)
         self.creator(playbook_config, node_list, tracking_list)
 
         execution_order = clean_dependencies(get_node_dependencies(DG, tracking_list))
         send_response({'outcome': 'success', 'details': execution_order}, 'True', self.user_id, self.playbook_name, 
-                      self.playbook_operator_version, 'set_execution_order', {'no_args': 'True'}, self.end_time)
+                      self.playbook_operator_version, 'delete execution order', {'no_args': 'True'}, self.end_time)
         self.exec_order.set_rules(execution_order, tracking_list)
         self.destroyer(playbook_config, tracking_list)
 
-        output = {'outcome': 'success', 'message': 'playbook executed', 'forward_log': 'True'}
-        return output
-
+        send_response({'outcome': 'success'}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
+                      'playbook execution completed', {'no_args': 'True'}, self.end_time)
+        return 'terminate'
