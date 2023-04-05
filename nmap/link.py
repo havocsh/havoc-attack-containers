@@ -138,7 +138,7 @@ def file_transfer_http(rt, sync_direction, file_name):
         except Exception as err:
             print(f'file_transfer_http failed for direction {sync_direction}, file_name {file_name} with error {err}')
         if file_transfer_response and 'file_contents' in file_transfer_response:
-            with open(f'/opt/havoc/share/{file_name}', 'wb') as w:
+            with open(f'/opt/havoc/shared/{file_name}', 'wb') as w:
                 w.write(file_transfer_response['file_contents'])
             success = True
         else:
