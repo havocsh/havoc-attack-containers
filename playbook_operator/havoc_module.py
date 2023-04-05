@@ -85,6 +85,7 @@ class Action:
 
     def instruct_task(self, object_name, action, **object_parameters):
         if action == 'create':
+            failed = None
             if 'delay' in object_parameters:
                 delay = object_parameters['delay']
                 if isinstance(int(delay), int):
@@ -104,15 +105,15 @@ class Action:
                 if essential:
                     return f'action_instruct_task_create_essential_failed: {e}'
                 else:
-                    return f'action_instruct_task_create_failed: {e}'
+                    failed = f'action_instruct_task_create_failed: {e}'
             signal.alarm(0)
             if interact_with_task_response['outcome'] == 'failed':
                 if essential:
                     return f'action_instruct_task_create_essential_failed: {interact_with_task_response}'
                 else:
-                    return f'action_instruct_task_create_failed: {interact_with_task_response}'
+                    failed = f'action_instruct_task_create_failed: {interact_with_task_response}'
             self.action_dict['instruct_task'][object_name] = {key: value for key, value in object_parameters.items()}
-            if 'action_function' in object_parameters:
+            if 'action_function' in object_parameters and failed is None:
                 for k in object_parameters['action_function'].keys():
                     called_action_function = k
                 function_parameters = {}
@@ -128,10 +129,14 @@ class Action:
                     if essential:
                         return f'action_instruct_task_create_essential_failed: {e}'
                     else:
-                        return f'action_instruct_task_create_failed: {e}'
+                        failed = f'action_instruct_task_create_failed: {e}'
                 signal.alarm(0)
-                self.action_dict['instruct_task'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            return self.action_dict['instruct_task'][object_name]
+                if failed is None:
+                    self.action_dict['instruct_task'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
+            if failed is None:
+                return self.action_dict['instruct_task'][object_name]
+            else:
+                return failed
         if action == 'delete':
             try:
                 del self.action_dict['instruct_task'][object_name]
@@ -153,6 +158,7 @@ class Action:
         
     def download_from_workspace(self, object_name, action, **object_parameters):
         if action == 'create':
+            failed = None
             if 'delay' in object_parameters:
                 delay = object_parameters['delay']
                 if isinstance(int(delay), int):
@@ -172,12 +178,15 @@ class Action:
                 if essential:
                     return f'action_download_from_workspace_create_essential_failed: {e}'
                 else:
-                    return f'action_download_from_workspace_create_failed: {e}'
+                    failed = f'action_download_from_workspace_create_failed: {e}'
             signal.alarm(0)
             if interact_with_task_response['outcome'] == 'failed':
-                return f'action_download_from_workspace_create_failed: {interact_with_task_response}'
+                if essential:
+                    return f'action_download_from_workspace_create_essential_failed: {interact_with_task_response}'
+                else:
+                    failed = f'action_download_from_workspace_create_failed: {interact_with_task_response}'
             self.action_dict['download_from_workspace'][object_name] = {key: value for key, value in object_parameters.items()}
-            if 'action_function' in object_parameters:
+            if 'action_function' in object_parameters and failed is None:
                 for k in object_parameters['action_function'].keys():
                     called_action_function = k
                 function_parameters = {}
@@ -193,10 +202,14 @@ class Action:
                     if essential:
                         return f'action_download_from_workspace_create_essential_failed: {e}'
                     else:
-                        return f'action_download_from_workspace_create_failed: {e}'
+                        failed = f'action_download_from_workspace_create_failed: {e}'
                 signal.alarm(0)
-                self.action_dict['download_from_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            return self.action_dict['download_from_workspace'][object_name]
+                if failed is None:
+                    self.action_dict['download_from_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
+            if failed is None:
+                return self.action_dict['download_from_workspace'][object_name]
+            else:
+                return failed
         if action == 'delete':
             try:
                 task_name = self.action_dict['download_from_workspace'][object_name]['task_name']
@@ -225,6 +238,7 @@ class Action:
     
     def sync_to_workspace(self, object_name, action, **object_parameters):
         if action == 'create':
+            failed = None
             if 'delay' in object_parameters:
                 delay = object_parameters['delay']
                 if isinstance(int(delay), int):
@@ -243,13 +257,13 @@ class Action:
                 if essential:
                     return f'action_sync_to_workspace_create_essential_failed: {e}'
                 else:
-                    return f'action_sync_to_workspace_create_failed: {e}'
+                    failed = f'action_sync_to_workspace_create_failed: {e}'
             signal.alarm(0)
             if interact_with_task_response['outcome'] == 'failed':
                 if essential:
                     return f'action_sync_to_workspace_create_essential_failed: {interact_with_task_response}'
                 else:
-                    return f'action_sync_to_workspace_create_failed: {interact_with_task_response}'
+                    failed = f'action_sync_to_workspace_create_failed: {interact_with_task_response}'
             self.action_dict['sync_to_workspace'][object_name] = {key: value for key, value in object_parameters.items()}
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
@@ -267,10 +281,14 @@ class Action:
                     if essential:
                         return f'action_sync_to_workspace_create_essential_failed: {e}'
                     else:
-                        return f'action_sync_to_workspace_create_failed: {e}'
+                        failed = f'action_sync_to_workspace_create_failed: {e}'
                 signal.alarm(0)
-                self.action_dict['sync_to_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            return self.action_dict['sync_to_workspace'][object_name]
+                if failed is None:
+                    self.action_dict['sync_to_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
+            if failed is None:
+                return self.action_dict['sync_to_workspace'][object_name]
+            else:
+                return failed
         if action == 'delete':
             try:
                 del self.action_dict['sync_to_workspace'][object_name]
@@ -292,6 +310,7 @@ class Action:
     
     def sync_from_workspace(self, object_name, action, **object_parameters):
         if action == 'create':
+            failed = None
             if 'delay' in object_parameters:
                 delay = object_parameters['delay']
                 if isinstance(int(delay), int):
@@ -310,13 +329,13 @@ class Action:
                 if essential:
                     return f'action_sync_from_workspace_create_essential_failed: {e}'
                 else:
-                    return f'action_sync_from_workspace_create_failed: {e}'
+                    failed = f'action_sync_from_workspace_create_failed: {e}'
             signal.alarm(0)
             if interact_with_task_response['outcome'] == 'failed':
                 if essential:
                     return f'action_sync_from_workspace_create_essential_failed: {interact_with_task_response}'
                 else:
-                    return f'action_sync_from_workspace_create_failed: {interact_with_task_response}'
+                    failed = f'action_sync_from_workspace_create_failed: {interact_with_task_response}'
             self.action_dict['sync_from_workspace'][object_name] = {key: value for key, value in object_parameters.items()}
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
@@ -334,10 +353,14 @@ class Action:
                     if essential:
                         return f'action_sync_from_workspace_create_essential_failed: {e}'
                     else:
-                        return f'action_sync_from_workspace_create_failed: {e}'
+                        failed = f'action_sync_from_workspace_create_failed: {e}'
                 signal.alarm(0)
-                self.action_dict['sync_from_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            return self.action_dict['sync_from_workspace'][object_name]
+                if failed is None:
+                    self.action_dict['sync_from_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
+            if failed is None:
+                return self.action_dict['sync_from_workspace'][object_name]
+            else:
+                return failed
         if action == 'delete':
             try:
                 del self.action_dict['sync_from_workspace'][object_name]
@@ -359,6 +382,7 @@ class Action:
     
     def task_download_file(self, object_name, action, **object_parameters):
         if action == 'create':
+            failed = None
             if 'delay' in object_parameters:
                 delay = object_parameters['delay']
                 if isinstance(int(delay), int):
@@ -380,13 +404,13 @@ class Action:
                 if essential:
                     return f'action_task_download_file_create_essential_failed: {e}'
                 else:
-                    return f'action_task_download_file_create_failed: {e}'
+                    failed = f'action_task_download_file_create_failed: {e}'
             signal.alarm(0)
             if interact_with_task_response['outcome'] == 'failed':
                 if essential:
                     return f'action_task_download_file_create_failed: {interact_with_task_response}'
                 else:
-                    return f'action_task_download_file_create_failed: {interact_with_task_response}'
+                    failed = f'action_task_download_file_create_failed: {interact_with_task_response}'
             self.action_dict['task_download_file'][object_name] = {key: value for key, value in interact_with_task_response.items()}
             self.action_dict['task_download_file'][object_name]['task_name'] = task_name
             if 'action_function' in object_parameters:
@@ -405,10 +429,14 @@ class Action:
                     if essential:
                         return f'action_task_download_file_create_essential_failed: {e}'
                     else:
-                        return f'action_task_download_file_create_failed: {e}'
+                        failed = f'action_task_download_file_create_failed: {e}'
                 signal.alarm(0)
-                self.action_dict['task_download_file'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            return self.action_dict['task_download_file'][object_name]
+                if failed is None:
+                    self.action_dict['task_download_file'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
+            if failed is None:
+                return self.action_dict['task_download_file'][object_name]
+            else:
+                return failed
         if action == 'delete':
             try:
                 task_name = self.action_dict['task_download_file'][object_name]['task_name']
@@ -435,6 +463,7 @@ class Action:
     
     def task_execute_command(self, object_name, action, **object_parameters):
         if action == 'create':
+            failed = None
             if 'delay' in object_parameters:
                 delay = object_parameters['delay']
                 if isinstance(int(delay), int):
@@ -455,13 +484,13 @@ class Action:
                 if essential:
                     return f'action_task_execute_command_create_essential_failed: {e}'
                 else:
-                    return f'action_task_execute_command_create_failed: {e}'
+                    failed = f'action_task_execute_command_create_failed: {e}'
             signal.alarm(0)
             if interact_with_task_response['outcome'] == 'failed':
                 if essential:
                     return f'action_task_execute_command_create_essential_failed: {interact_with_task_response}'
                 else:
-                    return f'action_task_execute_command_create_failed: {interact_with_task_response}'
+                    failed = f'action_task_execute_command_create_failed: {interact_with_task_response}'
             self.action_dict['task_execute_command'][object_name] = {key: value for key, value in interact_with_task_response.items()}
             self.action_dict['task_execute_command'][object_name]['task_name'] = task_name
             if 'action_function' in object_parameters:
@@ -480,10 +509,14 @@ class Action:
                     if essential:
                         return f'action_task_execute_command_create_essential_failed: {e}'
                     else:
-                        return f'action_task_execute_command_create_failed: {e}'
+                        failed = f'action_task_execute_command_create_failed: {e}'
                 signal.alarm(0)
-                self.action_dict['task_execute_command'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            return self.action_dict['task_execute_command'][object_name]
+                if failed is None:
+                    self.action_dict['task_execute_command'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
+            if failed is None:
+                return self.action_dict['task_execute_command'][object_name]
+            else:
+                return failed
         if action == 'delete':
             try:
                 task_name = self.action_dict['task_execute_command'][object_name]['task_name']
@@ -510,6 +543,7 @@ class Action:
     
     def execute_agent_module(self, object_name, action, **object_parameters):
         if action == 'create':
+            failed = None
             if 'delay' in object_parameters:
                 delay = object_parameters['delay']
                 if isinstance(int(delay), int):
@@ -543,13 +577,13 @@ class Action:
                 if essential:
                     return f'action_execute_agent_module_create_essential_failed: {e}'
                 else:
-                    return f'action_execute_agent_module_create_failed: {e}'
+                    failed = f'action_execute_agent_module_create_failed: {e}'
             signal.alarm(0)
             if 'outcome' in execute_agent_module_response and execute_agent_module_response['outcome'] == 'failed':
                 if essential:
                     return f'action_execute_agent_module_create_essential_failed: {execute_agent_module_response}'
                 else:
-                    return f'action_execute_agent_module_create_failed: {execute_agent_module_response}'
+                    failed = f'action_execute_agent_module_create_failed: {execute_agent_module_response}'
             self.action_dict['execute_agent_module'][object_name] = execute_agent_module_response
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
@@ -567,10 +601,14 @@ class Action:
                     if essential:
                         return f'action_execute_agent_module_create_essential_failed: {e}'
                     else:
-                        return f'action_execute_agent_module_create_failed: {e}'
+                        failed = f'action_execute_agent_module_create_failed: {e}'
                 signal.alarm(0)
-                self.action_dict['execute_agent_module'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            return self.action_dict['execute_agent_module'][object_name]
+                if failed is None:
+                    self.action_dict['execute_agent_module'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
+            if failed is None:
+                return self.action_dict['execute_agent_module'][object_name]
+            else:
+                return failed
         if action == 'delete':
             try:
                 del self.action_dict['execute_agent_module'][object_name]
@@ -592,6 +630,7 @@ class Action:
     
     def execute_agent_shell_command(self, object_name, action, **object_parameters):
         if action == 'create':
+            failed = None
             if 'delay' in object_parameters:
                 delay = object_parameters['delay']
                 if isinstance(int(delay), int):
@@ -622,13 +661,13 @@ class Action:
                 if essential:
                     return f'action_execute_agent_shell_command_create_essential_failed: {e}'
                 else:
-                    return f'action_execute_agent_shell_command_create_failed: {e}'
+                    failed = f'action_execute_agent_shell_command_create_failed: {e}'
             signal.alarm(0)
             if 'error' in execute_agent_shell_command_response:
                 if essential:
                     return f'action_execute_agent_shell_command_create_essential_failed: {execute_agent_shell_command_response}'
                 else:
-                    return f'action_execute_agent_shell_command_create_failed: {execute_agent_shell_command_response}'
+                    failed = f'action_execute_agent_shell_command_create_failed: {execute_agent_shell_command_response}'
             self.action_dict['execute_agent_shell_command'][object_name] = execute_agent_shell_command_response
             if 'action_function' in object_parameters:
                 for k in object_parameters['action_function'].keys():
@@ -646,10 +685,14 @@ class Action:
                     if essential:
                         return f'action_execute_agent_shell_command_create_essential_failed: {e}'
                     else:
-                        return f'action_execute_agent_shell_command_create_failed: {e}'
+                        failed = f'action_execute_agent_shell_command_create_failed: {e}'
                 signal.alarm(0)
-                self.action_dict['execute_agent_shell_command'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            return self.action_dict['execute_agent_shell_command'][object_name]
+                if failed is None:
+                    self.action_dict['execute_agent_shell_command'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
+            if failed is None:
+                return self.action_dict['execute_agent_shell_command'][object_name]
+            else:
+                return failed
         if action == 'delete':
             try:
                 del self.action_dict['execute_agent_shell_command'][object_name]
