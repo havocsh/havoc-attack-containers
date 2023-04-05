@@ -1452,7 +1452,7 @@ class call_object():
                                     json_value = re.sub(re_sub, str(dep_value), json_value)
                             send_response({'outcome': 'success', 'details': json_value}, 'True', self.user_id,
                                           self.playbook_name, self.playbook_operator_version, f'configure {node_path}', value, self.end_time)
-                            t.sleep(2)
+                            t.sleep(5)
                             value = json.loads(json_value, strict=False)
                             operator_command = f'create {node_path}'
                             method_result = method(object_name, 'create', **value)
@@ -1460,7 +1460,7 @@ class call_object():
                                 send_response({'outcome': 'success', 'details': method_result}, 'True', self.user_id,
                                               self.playbook_name, self.playbook_operator_version, operator_command, value, self.end_time)
                                 executed_list.append(node_path)
-                                t.sleep(2)
+                                t.sleep(5)
                             if 'failed' in method_result:
                                 send_response({'outcome': 'failed', 'details': method_result}, 'True', self.user_id, self.playbook_name,
                                               self.playbook_operator_version, operator_command, value, self.end_time)
@@ -1469,7 +1469,7 @@ class call_object():
                                 if 'action' not in method_result:
                                     return
                                 executed_list.append(node_path)
-                                t.sleep(2)
+                                t.sleep(5)
                             self.exec_order.next_exec_rule(node_path)
                         
     def destroyer(self, playbook_config, executed_list):
@@ -1487,17 +1487,17 @@ class call_object():
                             value = {'destroy_all_resources': True}
                             send_response({'outcome': 'success'}, 'True', self.user_id, self.playbook_name,
                                           self.playbook_operator_version, f'configure {node_path}', value, self.end_time)
-                            t.sleep(2)
+                            t.sleep(5)
                             operator_command = f'delete {node_path}'
                             method_result = method(object_name, 'delete', **value)
                             if 'failed' not in method_result:
                                 send_response({'outcome': 'success'}, 'True', self.user_id, self.playbook_name,
                                               self.playbook_operator_version, operator_command, value, self.end_time)
-                                t.sleep(2)
+                                t.sleep(5)
                             else:
                                 send_response({'outcome': 'failed'}, 'True', self.user_id, self.playbook_name,
                                               self.playbook_operator_version, operator_command, value, self.end_time)
-                                t.sleep(2)
+                                t.sleep(5)
                             self.exec_order.prev_exec_rule(node_path)
 
     def execute_playbook(self):
@@ -1596,14 +1596,14 @@ class call_object():
         send_response({'outcome': 'success', 'details': execution_order}, 'True', self.user_id, self.playbook_name, 
                       self.playbook_operator_version, 'create execution order', {'no_args': 'True'}, self.end_time)
         self.exec_order.set_rules(execution_order, node_list)
-        t.sleep(2)
+        t.sleep(5)
         self.creator(playbook_config, node_list, tracking_list)
 
         execution_order = clean_dependencies(get_node_dependencies(DG, tracking_list))
         send_response({'outcome': 'success', 'details': execution_order}, 'True', self.user_id, self.playbook_name, 
                       self.playbook_operator_version, 'delete execution order', {'no_args': 'True'}, self.end_time)
         self.exec_order.set_rules(execution_order, tracking_list)
-        t.sleep(2)
+        t.sleep(5)
         self.destroyer(playbook_config, tracking_list)
 
         send_response({'outcome': 'success'}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
