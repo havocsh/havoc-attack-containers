@@ -1608,4 +1608,5 @@ class call_object():
 
         send_response({'outcome': 'success'}, 'True', self.user_id, self.playbook_name, self.playbook_operator_version,
                       'playbook execution completed', {'no_args': 'True'}, self.end_time)
-        return 'terminate'
+
+        return {'outcome': 'success', 'message': 'playbook execution completed', 'forward_log': 'True'}
