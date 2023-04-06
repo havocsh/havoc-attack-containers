@@ -793,19 +793,18 @@ class call_msf:
             sessions_status = list_sessions['sessions']
             current_sessions_id = []
             for current in current_sessions:
-                current_sessions_id.append(current)
+                current_sessions_id.append(current['session_id'])
             temp_sessions_id = []
-            for session in sessions_status:
+            for session in sessions_status.keys():
                 temp_sessions_id.append(session)
 
-            for session in sessions_status:
+            for session in sessions_status.keys():
                 if session not in current_sessions_id:
                     sessions_status[session]['session_id'] = session
                     new_sessions.append(sessions_status[session])
             for current in current_sessions:
-                if current not in temp_sessions_id:
-                    current_sessions[current]['session_id'] = current
-                    dead_sessions.append(current_sessions[current])
+                if current['session_id'] not in temp_sessions_id:
+                    dead_sessions.append(current)
         sessions = {'new_sessions': new_sessions, 'dead_sessions': dead_sessions}
         return sessions
 
