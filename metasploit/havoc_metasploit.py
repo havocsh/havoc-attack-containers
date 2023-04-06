@@ -128,7 +128,7 @@ class call_msf:
 
     def show_exploit(self):
         if self.exploit:
-            output = {'exploit': self.exploit, 'description': self.exploit.description, 'forward_log': 'False'}
+            output = {'exploit': self.exploit.name, 'description': self.exploit.description, 'forward_log': 'False'}
         else:
             output = {'message': 'exploit_module must be set before running show_exploit', 'forward_log': 'False'}
         return output
@@ -392,9 +392,9 @@ class call_msf:
                     output = {'outcome': 'failed', 'message': 'instruct_args must specify filename',
                               'forward_log': 'False'}
                     return output
-                with open('/opt/havocops/shared/' + filename, 'wb') as f:
+                with open('/opt/havoc/shared/' + filename, 'wb') as f:
                     f.write(data)
-                output = {'outcome': 'success', 'payload': 'Executable file written to /opt/havocops/shared/' + filename, 'forward_log': 'True'}
+                output = {'outcome': 'success', 'payload': 'Executable file written to /opt/havoc/shared/' + filename, 'forward_log': 'True'}
         else:
             output = {'outcome': 'failed', 'message': 'payload_module must be set before running generate_payload',
                       'forward_log': 'False'}
@@ -516,7 +516,7 @@ class call_msf:
             return output
         try:
             script_name = self.args['script_name']
-            script = f'/opt/havocops/shared/{script_name}'
+            script = f'/opt/havoc/shared/{script_name}'
         except:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify script_path', 'forward_log': 'False'}
             return output
@@ -563,7 +563,7 @@ class call_msf:
             return output
         try:
             script_name = self.args['script_name']
-            script = f'/opt/havocops/shared/{script_name}'
+            script = f'/opt/havoc/shared/{script_name}'
         except:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify script_name', 'forward_log': 'False'}
             return output
