@@ -51,18 +51,25 @@ class call_msf:
         output = {'sessions': sessions, 'forward_log': 'False'}
         return output
 
+    def modify_routes(self):
+        autoroute = self.msf_client.modules.use('post', 'multi/manage/autoroute')
+        try:
+            output = {'outcome': 'success', 'route': {}, 'forward_log': 'False'}
+            for key, value in self.args.items():
+                autoroute[key] = value
+                output['route'][key] = value
+            autoroute.execute()
+        except Exception as e:
+            output = {'outcome': 'failed', 'message': f'modify_route failed with error: {e}', 'forward_log': 'False'}
+        return output
+
     def set_exploit_module(self):
         try:
             self.exploit_module = self.args['exploit_module']
-        except:
-            output = {'outcome': 'failed', 'message': 'instruct_args must specify exploit_module', 'forward_log': 'False'}
-            return output
-        try:
             self.exploit = self.msf_client.modules.use('exploit', self.exploit_module)
             output = {'outcome': 'success', 'forward_log': 'False'}
-        except:
-            output = {'outcome': 'failed', 'message': 'Invalid exploit_module', 'forward_log': 'False'}
-            return output
+        except Exception as e:
+            output = {'outcome': 'failed', 'message': f'set_exploit_module failed with error: {e}', 'forward_log': 'False'}
         return output
 
     def set_exploit_options(self):
@@ -75,11 +82,10 @@ class call_msf:
                             return output
                     self.exploit[key] = value
                 output = {'outcome': 'success', 'forward_log': 'False'}
-            except:
-                output = {'outcome': 'failed', 'message': 'Invalid option or option value', 'forward_log': 'False'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'set_exploit_options failed with error: {e}', 'forward_log': 'False'}
         else:
-            output = {'outcome': 'failed', 'message': 'exploit_module must be set before running set_exploit_options',
-                      'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'exploit_module not set', 'forward_log': 'False'}
         return output
 
     def set_exploit_target(self):
@@ -91,26 +97,24 @@ class call_msf:
                 return output
             try:
                 self.exploit.target = exploit_target
-                output = {'outcome': 'success', 'forward_log': 'False'}
-            except:
-                output = {'outcome': 'failed', 'message': 'Invalid exploit_target', 'forward_log': 'False'}
-                return output
+                output = {'outcome': 'success', 'exploit_target': exploit_target, 'forward_log': 'False'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'set_exploit_target failed with error: {e}', 'forward_log': 'False'}
         else:
-            output = {'outcome': 'failed', 'message': 'exploit_module must be set before running set_exploit_target',
-                      'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'exploit_module not set', 'forward_log': 'False'}
         return output
 
     def set_payload_module(self):
         try:
             self.payload_module = self.args['payload_module']
-        except:
+        except Exception as e:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify payload_module', 'forward_log': 'False'}
             return output
         try:
             self.payload = self.msf_client.modules.use('payload', self.payload_module)
-            output = {'outcome': 'success', 'forward_log': 'False'}
-        except:
-            output = {'outcome': 'failed', 'message': 'Invalid payload', 'forward_log': 'False'}
+            output = {'outcome': 'success', 'payload_module': self.payload_module, 'forward_log': 'False'}
+        except Exception as e:
+            output = {'outcome': 'failed', 'message': f'set_payload_module failed with error: {e}', 'forward_log': 'False'}
         return output
 
     def set_payload_options(self):
@@ -119,151 +123,113 @@ class call_msf:
                 for key, value in self.args.items():
                     self.payload[key] = value
                 output = {'outcome': 'success', 'forward_log': 'False'}
-            except:
-                output = {'outcome': 'failed', 'message': 'Invalid option or option value', 'forward_log': 'False'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'set_payload_options failed with error: {e}', 'forward_log': 'False'}
         else:
-            output = {'outcome': 'failed', 'message': 'payload_module must be set before running set_payload_options',
-                      'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'payload_module not set', 'forward_log': 'False'}
         return output
 
     def show_exploit(self):
         if self.exploit:
-            output = {'exploit': self.exploit.name, 'description': self.exploit.description, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'exploit': self.exploit.name, 'description': self.exploit.description, 'forward_log': 'False'}
         else:
-            output = {'message': 'exploit_module must be set before running show_exploit', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'exploit_module not set', 'forward_log': 'False'}
         return output
 
     def show_exploit_options(self):
         if self.exploit:
             options = self.exploit.options
-            if options:
-                output = {'options': options, 'forward_log': 'False'}
-            else:
-                output = {'options': None, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'options': options, 'forward_log': 'False'}
         else:
-            output = {'message': 'exploit_module must be set before running show_exploit_options',
-                      'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'exploit_module not set', 'forward_log': 'False'}
         return output
 
     def show_exploit_option_info(self):
         if self.exploit:
             try:
                 option = self.args['exploit_option']
-            except:
-                output = {'message': 'instruct_args must specify exploit_option', 'forward_log': 'False'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': 'instruct_args must specify exploit_option', 'forward_log': 'False'}
                 return output
             try:
                 option_info = self.exploit.optioninfo(option)
-            except:
-                output = {'message': 'invalid exploit_option', 'forward_log': 'False'}
-                return output
-            if option_info:
-                output = {'option_info': option_info, 'forward_log': 'False'}
-            else:
-                output = {'option_info': None, 'forward_log': 'False'}
+                output = {'outcome': 'success', 'option_info': option_info, 'forward_log': 'False'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'show_exploit_option_info failed with error: {e}', 'forward_log': 'False'}
         else:
-            output = {'message': 'exploit_module must be set before running show_exploit_option_info',
-                      'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'exploit_module not set', 'forward_log': 'False'}
         return output
 
     def show_exploit_targets(self):
         if self.exploit:
             targets = self.exploit.targets
-            if targets:
-                output = {'targets': targets, 'forward_log': 'False'}
-            else:
-                output = {'targets': None, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'targets': targets, 'forward_log': 'False'}
         else:
-            output = {'message': 'exploit_module must be set before running show_exploit_targets',
-                      'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'exploit_module not set', 'forward_log': 'False'}
         return output
 
     def show_exploit_evasion(self):
         if self.exploit:
             evasion = self.exploit.evasion
-            if evasion:
-                output = {'evasion': evasion, 'forward_log': 'False'}
-            else:
-                output = {'evasion': None, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'evasion': evasion, 'forward_log': 'False'}
         else:
-            output = {'message': 'exploit_module must be set before running show_exploit_evasion',
-                      'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'exploit_module not set', 'forward_log': 'False'}
         return output
 
     def show_exploit_payloads(self):
         if self.exploit:
             payloads = self.exploit.targetpayloads()
-            if payloads:
-                output = {'payloads': payloads, 'forward_log': 'False'}
-            else:
-                output = {'payloads': None, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'payloads': payloads, 'forward_log': 'False'}
         else:
-            output = {'message': 'exploit_module must be set before running show_exploit_payloads',
-                      'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'exploit_module not set', 'forward_log': 'False'}
         return output
 
     def show_configured_exploit_options(self):
         if self.exploit:
             run_options = self.exploit.runoptions
-            if run_options:
-                output = {'options': run_options, 'forward_log': 'False'}
-            else:
-                output = {'options': None, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'options': run_options, 'forward_log': 'False'}
         else:
-            output = {'message': 'exploit_module must be set before running show_configured_exploit_options',
-                      'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'exploit_module not set', 'forward_log': 'False'}
         return output
 
     def show_exploit_requirements(self):
         if self.exploit:
             requirements = self.exploit.required
-            if requirements:
-                output = {'requirements': requirements, 'forward_log': 'False'}
-            else:
-                output = {'requirements': None, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'requirements': requirements, 'forward_log': 'False'}
         else:
-            output = {'message': 'exploit_module must be set before running show_exploit_requirements',
-                      'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'exploit_module not set', 'forward_log': 'False'}
         return output
 
     def show_missing_exploit_requirements(self):
         if self.exploit:
             missing_requirements = self.exploit.missing_required
-            if missing_requirements:
-                output = {'requirements': missing_requirements, 'forward_log': 'False'}
-            else:
-                output = {'requirements': None, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'requirements': missing_requirements, 'forward_log': 'False'}
         else:
-            output = {'message': 'exploit_module must be set before running show_missing_exploit_requirements',
-                      'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'exploit_module not set', 'forward_log': 'False'}
         return output
 
     def show_last_exploit_results(self):
         if self.exploit_results:
-            output = {'results': self.exploit_results, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'results': self.exploit_results, 'forward_log': 'False'}
         elif self.exploit_console_results:
-            output = {'results': self.exploit_console_results, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'results': self.exploit_console_results, 'forward_log': 'False'}
         else:
-            output = {'results': 'No exploit results found', 'forward_log': 'False'}
+            output = {'outcome': 'success', 'results': 'No exploit results found', 'forward_log': 'False'}
         return output
 
     def show_payload(self):
         if self.payload:
-            output = {'payload': self.payload, 'description': self.payload.description, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'payload': self.payload.name, 'description': self.payload.description, 'forward_log': 'False'}
         else:
-            output = {'message': 'payload_module must be set before running show_payload', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'payload_module not set', 'forward_log': 'False'}
         return output
 
     def show_payload_options(self):
         if self.payload:
             options = self.payload.options
-            if options:
-                output = {'options': options, 'forward_log': 'False'}
-            else:
-                output = {'options': None, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'options': options, 'forward_log': 'False'}
         else:
-            output = {'message': 'payload_module must be set before running show_payload_options',
-                      'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'payload_module not set', 'forward_log': 'False'}
         return output
 
     def show_payload_option_info(self):
@@ -271,92 +237,75 @@ class call_msf:
             try:
                 option = self.args['payload_option']
             except:
-                output = {'message': 'instruct_args must specify payload_option', 'forward_log': 'False'}
+                output = {'outcome': 'failed', 'message': 'instruct_args must specify payload_option', 'forward_log': 'False'}
                 return output
             try:
                 option_info = self.payload.optioninfo(option)
-            except:
-                output = {'message': 'invalid payload_option', 'forward_log': 'False'}
-                return output
-            if option_info:
-                output = {'option_info': option_info, 'forward_log': 'False'}
-            else:
-                output = {'option_info': None, 'forward_log': 'False'}
+                output = {'outcome': 'success', 'option_info': option_info, 'forward_log': 'False'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'show_payload_option_info failed with error: {e}', 'forward_log': 'False'}
         else:
-            output = {'message': 'payload_module must be set before running show_payload_option_info',
-                      'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'payload_module not set', 'forward_log': 'False'}
         return output
 
     def show_configured_payload_options(self):
         if self.payload:
             run_options = self.payload.runoptions
-            if run_options:
-                output = {'options': run_options, 'forward_log': 'False'}
-            else:
-                output = {'options': None, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'options': run_options, 'forward_log': 'False'}
         else:
-            output = {'message': 'payload_module must be set before running show_configured_payload_options',
-                      'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'payload_module not set', 'forward_log': 'False'}
         return output
 
     def show_payload_requirements(self):
         if self.payload:
             requirements = self.payload.required
-            if requirements:
-                output = {'requirements': requirements, 'forward_log': 'False'}
-            else:
-                output = {'requirements': None, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'requirements': requirements, 'forward_log': 'False'}
         else:
-            output = {'message': 'payload_module must be set before running show_payload_requirements',
-                      'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'payload_module not set', 'forward_log': 'False'}
         return output
 
     def show_missing_payload_requirements(self):
         if self.payload:
             missing_requirements = self.payload.missing_required
-            if missing_requirements:
-                output = {'requirements': missing_requirements, 'forward_log': 'False'}
-            else:
-                output = {'requirements': None, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'requirements': missing_requirements, 'forward_log': 'False'}
         else:
-            output = {'message': 'payload_module must be set before running show_missing_payload_requirements',
-                      'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'payload_module not set', 'forward_log': 'False'}
         return output
 
     def show_job_info(self):
         try:
             job_id = self.args['job_id']
         except:
-            output = {'message': 'instruct_args must specify job_id', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'instruct_args must specify job_id', 'forward_log': 'False'}
             return output
         job_list = self.msf_client.jobs.list
         if job_id in job_list:
             job_info = self.msf_client.jobs.info(job_id)
-            output = {'job_id': job_id, 'job_info': job_info, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'job_id': job_id, 'job_info': job_info, 'forward_log': 'False'}
         else:
-            output = {'message': 'job_id not found', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'job_id not found', 'forward_log': 'False'}
         return output
 
     def show_session_info(self):
         try:
             session_id = self.args['session_id']
         except:
-            output = {'message': 'instruct_args must specify session_id', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'instruct_args must specify session_id', 'forward_log': 'False'}
             return output
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             session_info = self.msf_client.sessions.session(session_id).info
-            output = {'session_id': session_id, 'session_info': session_info, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'session_id': session_id, 'session_info': session_info, 'forward_log': 'False'}
         else:
-            output = {'message': 'session_id not found', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
 
     def execute_exploit(self):
         if self.exploit and self.payload:
             try:
                 self.exploit_results = self.exploit.execute(payload=self.payload)
-            except:
-                output = {'outcome': 'failed', 'message': 'Check exploit_options and try again', 'forward_log': 'False'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'execute_exploit failed with error: {e}', 'forward_log': 'False'}
                 return output
             if 'job_id' in self.exploit_results:
                 exploit_module = self.exploit.modulename
@@ -371,46 +320,38 @@ class call_msf:
                 self.exploit_console_results = self.msf_client.consoles.console(cid).run_module_with_output(self.exploit, payload=self.payload)
                 output = {'outcome': 'failed', 'stdout': self.exploit_console_results, 'forward_log': 'True'}
         else:
-            output = {'outcome': 'failed', 'message': 'exploit_module and payload_module must be set before running execute_exploit',
-                      'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'exploit_module or payload_module not set', 'forward_log': 'False'}
         return output
 
     def generate_payload(self):
         if self.payload:
             try:
                 data = self.payload.payload_generate()
-            except:
-                output = {'outcome': 'failed', 'message': 'Check required payload options and try again',
-                          'forward_log': 'False'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'generate_payload failed with error: {e}', 'forward_log': 'False'}
                 return output
             if isinstance(data, str):
                 output = {'outcome': 'success', 'payload': data, 'forward_log': 'True'}
             else:
                 try:
-                    filename = self.args['filename']
-                except:
-                    output = {'outcome': 'failed', 'message': 'instruct_args must specify filename',
-                              'forward_log': 'False'}
-                    return output
-                with open('/opt/havoc/shared/' + filename, 'wb') as f:
-                    f.write(data)
-                output = {'outcome': 'success', 'payload': 'Executable file written to /opt/havoc/shared/' + filename, 'forward_log': 'True'}
+                    file_name = self.args['file_name']
+                    with open(f'/opt/havoc/shared/{file_name}', 'wb') as f:
+                        f.write(data)
+                    output = {'outcome': 'success', 'payload': file_name, 'forward_log': 'True'}
+                except Exception as e:
+                    output = {'outcome': 'failed', 'message': f'generate_payload failed with error: {e}', 'forward_log': 'False'}
         else:
-            output = {'outcome': 'failed', 'message': 'payload_module must be set before running generate_payload',
-                      'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'payload_module not set', 'forward_log': 'False'}
         return output
 
     def run_session_command(self):
-        try:
-            session_id = self.args['session_id']
-        except:
-            output = {'outcome': 'failed', 'message': 'instruct_args must specify session_id', 'forward_log': 'False'}
-            return output
-        try:
-            session_command = self.args['session_command']
-        except:
-            output = {'outcome': 'failed', 'message': 'instruct_args must specify session_command', 'forward_log': 'False'}
-            return output
+        req_args = ['session_id', 'session_command']
+        for req_arg in req_args:
+            if req_arg not in self.args:
+                output = {'outcome': 'failed', 'message': f'instruct_args must specify {req_arg}', 'forward_log': 'False'}
+                return output    
+        session_id = self.args['session_id']
+        session_command = self.args['session_command']
         if 'end_strings' in self.args:
             end_strings = self.args['end_strings']
         else:
@@ -428,24 +369,21 @@ class call_msf:
             try:
                 session_info = self.msf_client.sessions.session(session_id).info
                 run_session_command_output = self.msf_client.sessions.session(session_id).run_with_output(session_command, end_strings, timeout, timeout_exception)
-                output = {'outcome': 'success', 'run_session_command_output': run_session_command_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'True'}
-            except:
-                output = {'outcome': 'failed', 'message': 'Invalid session_command', 'forward_log': 'False'}
+                output = {'outcome': 'success', 'run_session_command': run_session_command_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'True'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'run_session_command failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
 
     def run_session_shell_command(self):
-        try:
-            session_id = self.args['session_id']
-        except:
-            output = {'outcome': 'failed', 'message': 'instruct_args must specify session_id', 'forward_log': 'False'}
-            return output
-        try:
-            session_shell_command = self.args['session_shell_command']
-        except:
-            output = {'outcome': 'failed', 'message': 'instruct_args must specify session_shell_command', 'forward_log': 'False'}
-            return output
+        req_args = ['session_id', 'session_shell_command']
+        for req_arg in req_args:
+            if req_arg not in self.args:
+                output = {'outcome': 'failed', 'message': f'instruct_args must specify {req_arg}', 'forward_log': 'False'}
+                return output
+        session_id = self.args['session_id']
+        session_shell_command = self.args['session_shell_command']
         if 'end_strings' in self.args:
             end_strings = self.args['end_strings']
         else:
@@ -455,126 +393,111 @@ class call_msf:
             try:
                 session_info = self.msf_client.sessions.session(session_id).info
                 run_session_shell_command_output = self.msf_client.sessions.session(session_id).run_shell_cmd_with_output(session_shell_command, end_strings)
-                output = {'outcome': 'success', 'run_session_shell_command_output': run_session_shell_command_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'True'}
-            except:
-                output = {'outcome': 'failed', 'message': 'Invalid session_shell_command', 'forward_log': 'False'}
+                output = {'outcome': 'success', 'run_session_shell_command': run_session_shell_command_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'True'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'run_session_shell_command failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
 
     def session_tabs(self):
-        try:
-            session_id = self.args['session_id']
-        except:
-            output = {'message': 'instruct_args must specify session_id', 'forward_log': 'False'}
-            return output
-        try:
-            session_command = self.args['session_command']
-        except:
-            output = {'message': 'instruct_args must specify session_command', 'forward_log': 'False'}
-            return output
+        req_args = ['session_id', 'session_command']
+        for req_arg in req_args:
+            if req_arg not in self.args:
+                output = {'outcome': 'failed', 'message': f'instruct_args must specify {req_arg}', 'forward_log': 'False'}
+                return output  
+        session_id = self.args['session_id']
+        session_command = self.args['session_command']
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             try:
                 session_info = self.msf_client.sessions.session(session_id).info
                 session_tabs_output = self.msf_client.sessions.session(session_id).tabs(session_command)
-                output = {'session_tabs_output': session_tabs_output, 'session_in': session_id, 'session_info': session_info, 'forward_log': 'False'}
-            except:
-                output = {'message': 'Invalid session_command', 'forward_log': 'False'}
+                output = {'outcome': 'success', 'session_tabs': session_tabs_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'False'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'session_tabs failed with error: {e}', 'forward_log': 'False'}
         else:
-            output = {'message': 'session_id not found', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
 
     def load_session_plugin(self):
-        try:
-            session_id = self.args['session_id']
-        except:
-            output = {'outcome': 'failed', 'message': 'instruct_args must specify session_id', 'forward_log': 'False'}
-            return output
-        try:
-            plugin_name = self.args['plugin_name']
-        except:
-            output = {'outcome': 'failed', 'message': 'instruct_args must specify plugin_name', 'forward_log': 'False'}
-            return output
+        req_args = ['session_id', 'plugin_name']
+        for req_arg in req_args:
+            if req_arg not in self.args:
+                output = {'outcome': 'failed', 'message': f'instruct_args must specify {req_arg}', 'forward_log': 'False'}
+                return output  
+        session_id = self.args['session_id']
+        plugin_name = self.args['plugin_name']
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             try:
                 session_info = self.msf_client.sessions.session(session_id).info
                 load_session_plugin_output = self.msf_client.sessions.session(session_id).load_plugin(plugin_name)
-                output = {'outcome': 'success', 'load_session_plugin_output': load_session_plugin_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'False'}
-            except:
-                output = {'outcome': 'failed', 'message': 'Invalid plugin_name', 'forward_log': 'False'}
+                output = {'outcome': 'success', 'load_session_plugin': load_session_plugin_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'False'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'load_session_plugin failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
 
     def session_import_psh(self):
-        try:
-            session_id = self.args['session_id']
-        except:
-            output = {'outcome': 'failed', 'message': 'instruct_args must specify session_id', 'forward_log': 'False'}
-            return output
-        try:
-            script_name = self.args['script_name']
-            script = f'/opt/havoc/shared/{script_name}'
-        except:
-            output = {'outcome': 'failed', 'message': 'instruct_args must specify script_path', 'forward_log': 'False'}
-            return output
+        req_args = ['session_id', 'script_name']
+        for req_arg in req_args:
+            if req_arg not in self.args:
+                output = {'outcome': 'failed', 'message': f'instruct_args must specify {req_arg}', 'forward_log': 'False'}
+                return output 
+        session_id = self.args['session_id']
+        script_name = self.args['script_name']
+        script = f'/opt/havoc/shared/{script_name}'
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             try:
                 session_info = self.msf_client.sessions.session(session_id).info
                 session_import_psh_output = self.msf_client.sessions.session(session_id).import_psh(script)
-                output = {'outcome': 'success', 'session_import_psh_output': session_import_psh_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'True'}
-            except:
-                output = {'outcome': 'failed', 'message': 'Invalid script_path', 'forward_log': 'False'}
+                output = {'outcome': 'success', 'session_import_psh': session_import_psh_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'True'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'session_import_psh failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
 
     def session_run_psh_cmd(self):
-        try:
-            session_id = self.args['session_id']
-        except:
-            output = {'outcome': 'failed', 'message': 'instruct_args must specify session_id', 'forward_log': 'False'}
-            return output
-        try:
-            ps_cmd = self.args['ps_cmd']
-        except:
-            output = {'outcome': 'failed', 'message': 'instruct_args must specify ps_cmd', 'forward_log': 'False'}
-            return output
+        req_args = ['session_id', 'ps_cmd']
+        for req_arg in req_args:
+            if req_arg not in self.args:
+                output = {'outcome': 'failed', 'message': f'instruct_args must specify {req_arg}', 'forward_log': 'False'}
+                return output 
+        session_id = self.args['session_id']
+        ps_cmd = self.args['ps_cmd']
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             try:
                 session_info = self.msf_client.sessions.session(session_id).info
                 session_run_psh_cmd_output = self.msf_client.sessions.session(session_id).run_psh_cmd(ps_cmd)
-                output = {'outcome': 'success', 'session_run_psh_cmd_output': session_run_psh_cmd_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'True'}
-            except:
-                output = {'outcome': 'failed', 'message': 'Invalid ps_cmd', 'forward_log': 'False'}
+                output = {'outcome': 'success', 'session_run_psh_cmd': session_run_psh_cmd_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'True'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'session_run_psh_cmd failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
 
     def run_session_script(self):
-        try:
-            session_id = self.args['session_id']
-        except:
-            output = {'outcome': 'failed', 'message': 'instruct_args must specify session_id', 'forward_log': 'False'}
-            return output
-        try:
-            script_name = self.args['script_name']
-            script = f'/opt/havoc/shared/{script_name}'
-        except:
-            output = {'outcome': 'failed', 'message': 'instruct_args must specify script_name', 'forward_log': 'False'}
-            return output
+        req_args = ['session_id', 'script_name']
+        for req_arg in req_args:
+            if req_arg not in self.args:
+                output = {'outcome': 'failed', 'message': f'instruct_args must specify {req_arg}', 'forward_log': 'False'}
+                return output 
+        session_id = self.args['session_id']
+        script_name = self.args['script_name']
+        script = f'/opt/havoc/shared/{script_name}'
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             try:
                 session_info = self.msf_client.sessions.session(session_id).info
                 run_session_script_output = self.msf_client.sessions.session(session_id).runscript(script)
-                output = {'outcome': 'success', 'run_session_script_output': run_session_script_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'True'}
-            except:
-                output = {'outcome': 'failed', 'message': 'script_name not found in shared directory', 'forward_log': 'False'}
+                output = {'outcome': 'success', 'run_session_script': run_session_script_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'True'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'run_session_script failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
@@ -590,9 +513,9 @@ class call_msf:
             try:
                 session_info = self.msf_client.sessions.session(session_id).info
                 get_session_writeables_dir_output = self.msf_client.sessions.session(session_id).get_writeable_dir()
-                output = {'outcome': 'success', 'get_session_writeables_dir_output': get_session_writeables_dir_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'True'}
-            except:
-                output = {'outcome': 'failed', 'message': 'session_writeable_dir not found', 'forward_log': 'False'}
+                output = {'outcome': 'success', 'get_session_writeables_dir': get_session_writeables_dir_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'True'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'get_session_writeable_dir failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
@@ -605,9 +528,12 @@ class call_msf:
             return output
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
-            session_info = self.msf_client.sessions.session(session_id).info
-            session_read_output = self.msf_client.sessions.session(session_id).read()
-            output = {'outcome': 'success', 'session_read_output': session_read_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'False'}
+            try:
+                session_info = self.msf_client.sessions.session(session_id).info
+                session_read_output = self.msf_client.sessions.session(session_id).read()
+                output = {'outcome': 'success', 'session_read': session_read_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'False'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'session_read failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
@@ -623,9 +549,9 @@ class call_msf:
             try:
                 session_info = self.msf_client.sessions.session(session_id).info
                 session_detach_output = self.msf_client.sessions.session(session_id).detach()
-                output = {'outcome': 'success', 'session_detach_output': session_detach_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'True'}
-            except:
-                output = {'outcome': 'failed', 'forward_log': 'False'}
+                output = {'outcome': 'success', 'detach_session': session_detach_output, 'session_id': session_id, 'session_info': session_info, 'forward_log': 'True'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'detach_session failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
@@ -641,9 +567,9 @@ class call_msf:
             try:
                 session_info = self.msf_client.sessions.session(session_id).info
                 self.msf_client.sessions.session(session_id).kill()
-                output = {'outcome': 'success', 'session_id': session_id, 'session_info': session_info, 'forward_log': 'True'}
-            except:
-                output = {'outcome': 'failed', 'forward_log': 'False'}
+                output = {'outcome': 'success', 'kill_session': session_id, 'session_info': session_info, 'forward_log': 'True'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'kill_session failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
@@ -659,9 +585,9 @@ class call_msf:
             try:
                 job_info = self.msf_client.jobs.info(job_id)
                 self.msf_client.jobs.stop(job_id)
-                output = {'outcome': 'success', 'job_id': job_id, 'job_info': job_info, 'forward_log': 'True'}
-            except:
-                output = {'outcome': 'failed', 'forward_log': 'False'}
+                output = {'outcome': 'success', 'kill_job': job_id, 'job_info': job_info, 'forward_log': 'True'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'kill_job failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'job_id not found', 'forward_log': 'False'}
         return output
