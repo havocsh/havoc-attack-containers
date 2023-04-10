@@ -67,7 +67,7 @@ class call_msf:
         try:
             self.exploit_module = self.args['exploit_module']
             self.exploit = self.msf_client.modules.use('exploit', self.exploit_module)
-            output = {'outcome': 'success', 'forward_log': 'False'}
+            output = {'outcome': 'success', 'exploit_module': self.exploit_module, 'forward_log': 'False'}
         except Exception as e:
             output = {'outcome': 'failed', 'message': f'set_exploit_module failed with error: {e}', 'forward_log': 'False'}
         return output
@@ -81,7 +81,7 @@ class call_msf:
                             output = {'outcome': 'failed', 'message': 'Invalid RHOST value', 'host_info': self.host_info, 'forward_log': 'False'}
                             return output
                     self.exploit[key] = value
-                output = {'outcome': 'success', 'forward_log': 'False'}
+                output = {'outcome': 'success', 'exploit_options': self.args, 'forward_log': 'False'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'set_exploit_options failed with error: {e}', 'forward_log': 'False'}
         else:
