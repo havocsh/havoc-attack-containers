@@ -1274,46 +1274,58 @@ class Resource:
                 self.resource_dict['task'][object_name]['listener'] = {}
                 listener_args = {}
                 listener_tls = None
-                listener_type = None
-                for k in object_parameters['listener'].keys():
-                    if k != 'tls':
-                        listener_type = k
-                    else:
-                        listener_tls = k
-                if listener_tls:
+                if 'tls' in object_parameters['listener']:
+                    listener_tls = True
                     tls_args = {}
-                    for k, v in object_parameters['listener'][listener_tls].items():
+                    for k, v in object_parameters['listener']['tls'].items():
                         tls_args[k] = v
                     try:
                         cert_gen_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'cert_gen', instruct_args=tls_args)
                     except Exception as e:
-                        return f'resource_listener_create_failed: {e}'
+                        return f'resource_task_listener_tls_create_failed: {e}'
                     if cert_gen_response['outcome'] == 'failed':
-                        return f'resource_listener_create_failed: {cert_gen_response}'
-                listener_args['listener_type'] = listener_type
-                listener_args['Name'] = listener_type
-                for k, v in object_parameters['listener'][listener_type].items():
+                        return f'resource_task_listener_tls_create_failed: {cert_gen_response}'
+                for k, v in object_parameters['listener'].items():
                     listener_args[k] = v
                 try:
-                    create_listener_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'create_listener', instruct_args=listener_args)
+                    listener_args['Name'] = object_parameters['listener']['listener_type']
+                    setup_listener_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'setup_listener', instruct_args=listener_args)
                 except Exception as e:
-                    return f'resource_listener_create_failed: {e}'
-                if create_listener_response['outcome'] == 'failed':
-                    return f'resource_listener_create_failed: {create_listener_response}'
-                self.resource_dict['task'][object_name]['listener'] = create_listener_response['listener']
+                    return f'resource_task_listener_create_failed: {e}'
+                if setup_listener_response['outcome'] == 'failed':
+                    return f'resource_task_listener_create_failed: {setup_listener_response}'
+                self.resource_dict['task'][object_name]['listener'] = setup_listener_response['listener']
                 if listener_tls:
                     self.resource_dict['task'][object_name]['listener']['tls'] = cert_gen_response['tls']
-            if 'stager' in object_parameters:
-                stager_args = {}
-                for k, v in object_parameters['stager'].items():
-                    stager_args[k] = v
+            if 'handler' in object_parameters:
+                self.resource_dict['task'][object_name]['handler'] = {}
+                handler_args = {}
+                handler_tls = None
+                for k in object_parameters['handler'].keys():
+                    if k == 'tls':
+                        handler_tls = True
+                if handler_tls:
+                    tls_args = {}
+                    for k, v in object_parameters['handler']['tls'].items():
+                        tls_args[k] = v
+                    try:
+                        cert_gen_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'cert_gen', instruct_args=tls_args)
+                    except Exception as e:
+                        return f'resource_task_handler_tls_create_failed: {e}'
+                    if cert_gen_response['outcome'] == 'failed':
+                        return f'resource_task_handler_tls_create_failed: {cert_gen_response}'
+                for k, v in object_parameters['handler'].items():
+                        if k != 'tls':
+                            handler_args[k] = v
                 try:
-                    create_stager_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'create_stager', instruct_args=stager_args)
+                    setup_handler_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'setup_handler', instruct_args=handler_args)
                 except Exception as e:
-                    return f'resource_stager_create_failed: {e}'
-                if create_stager_response['outcome'] == 'failed':
-                    return f'resource_stager_create_failed: {create_stager_response}'
-                self.resource_dict['task'][object_name]['stager'] = create_stager_response['stager']
+                    return f'resource_task_handler_create_failed: {e}'
+                if setup_handler_response['outcome'] == 'failed':
+                    return f'resource_task_handler_create_failed: {setup_handler_response}'
+                self.resource_dict['task'][object_name]['handler'] = setup_handler_response['handler']
+                if handler_tls:
+                    self.resource_dict['task'][object_name]['handler']['tls'] = cert_gen_response['tls']
             return self.resource_dict['task'][object_name]
         if action == 'delete':
             try:
