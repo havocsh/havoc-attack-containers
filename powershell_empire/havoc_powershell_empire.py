@@ -69,16 +69,19 @@ class call_powershell_empire:
             message = create_listener_results['message']
             output = {'outcome': 'failed', 'message': f'setup_listener failed with error: {message}', 'forward_log': 'False'}
             return output
-        create_stager_results = self.create_stager()
-        if create_stager_results['outcome'] == 'failed':
-            message = create_stager_results['message']
-            output = {'outcome': 'failed', 'message': f'setup_listener failed with error: {message}', 'forward_log': 'False'}
-            return output
         listener = create_listener_results['listener']
-        stager = create_stager_results['stager']
+        stager = None
+        if 'stager' in self.args:
+            self.args = self.args['stager']
+            create_stager_results = self.create_stager()
+            if create_stager_results['outcome'] == 'failed':
+                message = create_stager_results['message']
+                output = {'outcome': 'failed', 'message': f'setup_listener failed with error: {message}', 'forward_log': 'False'}
+                return output
+            stager = create_stager_results['stager']
         output = {'outcome': 'success', 'listener': listener, 'forward_log': 'True'}
-        for k, v in stager.items():
-            output['listener'][k] = v
+        if stager:
+            output['listener']['stager'] = stager
         return output
 
     def create_listener(self):
