@@ -1477,8 +1477,10 @@ class call_object():
                                 send_response({'outcome': 'failed', 'details': method_result}, 'True', self.user_id, self.playbook_name,
                                               self.playbook_operator_version, operator_command, value, self.end_time)
                                 if 'action' in method_result and 'essential' in method_result:
+                                    self.exec_order.prev_exec_rule(node_path)
                                     return
                                 if 'action' not in method_result:
+                                    self.exec_order.prev_exec_rule(node_path)
                                     return
                                 executed_list.append(node_path)
                                 t.sleep(5)
