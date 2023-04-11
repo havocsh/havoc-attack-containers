@@ -63,6 +63,24 @@ class call_powershell_empire:
             output = {'outcome': 'failed', 'message': 'Missing listener_type', 'forward_log': 'False'}
         return output
 
+    def setup_listener(self):
+        create_listener_results = self.create_listener()
+        if create_listener_results['outcome'] == 'failed':
+            message = create_listener_results['message']
+            output = {'outcome': 'failed', 'message': f'setup_listener failed with error: {message}', 'forward_log': 'False'}
+            return output
+        create_stager_results = self.create_stager()
+        if create_stager_results['outcome'] == 'failed':
+            message = create_stager_results['message']
+            output = {'outcome': 'failed', 'message': f'setup_listener failed with error: {message}', 'forward_log': 'False'}
+            return output
+        listener = create_listener_results['listener']
+        stager = create_stager_results['stager']
+        output = {'outcome': 'success', 'listener': listener, 'forward_log': 'True'}
+        for k, v in stager.items():
+            output['listener'][k] = v
+        return output
+
     def create_listener(self):
         if 'listener_type' in self.args:
             listener_type = self.args['listener_type']
@@ -74,6 +92,9 @@ class call_powershell_empire:
             return output
         listener_name = self.args['Name']
         listener_args = copy.deepcopy(self.args)
+        if 'Host' in listener_args:
+            if 'https://' in listener_args['Host'].lower() and 'CertPath' not in listener_args:
+                listener_args['CertPath'] = '/opt/Empire/empire/server/data'
         del listener_args['listener_type']
         create_listener_uri = f'{self.server_uri}api/listeners/{listener_type}?token={self.token}'
         create_listener_response = requests.post(create_listener_uri, json=listener_args, verify=False)
