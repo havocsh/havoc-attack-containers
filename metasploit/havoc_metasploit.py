@@ -63,16 +63,16 @@ class call_msf:
             output = {'outcome': 'failed', 'message': f'modify_route failed with error: {e}', 'forward_log': 'False'}
         return output
 
-    def create_handler(self):
+    def setup_handler(self):
         set_exploit_module_results = self.set_exploit_module()
         if set_exploit_module_results['outcome'] == 'failed':
             message = set_exploit_module_results['message']
-            output = {'outcome': 'failed', 'message': f'set_handler failed with error: {message}', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': f'setup_handler failed with error: {message}', 'forward_log': 'False'}
             return output
         set_payload_module_results = self.set_payload_module()
         if set_payload_module_results['outcome'] == 'failed':
             message = set_payload_module_results['message']
-            output = {'outcome': 'failed', 'message': f'set_handler failed with error: {message}', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': f'setup_handler failed with error: {message}', 'forward_log': 'False'}
             return output
         for key, value in self.args.items():
             if key != 'exploit_module' and key != 'payload_module' and key != 'file_name':
@@ -80,7 +80,7 @@ class call_msf:
         generate_payload_results = self.generate_payload()
         if generate_payload_results['outcome'] == 'failed':
             message = generate_payload_results['message']
-            output = {'outcome': 'failed', 'message': f'set_handler failed with error: {message}', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': f'setup_handler failed with error: {message}', 'forward_log': 'False'}
             return output
         self.args['payload'] = generate_payload_results['payload']
         output = {'outcome': 'success', 'handler': self.args, 'forward_log': 'False'}
