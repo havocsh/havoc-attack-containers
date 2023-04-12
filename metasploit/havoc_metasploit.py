@@ -77,6 +77,11 @@ class call_msf:
         for key, value in self.args.items():
             if key != 'exploit_module' and key != 'payload_module' and key != 'file_name':
                 self.payload[key] = value
+        execute_exploit_results = self.execute_exploit()
+        if execute_exploit_results['outcome'] == 'failed':
+            message = execute_exploit_results['message']
+            output = {'outcome': 'failed', 'message': f'setup_handler failed with error: {message}', 'forward_log': 'False'}
+            return output
         generate_payload_results = self.generate_payload()
         if generate_payload_results['outcome'] == 'failed':
             message = generate_payload_results['message']
@@ -341,7 +346,7 @@ class call_msf:
             else:
                 cid = self.msf_client.consoles.console().cid
                 self.exploit_console_results = self.msf_client.consoles.console(cid).run_module_with_output(self.exploit, payload=self.payload)
-                output = {'outcome': 'failed', 'stdout': self.exploit_console_results, 'forward_log': 'True'}
+                output = {'outcome': 'failed', 'message': self.exploit_console_results, 'forward_log': 'True'}
         else:
             output = {'outcome': 'failed', 'message': 'exploit_module or payload_module not set', 'forward_log': 'False'}
         return output
