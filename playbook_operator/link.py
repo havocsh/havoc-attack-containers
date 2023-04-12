@@ -5,8 +5,8 @@ import re
 import sys
 import json
 import boto3
-import pathlib
 import subprocess
+import time as t
 from configparser import ConfigParser
 from datetime import datetime, timezone
 from twisted.python import log
@@ -112,6 +112,7 @@ def action(region, deployment_name, user_id, playbook_operator_version, commands
                 send_response(call_method, forward_log, user_id, playbook_name, playbook_operator_version, operator_command,
                               command_args, end_time)
                 if call_method:
+                    t.sleep(5)
                     timestamp = datetime.now().strftime('%s')
                     terminate_command = {'operator_command': 'terminate', 'command_args': {'no_args': 'True'}, 'timestamp': timestamp, 'end_time': end_time}
                     command_list.append(terminate_command)
