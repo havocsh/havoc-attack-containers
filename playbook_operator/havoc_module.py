@@ -1272,10 +1272,18 @@ class Resource:
             self.resource_dict['task'][object_name] = {key: value for key, value in task_startup_response.items()}
             if 'listener' in object_parameters:
                 self.resource_dict['task'][object_name]['listener'] = {}
+                listener_types = ['dbx', 'http', 'https', 'http_com', 'http_foreign', 'http_hop', 'http_malleable', 'onedrive', 'port_forward_pivot']
                 listener_args = {}
                 listener_tls = None
+                listener_type = None
+                for k in object_parameters['listener'].keys():
+                    if k in listener_types:
+                        listener_type = k
                 if 'tls' in object_parameters['listener']:
                     listener_tls = True
+                if 'stager' in object_parameters['listener']:
+                    stager = True
+                if listener_tls:
                     tls_args = {}
                     for k, v in object_parameters['listener']['tls'].items():
                         tls_args[k] = v
@@ -1285,18 +1293,32 @@ class Resource:
                         return f'resource_task_listener_tls_create_failed: {e}'
                     if cert_gen_response['outcome'] == 'failed':
                         return f'resource_task_listener_tls_create_failed: {cert_gen_response}'
-                for k, v in object_parameters['listener'].items():
+                listener_args['listener_type'] = listener_type
+                listener_args['Name'] = listener_type
+                for k, v in object_parameters['listener'][listener_type].items():
                     listener_args[k] = v
                 try:
-                    listener_args['Name'] = object_parameters['listener']['listener_type']
-                    setup_listener_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'setup_listener', instruct_args=listener_args)
+                    create_listener_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'create_listener', instruct_args=listener_args)
                 except Exception as e:
                     return f'resource_task_listener_create_failed: {e}'
-                if setup_listener_response['outcome'] == 'failed':
-                    return f'resource_task_listener_create_failed: {setup_listener_response}'
-                self.resource_dict['task'][object_name]['listener'] = setup_listener_response['listener']
+                if create_listener_response['outcome'] == 'failed':
+                    return f'resource_task_listener_create_failed: {create_listener_response}'
+                self.resource_dict['task'][object_name]['listener'] = create_listener_response['listener']
+                if stager:
+                    stager_args = {}
+                    for k, v in object_parameters['listener']['stager'].items():
+                        stager_args[k] = v
+                    try:
+                        create_stager_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'create_stager', instruct_args=stager_args)
+                    except Exception as e:
+                        return f'resource_task_stager_create_failed: {e}'
+                    if create_stager_response['outcome'] == 'failed':
+                        return f'resource_task_stager_create_failed: {create_stager_response}'
+                    self.resource_dict['task'][object_name]['stager'] = create_stager_response['stager']
                 if listener_tls:
                     self.resource_dict['task'][object_name]['listener']['tls'] = cert_gen_response['tls']
+                if stager:
+                    self.resource_dict['task'][object_name]['listener']['stager'] = create_stager_response['stager']
             if 'handler' in object_parameters:
                 self.resource_dict['task'][object_name]['handler'] = {}
                 handler_args = {}
@@ -1477,10 +1499,8 @@ class call_object():
                                 send_response({'outcome': 'failed', 'details': method_result}, 'True', self.user_id, self.playbook_name,
                                               self.playbook_operator_version, operator_command, value, self.end_time)
                                 if 'action' in method_result and 'essential' in method_result:
-                                    self.exec_order.prev_exec_rule(node_path)
                                     return
                                 if 'action' not in method_result:
-                                    self.exec_order.prev_exec_rule(node_path)
                                     return
                                 executed_list.append(node_path)
                                 t.sleep(5)
