@@ -1276,6 +1276,7 @@ class Resource:
                 listener_args = {}
                 listener_tls = None
                 listener_type = None
+                stager = None
                 for k in object_parameters['listener'].keys():
                     if k in listener_types:
                         listener_type = k
