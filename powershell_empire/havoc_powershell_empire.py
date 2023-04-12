@@ -63,35 +63,6 @@ class call_powershell_empire:
             output = {'outcome': 'failed', 'message': 'Missing listener_type', 'forward_log': 'False'}
         return output
 
-    def setup_listener(self):
-        if 'listener_type' not in self.args:
-            output = {'outcome': 'failed', 'message': 'Missing listener_type', 'forward_log': 'False'}
-            return output
-        if 'stager' not in self.args:
-            output = {'outcome': 'failed', 'message': 'Missing stager', 'forward_log': 'False'}
-            return output
-        stager_args = self.args['stager']
-        del self.args['stager']
-        create_listener_results = self.create_listener()
-        if create_listener_results['outcome'] == 'failed':
-            message = create_listener_results['message']
-            output = {'outcome': 'failed', 'message': f'setup_listener failed with error: {message}', 'forward_log': 'False'}
-            return output
-        listener = create_listener_results['listener']
-        listener_args = copy.deepcopy(self.args)
-        self.args = stager_args
-        create_stager_results = self.create_stager()
-        if create_stager_results['outcome'] == 'failed':
-            message = create_stager_results['message']
-            output = {'outcome': 'failed', 'message': f'setup_listener failed with error: {message}', 'forward_log': 'False'}
-            return output
-        stager = create_stager_results['stager']
-        output = {'outcome': 'success', 'listener': listener, 'forward_log': 'True'}
-        output['listener']['stager'] = stager
-        self.args = listener_args
-        self.args['stager'] = stager_args
-        return output
-
     def create_listener(self):
         if 'listener_type' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing listener_type', 'forward_log': 'False'}

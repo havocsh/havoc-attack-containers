@@ -16,14 +16,6 @@ class HttpServer:
         self.args = args
         self.host_info = [public_ip, hostname] + local_ip
         return True
-
-    def setup_listener(self):
-        create_listener_results = self.create_listener()
-        if create_listener_results['outcome'] == 'failed':
-            message = create_listener_results['message']
-            output = {'outcome': 'failed', 'message': f'setup_listener failed with error: {message}', 'forward_log': 'False'}
-            return output
-        return create_listener_results
     
     def create_listener(self):
         if 'listener_type' not in self.args:
