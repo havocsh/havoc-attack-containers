@@ -72,20 +72,12 @@ class Action:
 
     def __init__(self):
         self.havoc_client = None
-        self.action_dict = {
-            'instruct_task': {},
-            'download_from_workspace': {}, 
-            'sync_to_workspace': {}, 
-            'sync_from_workspace': {}, 
-            'task_download_file': {}, 
-            'task_execute_command': {}, 
-            'execute_agent_module': {},
-            'execute_agent_shell_command': {}
-        }
+        self.action_dict = {'agent_action': {}, 'session_action': {}, 'task_action': {}}
 
-    def instruct_task(self, object_name, action, **object_parameters):
+    def agent_action(self, object_name, action, **object_parameters):
         if action == 'create':
             failed = None
+            essential = None
             if 'delay' in object_parameters:
                 delay = object_parameters['delay']
                 if isinstance(int(delay), int):
@@ -93,26 +85,29 @@ class Action:
             if 'timeout' in object_parameters:
                 timeout = object_parameters['timeout']
                 signal.alarm(int(timeout))
-            essential = None
             if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
                 essential = True
             try:
                 task_name = object_parameters['task_name']
-                instruct_command = object_parameters['instruct_command']
-                instruct_args = object_parameters['instruct_args']
-                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+                agent_name = object_parameters['agent_name']
+                agent_command = object_parameters['command']
+                if agent_command in object_parameters:
+                    command_args = object_parameters[agent_command]
+                method = getattr(self.havoc_client, agent_command)
+                agent_command_response = method(task_name, agent_name, **command_args)
             except Exception as e:
                 if essential:
-                    return f'action_instruct_task_create_essential_failed: {e}'
+                    return f'action_agent_action_{agent_command}_create_essential_failed: {e}'
                 else:
-                    failed = f'action_instruct_task_create_failed: {e}'
+                    failed = f'action_agent_action_{agent_command}_create_essential_failed: {e}'
             signal.alarm(0)
-            if interact_with_task_response['outcome'] == 'failed':
+            if agent_command_response['outcome'] == 'failed':
                 if essential:
-                    return f'action_instruct_task_create_essential_failed: {interact_with_task_response}'
+                    return f'action_agent_action_{agent_command}_create_essential_failed: {agent_command_response}'
                 else:
-                    failed = f'action_instruct_task_create_failed: {interact_with_task_response}'
-            self.action_dict['instruct_task'][object_name] = {key: value for key, value in object_parameters.items()}
+                    failed = f'action_agent_action_{agent_command}_create_essential_failed: {agent_command_response}'
+            self.action_dict['task_action'][object_name] = {key: value for key, value in object_parameters.items()}
+            self.action_dict['task_action'][object_name][agent_command] = agent_command_response[agent_command]
             if 'action_function' in object_parameters and failed is None:
                 for k in object_parameters['action_function'].keys():
                     called_action_function = k
@@ -127,38 +122,40 @@ class Action:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
                     if essential:
-                        return f'action_instruct_task_create_essential_failed: {e}'
+                        return f'action_agent_action_{agent_command}_create_essential_failed: {e}'
                     else:
-                        failed = f'action_instruct_task_create_failed: {e}'
+                        failed = f'action_agent_action_{agent_command}_create_essential_failed: {e}'
                 signal.alarm(0)
                 if failed is None:
-                    self.action_dict['instruct_task'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
+                    self.action_dict['agent_action'][object_name]['action_function'][called_action_function] = {key: value for key, value in action_function_response.items()}
             if failed is None:
-                return self.action_dict['instruct_task'][object_name]
+                return self.action_dict['agent_action'][object_name]
             else:
                 return failed
         if action == 'delete':
             try:
-                del self.action_dict['instruct_task'][object_name]
-                return 'action_instruct_task_delete_completed'
+                agent_command = object_parameters['command']
+                del self.action_dict['agent_action'][object_name]
+                return f'action_agent_action_{agent_command}_delete_completed'
             except Exception as e:
-                return f'action_instruct_task_delete_failed: {e}'
+                return f'action_agent_action_{agent_command}_delete_failed: {e}'
         if action == 'read':
             try:
-                new_path = re.search('action.instruct_task.(.*)', object_parameters['path'])
+                new_path = re.search('action\.agent_action\.(.*)', object_parameters['path'])
                 count_check = re.search('\[(\d+)\]', new_path.group(1))
                 if count_check:
                     new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
                 else:
                     new_path = new_path.group(1)
                 path = re.sub('\.', '/', new_path)
-                return dpath.get(self.action_dict['instruct_task'], path)
+                return dpath.get(self.action_dict['agent_action'], path)
             except Exception as e:
-                return f'action_instruct_task_read_failed: {e}'
-        
-    def download_from_workspace(self, object_name, action, **object_parameters):
+                return f'action_agent_action_read_failed: {e}'
+
+    def session_action(self, object_name, action, **object_parameters):
         if action == 'create':
             failed = None
+            essential = None
             if 'delay' in object_parameters:
                 delay = object_parameters['delay']
                 if isinstance(int(delay), int):
@@ -166,26 +163,29 @@ class Action:
             if 'timeout' in object_parameters:
                 timeout = object_parameters['timeout']
                 signal.alarm(int(timeout))
-            essential = None
             if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
                 essential = True
             try:
                 task_name = object_parameters['task_name']
-                instruct_command = 'download_from_workspace'
-                instruct_args = {'file_name': object_parameters['file_name']}
-                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+                session_id = object_parameters['session_id']
+                session_command = object_parameters['command']
+                if session_command in object_parameters:
+                    command_args = object_parameters[session_command]
+                method = getattr(self.havoc_client, session_command)
+                session_command_response = method(task_name, session_id, **command_args)
             except Exception as e:
                 if essential:
-                    return f'action_download_from_workspace_create_essential_failed: {e}'
+                    return f'action_session_action_{session_command}_create_essential_failed: {e}'
                 else:
-                    failed = f'action_download_from_workspace_create_failed: {e}'
+                    failed = f'action_session_action_{session_command}_create_essential_failed: {e}'
             signal.alarm(0)
-            if interact_with_task_response['outcome'] == 'failed':
+            if session_command_response['outcome'] == 'failed':
                 if essential:
-                    return f'action_download_from_workspace_create_essential_failed: {interact_with_task_response}'
+                    return f'action_session_action_{session_command}_create_essential_failed: {session_command_response}'
                 else:
-                    failed = f'action_download_from_workspace_create_failed: {interact_with_task_response}'
-            self.action_dict['download_from_workspace'][object_name] = {key: value for key, value in object_parameters.items()}
+                    failed = f'action_session_action_{session_command}_create_essential_failed: {session_command_response}'
+            self.action_dict['session_action'][object_name] = {key: value for key, value in object_parameters.items()}
+            self.action_dict['session_action'][object_name][session_command] = session_command_response[session_command]
             if 'action_function' in object_parameters and failed is None:
                 for k in object_parameters['action_function'].keys():
                     called_action_function = k
@@ -200,518 +200,113 @@ class Action:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
                     if essential:
-                        return f'action_download_from_workspace_create_essential_failed: {e}'
+                        return f'action_session_action_{session_command}_create_essential_failed: {e}'
                     else:
-                        failed = f'action_download_from_workspace_create_failed: {e}'
+                        failed = f'action_session_action_{session_command}_create_essential_failed: {e}'
                 signal.alarm(0)
                 if failed is None:
-                    self.action_dict['download_from_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
+                    self.action_dict['session_action'][object_name]['action_function'][called_action_function] = {key: value for key, value in action_function_response.items()}
             if failed is None:
-                return self.action_dict['download_from_workspace'][object_name]
+                return self.action_dict['session_action'][object_name]
             else:
                 return failed
         if action == 'delete':
             try:
-                task_name = self.action_dict['download_from_workspace'][object_name]['task_name']
-                file_name = self.action_dict['download_from_workspace'][object_name]['file_name']
-                instruct_command = 'del'
-                instruct_args = {'file_name': file_name}
-                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+                session_command = object_parameters['command']
+                del self.action_dict['agent_action'][object_name]
+                return f'action_session_action_{session_command}_delete_completed'
             except Exception as e:
-                return f'action_download_from_workspace_delete_failed: {e}'
-            if interact_with_task_response['outcome'] == 'failed':
-                return f'action_download_from_workspace_delete_failed: {interact_with_task_response}'
-            del self.action_dict['download_from_workspace'][object_name]
-            return 'action_download_from_workspace_delete_completed'
+                return f'action_session_action_{session_command}_delete_failed: {e}'
         if action == 'read':
             try:
-                new_path = re.search('action.download_from_workspace.(.*)', object_parameters['path'])
+                new_path = re.search('action\.session_action\.(.*)', object_parameters['path'])
                 count_check = re.search('\[(\d+)\]', new_path.group(1))
                 if count_check:
                     new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
                 else:
                     new_path = new_path.group(1)
                 path = re.sub('\.', '/', new_path)
-                return dpath.get(self.action_dict['download_from_workspace'], path)
+                return dpath.get(self.action_dict['session_action'], path)
             except Exception as e:
-                return f'action_download_from_workspace_read_failed: {e}'
-    
-    def sync_to_workspace(self, object_name, action, **object_parameters):
-        if action == 'create':
-            failed = None
-            if 'delay' in object_parameters:
-                delay = object_parameters['delay']
-                if isinstance(int(delay), int):
-                    t.sleep(int(delay))
-            if 'timeout' in object_parameters:
-                timeout = object_parameters['timeout']
-                signal.alarm(int(timeout))
-            essential = None
-            if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
-                essential = True
-            try:
-                task_name = object_parameters['task_name']
-                instruct_command = 'sync_to_workspace'
-                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command)
-            except Exception as e:
-                if essential:
-                    return f'action_sync_to_workspace_create_essential_failed: {e}'
-                else:
-                    failed = f'action_sync_to_workspace_create_failed: {e}'
-            signal.alarm(0)
-            if interact_with_task_response['outcome'] == 'failed':
-                if essential:
-                    return f'action_sync_to_workspace_create_essential_failed: {interact_with_task_response}'
-                else:
-                    failed = f'action_sync_to_workspace_create_failed: {interact_with_task_response}'
-            self.action_dict['sync_to_workspace'][object_name] = {key: value for key, value in object_parameters.items()}
-            if 'action_function' in object_parameters:
-                for k in object_parameters['action_function'].keys():
-                    called_action_function = k
-                function_parameters = {}
-                if object_parameters['action_function'][called_action_function]:
-                    for k, v in object_parameters['action_function'][called_action_function].items():
-                        function_parameters[k] = v
-                if 'timeout' in object_parameters['action_function'][called_action_function]:
-                    timeout = object_parameters['action_function'][called_action_function]['timeout']
-                    signal.alarm(int(timeout))
-                try:
-                    action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
-                except Exception as e:
-                    if essential:
-                        return f'action_sync_to_workspace_create_essential_failed: {e}'
-                    else:
-                        failed = f'action_sync_to_workspace_create_failed: {e}'
-                signal.alarm(0)
-                if failed is None:
-                    self.action_dict['sync_to_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            if failed is None:
-                return self.action_dict['sync_to_workspace'][object_name]
-            else:
-                return failed
-        if action == 'delete':
-            try:
-                del self.action_dict['sync_to_workspace'][object_name]
-                return 'action_sync_to_workspace_delete_completed'
-            except Exception as e:
-                return f'action_sync_to_workspace_delete_failed: {e}'
-        if action == 'read':
-            try:
-                new_path = re.search('action.sync_to_workspace.(.*)', object_parameters['path'])
-                count_check = re.search('\[(\d+)\]', new_path.group(1))
-                if count_check:
-                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-                else:
-                    new_path = new_path.group(1)
-                path = re.sub('\.', '/', new_path)
-                return dpath.get(self.action_dict['sync_to_workspace'], path)
-            except Exception as e:
-                return f'action_sync_to_workspace_read_failed: {e}'
-    
-    def sync_from_workspace(self, object_name, action, **object_parameters):
-        if action == 'create':
-            failed = None
-            if 'delay' in object_parameters:
-                delay = object_parameters['delay']
-                if isinstance(int(delay), int):
-                    t.sleep(int(delay))
-            if 'timeout' in object_parameters:
-                timeout = object_parameters['timeout']
-                signal.alarm(int(timeout))
-            essential = None
-            if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
-                essential = True
-            try:
-                task_name = object_parameters['task_name']
-                instruct_command = 'sync_from_workspace'
-                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command)
-            except Exception as e:
-                if essential:
-                    return f'action_sync_from_workspace_create_essential_failed: {e}'
-                else:
-                    failed = f'action_sync_from_workspace_create_failed: {e}'
-            signal.alarm(0)
-            if interact_with_task_response['outcome'] == 'failed':
-                if essential:
-                    return f'action_sync_from_workspace_create_essential_failed: {interact_with_task_response}'
-                else:
-                    failed = f'action_sync_from_workspace_create_failed: {interact_with_task_response}'
-            self.action_dict['sync_from_workspace'][object_name] = {key: value for key, value in object_parameters.items()}
-            if 'action_function' in object_parameters:
-                for k in object_parameters['action_function'].keys():
-                    called_action_function = k
-                function_parameters = {}
-                if object_parameters['action_function'][called_action_function]:
-                    for k, v in object_parameters['action_function'][called_action_function].items():
-                        function_parameters[k] = v
-                if 'timeout' in object_parameters['action_function'][called_action_function]:
-                    timeout = object_parameters['action_function'][called_action_function]['timeout']
-                    signal.alarm(int(timeout))
-                try:
-                    action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
-                except Exception as e:
-                    if essential:
-                        return f'action_sync_from_workspace_create_essential_failed: {e}'
-                    else:
-                        failed = f'action_sync_from_workspace_create_failed: {e}'
-                signal.alarm(0)
-                if failed is None:
-                    self.action_dict['sync_from_workspace'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            if failed is None:
-                return self.action_dict['sync_from_workspace'][object_name]
-            else:
-                return failed
-        if action == 'delete':
-            try:
-                del self.action_dict['sync_from_workspace'][object_name]
-                return 'action_sync_from_workspace_delete_completed'
-            except Exception as e:
-                return f'action_sync_from_workspace_delete_failed: {e}'
-        if action == 'read':
-            try:
-                new_path = re.search('action.sync_from_workspace.(.*)', object_parameters['path'])
-                count_check = re.search('\[(\d+)\]', new_path.group(1))
-                if count_check:
-                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-                else:
-                    new_path = new_path.group(1)
-                path = re.sub('\.', '/', new_path)
-                return dpath.get(self.action_dict['sync_from_workspace'], path)
-            except Exception as e:
-                return f'action_sync_from_workspace_read_failed: {e}'
-    
-    def task_download_file(self, object_name, action, **object_parameters):
-        if action == 'create':
-            failed = None
-            if 'delay' in object_parameters:
-                delay = object_parameters['delay']
-                if isinstance(int(delay), int):
-                    t.sleep(int(delay))
-            if 'timeout' in object_parameters:
-                timeout = object_parameters['timeout']
-                signal.alarm(int(timeout))
-            essential = None
-            if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
-                essential = True
-            try:
-                task_name = object_parameters['task_name']
-                url = object_parameters['url']
-                file_name = object_parameters['file_name']
-                instruct_command = 'task_download_file'
-                instruct_args = {'url': url, 'file_name': file_name}
-                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
-            except Exception as e:
-                if essential:
-                    return f'action_task_download_file_create_essential_failed: {e}'
-                else:
-                    failed = f'action_task_download_file_create_failed: {e}'
-            signal.alarm(0)
-            if interact_with_task_response['outcome'] == 'failed':
-                if essential:
-                    return f'action_task_download_file_create_failed: {interact_with_task_response}'
-                else:
-                    failed = f'action_task_download_file_create_failed: {interact_with_task_response}'
-            self.action_dict['task_download_file'][object_name] = {key: value for key, value in interact_with_task_response.items()}
-            self.action_dict['task_download_file'][object_name]['task_name'] = task_name
-            if 'action_function' in object_parameters:
-                for k in object_parameters['action_function'].keys():
-                    called_action_function = k
-                function_parameters = {}
-                if object_parameters['action_function'][called_action_function]:
-                    for k, v in object_parameters['action_function'][called_action_function].items():
-                        function_parameters[k] = v
-                if 'timeout' in object_parameters['action_function'][called_action_function]:
-                    timeout = object_parameters['action_function'][called_action_function]['timeout']
-                    signal.alarm(int(timeout))
-                try:
-                    action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
-                except Exception as e:
-                    if essential:
-                        return f'action_task_download_file_create_essential_failed: {e}'
-                    else:
-                        failed = f'action_task_download_file_create_failed: {e}'
-                signal.alarm(0)
-                if failed is None:
-                    self.action_dict['task_download_file'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            if failed is None:
-                return self.action_dict['task_download_file'][object_name]
-            else:
-                return failed
-        if action == 'delete':
-            try:
-                task_name = self.action_dict['task_download_file'][object_name]['task_name']
-                file_name = self.action_dict['task_download_file'][object_name]['file_name']
-                instruct_command = 'del'
-                instruct_args = {'file_name': file_name}
-                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
-            except Exception as e:
-                return f'action_task_download_file_delete_failed: {e}'
-            del self.action_dict['task_download_file'][object_name]
-            return 'action_task_download_file_delete_completed'
-        if action == 'read':
-            try:
-                new_path = re.search('action.task_download_file.(.*)', object_parameters['path'])
-                count_check = re.search('\[(\d+)\]', new_path.group(1))
-                if count_check:
-                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-                else:
-                    new_path = new_path.group(1)
-                path = re.sub('\.', '/', new_path)
-                return dpath.get(self.action_dict['task_download_file'], path)
-            except Exception as e:
-                return f'action_task_download_file_read_failed: {e}'
-    
-    def task_execute_command(self, object_name, action, **object_parameters):
-        if action == 'create':
-            failed = None
-            if 'delay' in object_parameters:
-                delay = object_parameters['delay']
-                if isinstance(int(delay), int):
-                    t.sleep(int(delay))
-            if 'timeout' in object_parameters:
-                timeout = object_parameters['timeout']
-                signal.alarm(int(timeout))
-            essential = None
-            if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
-                essential = True
-            try:
-                task_name = object_parameters['task_name']
-                command = object_parameters['command']
-                instruct_command = 'task_execute_command'
-                instruct_args = {'command': command}
-                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
-            except Exception as e:
-                if essential:
-                    return f'action_task_execute_command_create_essential_failed: {e}'
-                else:
-                    failed = f'action_task_execute_command_create_failed: {e}'
-            signal.alarm(0)
-            if interact_with_task_response['outcome'] == 'failed':
-                if essential:
-                    return f'action_task_execute_command_create_essential_failed: {interact_with_task_response}'
-                else:
-                    failed = f'action_task_execute_command_create_failed: {interact_with_task_response}'
-            self.action_dict['task_execute_command'][object_name] = {key: value for key, value in interact_with_task_response.items()}
-            self.action_dict['task_execute_command'][object_name]['task_name'] = task_name
-            if 'action_function' in object_parameters:
-                for k in object_parameters['action_function'].keys():
-                    called_action_function = k
-                function_parameters = {}
-                if object_parameters['action_function'][called_action_function]:
-                    for k, v in object_parameters['action_function'][called_action_function].items():
-                        function_parameters[k] = v
-                if 'timeout' in object_parameters['action_function'][called_action_function]:
-                    timeout = object_parameters['action_function'][called_action_function]['timeout']
-                    signal.alarm(int(timeout))
-                try:
-                    action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
-                except Exception as e:
-                    if essential:
-                        return f'action_task_execute_command_create_essential_failed: {e}'
-                    else:
-                        failed = f'action_task_execute_command_create_failed: {e}'
-                signal.alarm(0)
-                if failed is None:
-                    self.action_dict['task_execute_command'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            if failed is None:
-                return self.action_dict['task_execute_command'][object_name]
-            else:
-                return failed
-        if action == 'delete':
-            try:
-                task_name = self.action_dict['task_execute_command'][object_name]['task_name']
-                command = self.action_dict['task_execute_command'][object_name]['command']
-                instruct_command = 'task_kill_command'
-                instruct_args = {'command': command}
-                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
-            except Exception as e:
-                return f'action_task_execute_command_delete_failed: {e}'
-            del self.action_dict['task_execute_command'][object_name]
-            return 'action_task_execute_command_delete_completed'
-        if action == 'read':
-            try:
-                new_path = re.search('action.task_execute_command.(.*)', object_parameters['path'])
-                count_check = re.search('\[(\d+)\]', new_path.group(1))
-                if count_check:
-                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-                else:
-                    new_path = new_path.group(1)
-                path = re.sub('\.', '/', new_path)
-                return dpath.get(self.action_dict['task_execute_command'], path)
-            except Exception as e:
-                return f'action_task_execute_command_read_failed: {e}'
-    
-    def execute_agent_module(self, object_name, action, **object_parameters):
-        if action == 'create':
-            failed = None
-            if 'delay' in object_parameters:
-                delay = object_parameters['delay']
-                if isinstance(int(delay), int):
-                    t.sleep(int(delay))
-            if 'timeout' in object_parameters:
-                timeout = object_parameters['timeout']
-                signal.alarm(int(timeout))
-            essential = None
-            if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
-                essential = True
-            wait_for_results = None
-            beginning_string = None
-            completion_string = None
-            module_args = {}
-            if 'wait_for_results' in object_parameters:
-                wait_for_results = object_parameters['wait_for_results']
-            if 'beginning_string' in object_parameters:
-                beginning_string = object_parameters['beginning_string']
-            if 'completion_string' in object_parameters:
-                completion_string = object_parameters['completion_string']
-            if 'module_args' in object_parameters:
-                module_args = object_parameters['module_args']
-            try:
-                task_name = object_parameters['task_name']
-                agent_name = object_parameters['agent_name']
-                module = object_parameters['module']
-                execute_agent_module_response = self.havoc_client.execute_agent_module(
-                    task_name, agent_name, module, module_args, wait_for_results=wait_for_results, beginning_string=beginning_string, completion_string=completion_string
-                )
-            except Exception as e:
-                if essential:
-                    return f'action_execute_agent_module_create_essential_failed: {e}'
-                else:
-                    failed = f'action_execute_agent_module_create_failed: {e}'
-            signal.alarm(0)
-            if 'outcome' in execute_agent_module_response and execute_agent_module_response['outcome'] == 'failed':
-                if essential:
-                    return f'action_execute_agent_module_create_essential_failed: {execute_agent_module_response}'
-                else:
-                    failed = f'action_execute_agent_module_create_failed: {execute_agent_module_response}'
-            self.action_dict['execute_agent_module'][object_name] = execute_agent_module_response
-            if 'action_function' in object_parameters:
-                for k in object_parameters['action_function'].keys():
-                    called_action_function = k
-                function_parameters = {}
-                if object_parameters['action_function'][called_action_function]:
-                    for k, v in object_parameters['action_function'][called_action_function].items():
-                        function_parameters[k] = v
-                if 'timeout' in object_parameters['action_function'][called_action_function]:
-                    timeout = object_parameters['action_function'][called_action_function]['timeout']
-                    signal.alarm(int(timeout))
-                try:
-                    action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
-                except Exception as e:
-                    if essential:
-                        return f'action_execute_agent_module_create_essential_failed: {e}'
-                    else:
-                        failed = f'action_execute_agent_module_create_failed: {e}'
-                signal.alarm(0)
-                if failed is None:
-                    self.action_dict['execute_agent_module'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            if failed is None:
-                return self.action_dict['execute_agent_module'][object_name]
-            else:
-                return failed
-        if action == 'delete':
-            try:
-                del self.action_dict['execute_agent_module'][object_name]
-                return 'action_execute_agent_module_delete_completed'
-            except Exception as e:
-                return f'action_execute_agent_module_delete_failed: {e}'
-        if action == 'read':
-            try:
-                new_path = re.search('action.execute_agent_module.(.*)', object_parameters['path'])
-                count_check = re.search('\[(\d+)\]', new_path.group(1))
-                if count_check:
-                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-                else:
-                    new_path = new_path.group(1)
-                path = re.sub('\.', '/', new_path)
-                return dpath.get(self.action_dict['execute_agent_module'], path)
-            except Exception as e:
-                return f'action_execute_agent_module_read_failed: {e}'
-    
-    def execute_agent_shell_command(self, object_name, action, **object_parameters):
-        if action == 'create':
-            failed = None
-            if 'delay' in object_parameters:
-                delay = object_parameters['delay']
-                if isinstance(int(delay), int):
-                    t.sleep(int(delay))
-            if 'timeout' in object_parameters:
-                timeout = object_parameters['timeout']
-                signal.alarm(int(timeout))
-            essential = None
-            if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
-                essential = True
-            wait_for_results = None
-            beginning_string = None
-            completion_string = None
-            if 'wait_for_results' in object_parameters:
-                wait_for_results = object_parameters['wait_for_results']
-            if 'beginning_string' in object_parameters:
-                beginning_string = object_parameters['beginning_string']
-            if 'completion_string' in object_parameters:
-                completion_string = object_parameters['completion_string']
-            try:
-                task_name = object_parameters['task_name']
-                agent_name = object_parameters['agent_name']
-                command = object_parameters['command']
-                execute_agent_shell_command_response = self.havoc_client.execute_agent_shell_command(
-                    task_name, agent_name, command, wait_for_results=wait_for_results, beginning_string=beginning_string, completion_string=completion_string
-                )
-            except Exception as e:
-                if essential:
-                    return f'action_execute_agent_shell_command_create_essential_failed: {e}'
-                else:
-                    failed = f'action_execute_agent_shell_command_create_failed: {e}'
-            signal.alarm(0)
-            if 'error' in execute_agent_shell_command_response:
-                if essential:
-                    return f'action_execute_agent_shell_command_create_essential_failed: {execute_agent_shell_command_response}'
-                else:
-                    failed = f'action_execute_agent_shell_command_create_failed: {execute_agent_shell_command_response}'
-            self.action_dict['execute_agent_shell_command'][object_name] = execute_agent_shell_command_response
-            if 'action_function' in object_parameters:
-                for k in object_parameters['action_function'].keys():
-                    called_action_function = k
-                function_parameters = {}
-                if object_parameters['action_function'][called_action_function]:
-                    for k, v in object_parameters['action_function'][called_action_function].items():
-                        function_parameters[k] = v
-                if 'timeout' in object_parameters['action_function'][called_action_function]:
-                    timeout = object_parameters['action_function'][called_action_function]['timeout']
-                    signal.alarm(int(timeout))
-                try:
-                    action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
-                except Exception as e:
-                    if essential:
-                        return f'action_execute_agent_shell_command_create_essential_failed: {e}'
-                    else:
-                        failed = f'action_execute_agent_shell_command_create_failed: {e}'
-                signal.alarm(0)
-                if failed is None:
-                    self.action_dict['execute_agent_shell_command'][object_name][called_action_function] = {key: value for key, value in action_function_response.items()}
-            if failed is None:
-                return self.action_dict['execute_agent_shell_command'][object_name]
-            else:
-                return failed
-        if action == 'delete':
-            try:
-                del self.action_dict['execute_agent_shell_command'][object_name]
-                return 'action_execute_agent_shell_command_delete_completed'
-            except Exception as e:
-                return f'action_execute_agent_shell_command_delete_failed: {e}'
-        if action == 'read':
-            try:
-                new_path = re.search('action.execute_agent_shell_command.(.*)', object_parameters['path'])
-                count_check = re.search('\[(\d+)\]', new_path.group(1))
-                if count_check:
-                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
-                else:
-                    new_path = new_path.group(1)
-                path = re.sub('\.', '/', new_path)
-                return dpath.get(self.action_dict['execute_agent_shell_command'], path)
-            except Exception as e:
-                return f'action_execute_agent_shell_command_read_failed: {e}'
+                return f'action_session_action_read_failed: {e}'
 
+    def task_action(self, object_name, action, **object_parameters):
+        if action == 'create':
+            failed = None
+            essential = None
+            instruct_args = None
+            if 'delay' in object_parameters:
+                delay = object_parameters['delay']
+                if isinstance(int(delay), int):
+                    t.sleep(int(delay))
+            if 'timeout' in object_parameters:
+                timeout = object_parameters['timeout']
+                signal.alarm(int(timeout))
+            if 'essential' in object_parameters and object_parameters['essential'].lower() == 'true':
+                essential = True
+            try:
+                task_name = object_parameters['task_name']
+                instruct_command = object_parameters['command']
+                if instruct_command in object_parameters:
+                    instruct_args = object_parameters[instruct_command]
+                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+            except Exception as e:
+                if essential:
+                    return f'action_task_action_{instruct_command}_create_essential_failed: {e}'
+                else:
+                    failed = f'action_task_action_{instruct_command}_create_essential_failed: {e}'
+            signal.alarm(0)
+            if interact_with_task_response['outcome'] == 'failed':
+                if essential:
+                    return f'action_task_action_{instruct_command}_create_essential_failed: {interact_with_task_response}'
+                else:
+                    failed = f'action_task_action_{instruct_command}_create_essential_failed: {interact_with_task_response}'
+            self.action_dict['task_action'][object_name] = {key: value for key, value in object_parameters.items()}
+            self.action_dict['task_action'][object_name][instruct_command] = interact_with_task_response[instruct_command]
+            if 'action_function' in object_parameters and failed is None:
+                for k in object_parameters['action_function'].keys():
+                    called_action_function = k
+                function_parameters = {}
+                if object_parameters['action_function'][called_action_function]:
+                    for k, v in object_parameters['action_function'][called_action_function].items():
+                        function_parameters[k] = v
+                if 'timeout' in object_parameters['action_function'][called_action_function]:
+                    timeout = object_parameters['action_function'][called_action_function]['timeout']
+                    signal.alarm(int(timeout))
+                try:
+                    action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
+                except Exception as e:
+                    if essential:
+                        return f'action_task_action_{instruct_command}_create_essential_failed: {e}'
+                    else:
+                        failed = f'action_task_action_{instruct_command}_create_essential_failed: {e}'
+                signal.alarm(0)
+                if failed is None:
+                    self.action_dict['task_action'][object_name]['action_function'][called_action_function] = {key: value for key, value in action_function_response.items()}
+            if failed is None:
+                return self.action_dict['task_action'][object_name]
+            else:
+                return failed
+        if action == 'delete':
+            try:
+                instruct_command = object_parameters['command']
+                del self.action_dict['task_action'][object_name]
+                return f'action_task_action_{instruct_command}_delete_completed'
+            except Exception as e:
+                return f'action_task_action_{instruct_command}_delete_failed: {e}'
+        if action == 'read':
+            try:
+                new_path = re.search('action\.task_action\.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
+                return dpath.get(self.action_dict['task_action'], path)
+            except Exception as e:
+                return f'action_task_action_read_failed: {e}'
+            
 
 class Data:
     
@@ -1270,95 +865,19 @@ class Resource:
             if task_startup_response['outcome'] == 'failed':
                 return f'resource_task_startup_failed: {task_startup_response}'
             self.resource_dict['task'][object_name] = {key: value for key, value in task_startup_response.items()}
-            if 'listener' in object_parameters:
-                self.resource_dict['task'][object_name]['listener'] = {}
-                listener_types = ['dbx', 'http', 'https', 'http_com', 'http_foreign', 'http_hop', 'http_malleable', 'onedrive', 'port_forward_pivot']
-                listener_args = {}
-                listener_tls = None
-                listener_type = None
-                stager = None
-                for k in object_parameters['listener'].keys():
-                    if k in listener_types:
-                        listener_type = k
-                if 'tls' in object_parameters['listener']:
-                    listener_tls = True
-                if 'stager' in object_parameters['listener']:
-                    stager = True
-                if listener_tls:
-                    tls_args = {}
-                    for k, v in object_parameters['listener']['tls'].items():
-                        tls_args[k] = v
+            if 'startup_actions' in object_parameters:
+                for startup_action in object_parameters['startup_actions']:
+                    self.resource_dict['task'][object_name][startup_action] = {}
+                    instruct_args = object_parameters[startup_action]
                     try:
-                        cert_gen_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'cert_gen', instruct_args=tls_args)
+                        response = self.havoc_client.interact_with_task(task_startup['task_name'], startup_action, instruct_args=instruct_args)
                     except Exception as e:
                         self.havoc_client.task_shutdown(**task_startup)
-                        return f'resource_task_listener_tls_create_failed: {e}'
-                    if cert_gen_response['outcome'] == 'failed':
+                        return f'resource_task_{startup_action}_create_failed: {e}'
+                    if response['outcome'] == 'failed':
                         self.havoc_client.task_shutdown(**task_startup)
-                        return f'resource_task_listener_tls_create_failed: {cert_gen_response}'
-                listener_args['listener_type'] = listener_type
-                listener_args['Name'] = listener_type
-                for k, v in object_parameters['listener'][listener_type].items():
-                    listener_args[k] = v
-                try:
-                    create_listener_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'create_listener', instruct_args=listener_args)
-                except Exception as e:
-                    self.havoc_client.task_shutdown(**task_startup)
-                    return f'resource_task_listener_create_failed: {e}'
-                if create_listener_response['outcome'] == 'failed':
-                    self.havoc_client.task_shutdown(**task_startup)
-                    return f'resource_task_listener_create_failed: {create_listener_response}'
-                self.resource_dict['task'][object_name]['listener'] = create_listener_response['listener']
-                if stager:
-                    stager_args = {}
-                    for k, v in object_parameters['listener']['stager'].items():
-                        stager_args[k] = v
-                    try:
-                        create_stager_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'create_stager', instruct_args=stager_args)
-                    except Exception as e:
-                        self.havoc_client.task_shutdown(**task_startup)
-                        return f'resource_task_stager_create_failed: {e}'
-                    if create_stager_response['outcome'] == 'failed':
-                        self.havoc_client.task_shutdown(**task_startup)
-                        return f'resource_task_stager_create_failed: {create_stager_response}'
-                    self.resource_dict['task'][object_name]['stager'] = create_stager_response['stager']
-                if listener_tls:
-                    self.resource_dict['task'][object_name]['listener']['tls'] = cert_gen_response['tls']
-                if stager:
-                    self.resource_dict['task'][object_name]['listener']['stager'] = create_stager_response['stager']
-            if 'handler' in object_parameters:
-                self.resource_dict['task'][object_name]['handler'] = {}
-                handler_args = {}
-                handler_tls = None
-                for k in object_parameters['handler'].keys():
-                    if k == 'tls':
-                        handler_tls = True
-                if handler_tls:
-                    tls_args = {}
-                    for k, v in object_parameters['handler']['tls'].items():
-                        tls_args[k] = v
-                    try:
-                        cert_gen_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'cert_gen', instruct_args=tls_args)
-                    except Exception as e:
-                        self.havoc_client.task_shutdown(**task_startup)
-                        return f'resource_task_handler_tls_create_failed: {e}'
-                    if cert_gen_response['outcome'] == 'failed':
-                        self.havoc_client.task_shutdown(**task_startup)
-                        return f'resource_task_handler_tls_create_failed: {cert_gen_response}'
-                for k, v in object_parameters['handler'].items():
-                        if k != 'tls':
-                            handler_args[k] = v
-                try:
-                    setup_handler_response = self.havoc_client.interact_with_task(task_startup['task_name'], 'setup_handler', instruct_args=handler_args)
-                except Exception as e:
-                    self.havoc_client.task_shutdown(**task_startup)
-                    return f'resource_task_handler_create_failed: {e}'
-                if setup_handler_response['outcome'] == 'failed':
-                    self.havoc_client.task_shutdown(**task_startup)
-                    return f'resource_task_handler_create_failed: {setup_handler_response}'
-                self.resource_dict['task'][object_name]['handler'] = setup_handler_response['handler']
-                if handler_tls:
-                    self.resource_dict['task'][object_name]['handler']['tls'] = cert_gen_response['tls']
+                        return f'resource_task_{startup_action}_create_failed: {response}'
+                    self.resource_dict['task'][object_name][startup_action] = response[startup_action]
             return self.resource_dict['task'][object_name]
         if action == 'delete':
             try:
