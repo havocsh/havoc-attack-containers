@@ -106,7 +106,7 @@ class call_powershell_empire:
     def kill_all_listeners(self):
         kill_listener_uri = f'{self.server_uri}api/listeners/all?token={self.token}'
         kill_all_listeners_response = requests.delete(kill_listener_uri, verify=False)
-        output = {'outcome': 'success', 'kill_all_listeners': kill_all_listeners_response, 'forward_log': 'True'}
+        output = {'outcome': 'success', 'kill_all_listeners': kill_all_listeners_response.json(), 'forward_log': 'True'}
         return output
 
     def get_stagers(self):
@@ -190,7 +190,7 @@ class call_powershell_empire:
     def remove_stale_agents(self):
         remove_stale_agents_uri = f'{self.server_uri}api/agents/stale?token={self.token}'
         remove_stale_agents_response = requests.delete(remove_stale_agents_uri, verify=False)
-        output = {'outcome': 'success', 'remove_stale_agents': remove_stale_agents_response, 'forward_log': 'True'}
+        output = {'outcome': 'success', 'remove_stale_agents': remove_stale_agents_response.json(), 'forward_log': 'True'}
         return output
 
     def agent_shell_command(self):
