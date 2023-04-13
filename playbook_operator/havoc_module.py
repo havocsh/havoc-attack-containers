@@ -950,13 +950,9 @@ class call_object():
 
     def object_resolver(self, object):
         methods = {
-            'download_from_workspace': self.action.download_from_workspace,
-            'sync_to_workspace': self.action.sync_to_workspace,
-            'sync_from_workspace': self.action.sync_from_workspace,
-            'task_download_file': self.action.task_download_file,
-            'task_execute_command': self.action.task_execute_command,
-            'execute_agent_module': self.action.execute_agent_module,
-            'execute_agent_shell_command': self.action.execute_agent_shell_command,
+            'agent_action': self.action.agent_action,
+            'session_action': self.action.session_action,
+            'task_action': self.action.task_action,
             'agents': self.data.agents,
             'domains': self.data.domains,
             'files': self.data.files,
