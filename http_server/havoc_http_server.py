@@ -72,7 +72,7 @@ class HttpServer:
             output = {'outcome': 'failed', 'message': server_message, 'forward_log': 'False'}
             return output
         else:
-            output = {'outcome': 'success', 'listener': {'listener_type': listener_type, 'Port': port}, 'forward_log': 'True'}
+            output = {'outcome': 'success', 'create_listener': {'listener_type': listener_type, 'Port': port}, 'forward_log': 'True'}
             return output
 
     def kill_listener(self):
@@ -80,7 +80,7 @@ class HttpServer:
             output = {'outcome': 'failed', 'message': 'no listener is running', 'forward_log': 'False'}
             return output
         self.server_process.terminate()
-        output = {'outcome': 'success', 'message': 'listener stopped', 'forward_log': 'True'}
+        output = {'outcome': 'success', 'kill_listener': 'listener stopped', 'forward_log': 'True'}
         return output
 
     def cert_gen(self):
@@ -115,7 +115,7 @@ class HttpServer:
             openssl_out = p.communicate()
             openssl_message = openssl_out[1].decode('utf-8')
             if 'problems making Certificate Request' not in openssl_message:
-                output = {'outcome': 'success', 'tls': {'host': host, 'subj': subj}, 'forward_log': 'True'}
+                output = {'outcome': 'success', 'cert_gen': {'host': host, 'subj': subj}, 'forward_log': 'True'}
             else:
                 output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'True'}
             return output
@@ -159,7 +159,7 @@ class HttpServer:
             with open('/opt/havoc/server.pem', 'w+') as server_f:
                 server_f.write(privkey)
                 server_f.write(fullchain)
-            output = {'outcome': 'success', 'tls': {'domain': domain, 'email': email}, 'forward_log': 'True'}
+            output = {'outcome': 'success', 'cert_gen': {'domain': domain, 'email': email}, 'forward_log': 'True'}
             return output
         output = {'outcome': 'failed', 'message': 'cert_type must be self-signed or ca-signed', 'forward_log': 'False'}
         return output
