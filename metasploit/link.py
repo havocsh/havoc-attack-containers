@@ -228,27 +228,26 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
                 else:
                     file_list = sync_workspace_http(rt, 'sync_from_workspace')
                 if instruct_command == 'Initialize':
-                    response_kv = ['status', 'ready']
+                    command_response = {'status': 'ready', 'Initialize': file_list}
                 else:
-                    response_kv = ['outcome', 'success']
-                send_response(rt, {response_kv[0]: response_kv[1], 'local_directory_contents': file_list},
-                              'True', user_id, task_name, task_context, task_type, task_version, instruct_user_id,
-                              instruct_instance, instruct_command, instruct_args, public_ip, local_ip, end_time)
+                    command_response = {'outcome': 'success', 'sync_from_workspace': file_list}
+                send_response(rt, command_response, 'True', user_id, task_name, task_context, task_type, task_version,
+                              instruct_user_id, instruct_instance, instruct_command, instruct_args, public_ip, local_ip, end_time)
             elif instruct_command == 'ls':
                 file_list = []
                 for root, subdirs, files in os.walk('/opt/havoc/shared'):
                     for filename in files:
                         file_list.append(filename)
-                send_response(rt, {'outcome': 'success', 'local_directory_contents': file_list}, 'False',
-                              user_id, task_name, task_context, task_type, task_version, instruct_user_id, 
-                              instruct_instance, instruct_command, instruct_args, public_ip, local_ip, end_time)
+                send_response(rt, {'outcome': 'success', 'ls': file_list}, 'False', user_id, task_name, task_context, task_type,
+                              task_version, instruct_user_id, instruct_instance, instruct_command, instruct_args, public_ip,
+                              local_ip, end_time)
             elif instruct_command == 'del':
                 if 'file_name' in instruct_args:
                     file_name = instruct_args['file_name']
                     path = pathlib.Path(f'/opt/havoc/shared/{file_name}')
                     if path.is_file():
                         os.remove(path)
-                        send_response(rt, {'outcome': 'success'}, 'True', user_id, task_name, task_context, task_type,
+                        send_response(rt, {'outcome': 'success', 'del': file_name}, 'True', user_id, task_name, task_context, task_type,
                                       task_version, instruct_user_id, instruct_instance, instruct_command, instruct_args,
                                       public_ip, local_ip, end_time)
                     else:
@@ -257,8 +256,8 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
                                       instruct_command, instruct_args, public_ip, local_ip, end_time)
                 else:
                     send_response(rt, {'outcome': 'failed', 'message': 'Missing file_name'}, 'False',
-                                  user_id, task_name, task_context, task_type, task_version, instruct_user_id,
-                                  instruct_instance, instruct_command, instruct_args, public_ip, local_ip, end_time)
+                                  user_id, task_name, task_context, task_type, task_version, instruct_user_id, instruct_instance,
+                                  instruct_command, instruct_args, public_ip, local_ip, end_time)
             elif instruct_command == 'sync_to_workspace':
                 if not rt.check:
                     file_list = []
@@ -269,8 +268,8 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
                             file_list.append(filename)
                 else:
                     file_list = sync_workspace_http(rt, 'sync_to_workspace')
-                send_response(rt, {'outcome': 'success', 'local_directory_contents': file_list}, 'False', user_id,
-                              task_name, task_context, task_type, task_version, instruct_user_id, instruct_instance, 
+                send_response(rt, {'outcome': 'success', 'sync_to_workspace': file_list}, 'False', user_id,
+                              task_name, task_context, task_type, task_version, instruct_user_id, instruct_instance,
                               instruct_command, instruct_args, public_ip, local_ip, end_time)
             elif instruct_command == 'upload_to_workspace':
                 if 'file_name' in instruct_args:
@@ -283,17 +282,17 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
                                              f"s3://{deployment_name}-workspace/shared/{file_name}"])
                         else:
                             file_transfer_http(rt, 'upload_to_workspace', file_name)
-                        send_response(rt, {'outcome': 'success'}, 'True', user_id, task_name, task_context, task_type,
-                                      task_version, instruct_user_id, instruct_instance, instruct_command, instruct_args,
-                                      public_ip, local_ip, end_time)
+                        send_response(rt, {'outcome': 'success', 'upload_to_workspace': file_name}, 'True', user_id, task_name, 
+                                      task_context, task_type, task_version, instruct_user_id, instruct_instance, instruct_command,
+                                      instruct_args, public_ip, local_ip, end_time)
                     else:
                         send_response(rt, {'outcome': 'failed', 'message': 'File not found'}, 'False', user_id,
                                       task_name, task_context, task_type, task_version, instruct_user_id, instruct_instance,
                                       instruct_command, instruct_args, public_ip, local_ip, end_time)
                 else:
                     send_response(rt, {'outcome': 'failed', 'message': 'Missing file_name'}, 'False',
-                                  user_id, task_name, task_context, task_type, task_version, instruct_user_id,
-                                  instruct_instance, instruct_command, instruct_args, public_ip, local_ip, end_time)
+                                  user_id, task_name, task_context, task_type, task_version, instruct_user_id, instruct_instance,
+                                  instruct_command, instruct_args, public_ip, local_ip, end_time)
             elif instruct_command == 'download_from_workspace':
                 if 'file_name' in instruct_args:
                     file_name = instruct_args['file_name']
@@ -313,9 +312,9 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
                                       task_name, task_context, task_type, task_version, instruct_user_id, instruct_instance,
                                       instruct_command, instruct_args, public_ip, local_ip, end_time)
                     else:
-                        send_response(rt, {'outcome': 'success'}, 'True', user_id, task_name, task_context, task_type,
-                                      task_version, instruct_user_id, instruct_instance, instruct_command, instruct_args,
-                                      public_ip, local_ip, end_time)
+                        send_response(rt, {'outcome': 'success', 'download_from_workspace': file_name}, 'True', user_id, task_name,
+                                      task_context, task_type, task_version, instruct_user_id, instruct_instance, instruct_command,
+                                      instruct_args, public_ip, local_ip, end_time)
                 else:
                     send_response(rt, {'outcome': 'failed', 'message': 'Missing file_name'}, 'False', user_id, task_name,
                                   task_context, task_type, task_version, instruct_user_id, instruct_instance, instruct_command,
