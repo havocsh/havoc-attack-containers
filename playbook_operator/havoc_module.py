@@ -872,10 +872,10 @@ class Resource:
                     try:
                         response = self.havoc_client.interact_with_task(task_startup['task_name'], startup_action, instruct_args=instruct_args)
                     except Exception as e:
-                        self.havoc_client.task_shutdown(**task_startup)
+                        self.havoc_client.task_shutdown(task_startup['task_name'])
                         return f'resource_task_{startup_action}_create_failed: {e}'
                     if response['outcome'] == 'failed':
-                        self.havoc_client.task_shutdown(**task_startup)
+                        self.havoc_client.task_shutdown(task_startup['task_name'])
                         return f'resource_task_{startup_action}_create_failed: {response}'
                     self.resource_dict['task'][object_name][startup_action] = response[startup_action]
             return self.resource_dict['task'][object_name]
@@ -991,6 +991,7 @@ class call_object():
                     new_path = re.search('\d+/(.*)', path).group(1)
                     dot_path = re.sub('/', '.', new_path)
                     node_path = f'{section}.{dot_path}'
+                    print(f'node_path: {node_path}')
                     if node_path in execution_list:
                         execution_order, current_rule = self.exec_order.get_exec_order(node_path)
                         if execution_order == current_rule:
@@ -1000,6 +1001,7 @@ class call_object():
                             dep_matches = re.findall('\${([^}]+)}', json_value)
                             if dep_matches:
                                 for dep_match in dep_matches:
+                                    print(f'dep_match: {dep_match}')
                                     dep_method, dep_object = self.object_resolver(dep_match)
                                     dep_value = dep_method(dep_object, 'read', path=dep_match)
                                     if not isinstance(dep_value, str) and not isinstance(dep_value, int):
