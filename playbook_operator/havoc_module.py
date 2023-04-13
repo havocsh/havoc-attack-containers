@@ -991,7 +991,6 @@ class call_object():
                     new_path = re.search('\d+/(.*)', path).group(1)
                     dot_path = re.sub('/', '.', new_path)
                     node_path = f'{section}.{dot_path}'
-                    print(f'node_path: {node_path}')
                     if node_path in execution_list:
                         execution_order, current_rule = self.exec_order.get_exec_order(node_path)
                         if execution_order == current_rule:
@@ -1001,7 +1000,6 @@ class call_object():
                             dep_matches = re.findall('\${([^}]+)}', json_value)
                             if dep_matches:
                                 for dep_match in dep_matches:
-                                    print(f'dep_match: {dep_match}')
                                     dep_method, dep_object = self.object_resolver(dep_match)
                                     dep_value = dep_method(dep_object, 'read', path=dep_match)
                                     if not isinstance(dep_value, str) and not isinstance(dep_value, int):
