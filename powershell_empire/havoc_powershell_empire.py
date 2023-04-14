@@ -193,7 +193,7 @@ class call_powershell_empire:
         output = {'outcome': 'success', 'remove_stale_agents': remove_stale_agents_response.json(), 'forward_log': 'True'}
         return output
 
-    def agent_shell_command(self):
+    def execute_agent_shell_command(self):
         if 'Name' in self.args:
             agent_name = self.args['Name']
         else:
@@ -207,7 +207,7 @@ class call_powershell_empire:
         agent_shell_uri = f'{self.server_uri}api/agents/{agent_name}/shell?token={self.token}'
         agent_shell_response = requests.post(agent_shell_uri, json=shell_command_args, verify=False)
         if agent_shell_response.status_code == 200:
-            output = {'outcome': 'success', 'agent_shell_command': agent_shell_response.json(), 'forward_log': 'True'}
+            output = {'outcome': 'success', 'execute_agent_shell_command': agent_shell_response.json(), 'forward_log': 'True'}
             return output
         else:
             output = {'outcome': 'failed', 'message': agent_shell_response.json(), 'forward_log': 'False'}
@@ -363,7 +363,7 @@ class call_powershell_empire:
             output = {'outcome': 'success', 'search_modules': 'No modules found', 'forward_log': 'False'}
             return output
 
-    def execute_module(self):
+    def execute_agent_module(self):
         if 'Agent' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing Agent', 'forward_log': 'False'}
             return output
@@ -377,7 +377,7 @@ class call_powershell_empire:
         execute_module_uri = f'{self.server_uri}api/modules/{module_name}?token={self.token}'
         execute_module_response = requests.post(execute_module_uri, json=module_args, verify=False)
         if execute_module_response.status_code == 200:
-            output = {'outcome': 'success', 'execute_module': execute_module_response.json(), 'forward_log': 'True'}
+            output = {'outcome': 'success', 'execute_agent_module': execute_module_response.json(), 'forward_log': 'True'}
         else:
             output = {'outcome': 'failed', 'message': execute_module_response.json(), 'forward_log': 'False'}
         return output
