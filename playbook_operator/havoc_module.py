@@ -91,6 +91,7 @@ class Action:
                 task_name = object_parameters['task_name']
                 agent_name = object_parameters['agent_name']
                 agent_command = object_parameters['command']
+                command_args = {}
                 if agent_command in object_parameters:
                     command_args = object_parameters[agent_command]
                 method = getattr(self.havoc_client, agent_command)
@@ -99,15 +100,16 @@ class Action:
                 if essential:
                     return f'action_agent_action_{agent_command}_create_essential_failed: {e}'
                 else:
-                    failed = f'action_agent_action_{agent_command}_create_essential_failed: {e}'
+                    failed = f'action_agent_action_{agent_command}_create_failed: {e}'
             signal.alarm(0)
-            if agent_command_response['outcome'] == 'failed':
+            if failed is None and agent_command_response['outcome'] == 'failed':
                 if essential:
                     return f'action_agent_action_{agent_command}_create_essential_failed: {agent_command_response}'
                 else:
-                    failed = f'action_agent_action_{agent_command}_create_essential_failed: {agent_command_response}'
+                    failed = f'action_agent_action_{agent_command}_create_failed: {agent_command_response}'
             self.action_dict['task_action'][object_name] = {key: value for key, value in object_parameters.items()}
-            self.action_dict['task_action'][object_name][agent_command] = agent_command_response[agent_command]
+            if failed is None:
+                self.action_dict['task_action'][object_name][agent_command] = agent_command_response[agent_command]
             if 'action_function' in object_parameters and failed is None:
                 for k in object_parameters['action_function'].keys():
                     called_action_function = k
@@ -124,7 +126,7 @@ class Action:
                     if essential:
                         return f'action_agent_action_{agent_command}_create_essential_failed: {e}'
                     else:
-                        failed = f'action_agent_action_{agent_command}_create_essential_failed: {e}'
+                        failed = f'action_agent_action_{agent_command}_create_failed: {e}'
                 signal.alarm(0)
                 if failed is None:
                     self.action_dict['agent_action'][object_name]['action_function'][called_action_function] = {key: value for key, value in action_function_response.items()}
@@ -169,6 +171,7 @@ class Action:
                 task_name = object_parameters['task_name']
                 session_id = object_parameters['session_id']
                 session_command = object_parameters['command']
+                command_args = {}
                 if session_command in object_parameters:
                     command_args = object_parameters[session_command]
                 method = getattr(self.havoc_client, session_command)
@@ -177,15 +180,16 @@ class Action:
                 if essential:
                     return f'action_session_action_{session_command}_create_essential_failed: {e}'
                 else:
-                    failed = f'action_session_action_{session_command}_create_essential_failed: {e}'
+                    failed = f'action_session_action_{session_command}_create_failed: {e}'
             signal.alarm(0)
-            if session_command_response['outcome'] == 'failed':
+            if failed is None and session_command_response['outcome'] == 'failed':
                 if essential:
                     return f'action_session_action_{session_command}_create_essential_failed: {session_command_response}'
                 else:
-                    failed = f'action_session_action_{session_command}_create_essential_failed: {session_command_response}'
+                    failed = f'action_session_action_{session_command}_create_failed: {session_command_response}'
             self.action_dict['session_action'][object_name] = {key: value for key, value in object_parameters.items()}
-            self.action_dict['session_action'][object_name][session_command] = session_command_response[session_command]
+            if failed is None:
+                self.action_dict['session_action'][object_name][session_command] = session_command_response[session_command]
             if 'action_function' in object_parameters and failed is None:
                 for k in object_parameters['action_function'].keys():
                     called_action_function = k
@@ -202,7 +206,7 @@ class Action:
                     if essential:
                         return f'action_session_action_{session_command}_create_essential_failed: {e}'
                     else:
-                        failed = f'action_session_action_{session_command}_create_essential_failed: {e}'
+                        failed = f'action_session_action_{session_command}_create_failed: {e}'
                 signal.alarm(0)
                 if failed is None:
                     self.action_dict['session_action'][object_name]['action_function'][called_action_function] = {key: value for key, value in action_function_response.items()}
@@ -247,6 +251,7 @@ class Action:
             try:
                 task_name = object_parameters['task_name']
                 instruct_command = object_parameters['command']
+                instruct_args = {}
                 if instruct_command in object_parameters:
                     instruct_args = object_parameters[instruct_command]
                 interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
@@ -254,15 +259,16 @@ class Action:
                 if essential:
                     return f'action_task_action_{instruct_command}_create_essential_failed: {e}'
                 else:
-                    failed = f'action_task_action_{instruct_command}_create_essential_failed: {e}'
+                    failed = f'action_task_action_{instruct_command}_create_failed: {e}'
             signal.alarm(0)
-            if interact_with_task_response['outcome'] == 'failed':
+            if failed is None and interact_with_task_response['outcome'] == 'failed':
                 if essential:
                     return f'action_task_action_{instruct_command}_create_essential_failed: {interact_with_task_response}'
                 else:
-                    failed = f'action_task_action_{instruct_command}_create_essential_failed: {interact_with_task_response}'
+                    failed = f'action_task_action_{instruct_command}_create_failed: {interact_with_task_response}'
             self.action_dict['task_action'][object_name] = {key: value for key, value in object_parameters.items()}
-            self.action_dict['task_action'][object_name][instruct_command] = interact_with_task_response[instruct_command]
+            if failed is None:
+                self.action_dict['task_action'][object_name][instruct_command] = interact_with_task_response[instruct_command]
             if 'action_function' in object_parameters and failed is None:
                 for k in object_parameters['action_function'].keys():
                     called_action_function = k
@@ -279,7 +285,7 @@ class Action:
                     if essential:
                         return f'action_task_action_{instruct_command}_create_essential_failed: {e}'
                     else:
-                        failed = f'action_task_action_{instruct_command}_create_essential_failed: {e}'
+                        failed = f'action_task_action_{instruct_command}_create_failed: {e}'
                 signal.alarm(0)
                 if failed is None:
                     self.action_dict['task_action'][object_name]['action_function'][called_action_function] = {key: value for key, value in action_function_response.items()}
