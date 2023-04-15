@@ -71,7 +71,7 @@ class ExecutionOrder:
     def exec_rule_failure(self, execution_list):
         temp_rule_list = []
         for rule in self.rules:
-            if rule not in execution_list:
+            if rule['rule_name'] not in execution_list:
                 self.rules.remove(rule)
         for rule in self.rules:
             temp_rule_list.append(rule['exec_order'])
