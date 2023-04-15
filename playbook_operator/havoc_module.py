@@ -1069,6 +1069,8 @@ class call_object():
                     node_path = f'{section}.{dot_path}'
                     if node_path in executed_list:
                         execution_order, current_rule = self.exec_order.get_exec_order(node_path)
+                        print(f'execution_order: {execution_order}, current_rule: {current_rule}')
+                        t.sleep(5)
                         if execution_order == current_rule:
                             executed_list.remove(node_path)
                             method, object_name = self.object_resolver(node_path)
