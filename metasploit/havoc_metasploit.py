@@ -153,7 +153,9 @@ class call_msf:
 
     def show_exploit(self):
         if self.exploit:
-            output = {'outcome': 'success', 'show_exploit': self.exploit.name, 'description': self.exploit.description, 'forward_log': 'False'}
+            module_name = self.exploit.modulname
+            description = f'{self.exploit.name} - {self.exploit.description}'
+            output = {'outcome': 'success', 'show_exploit': {'module_name': module_name, 'description': description}, 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'exploit_module not set', 'forward_log': 'False'}
         return output
@@ -241,7 +243,9 @@ class call_msf:
 
     def show_payload(self):
         if self.payload:
-            output = {'outcome': 'success', 'show_payload': self.payload.name, 'description': self.payload.description, 'forward_log': 'False'}
+            module_name = self.payload.modulname
+            description = f'{self.payload.name} - {self.payload.description}'
+            output = {'outcome': 'success', 'show_payload': {'module_name': module_name, 'description': description}, 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'payload_module not set', 'forward_log': 'False'}
         return output
