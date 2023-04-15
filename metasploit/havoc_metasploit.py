@@ -341,6 +341,9 @@ class call_msf:
 
     def generate_payload(self):
         if self.payload:
+            if self.args:
+                for k, v in self.args.items():
+                    self.payload[k] = v
             try:
                 data = self.payload.payload_generate()
             except Exception as e:
