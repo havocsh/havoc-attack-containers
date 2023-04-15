@@ -264,7 +264,7 @@ class Action:
                 task_name = object_parameters['task_name']
                 instruct_command = object_parameters['command']
                 instruct_instance = None
-                if instruct_instance in object_parameters:
+                if 'instruct_instance' in object_parameters:
                     instruct_instance = object_parameters['instruct_instance']
                 instruct_args = {}
                 if instruct_command in object_parameters:
