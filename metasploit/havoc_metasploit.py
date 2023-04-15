@@ -1,5 +1,6 @@
 import os
 import re
+import base64
 import shutil
 import subprocess
 from pymetasploit3.msfrpc import *
@@ -354,16 +355,16 @@ class call_msf:
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'generate_payload failed with error: {e}', 'forward_log': 'False'}
                 return output
-            if isinstance(data, str):
-                output = {'outcome': 'success', 'generate_payload': data, 'forward_log': 'True'}
-            else:
+            if 'file_name' in self.args:
                 try:
                     file_name = self.args['file_name']
                     with open(f'/opt/havoc/shared/{file_name}', 'wb') as f:
                         f.write(data)
-                    output = {'outcome': 'success', 'generate_payload': file_name, 'forward_log': 'True'}
+                    output = {'outcome': 'success', 'generate_payload': {'file_name': file_name}, 'forward_log': 'True'}
                 except Exception as e:
                     output = {'outcome': 'failed', 'message': f'generate_payload failed with error: {e}', 'forward_log': 'False'}
+            else:
+                output = {'outcome': 'success', 'generate_payload': {'payload': base64.b64encode(data.decode())}, 'forward_log': 'True'}
         else:
             output = {'outcome': 'failed', 'message': 'payload_module not set', 'forward_log': 'False'}
         return output
