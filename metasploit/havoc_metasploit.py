@@ -82,12 +82,6 @@ class call_msf:
             message = execute_exploit_results['message']
             output = {'outcome': 'failed', 'message': f'setup_handler failed with error: {message}', 'forward_log': 'False'}
             return output
-        generate_payload_results = self.generate_payload()
-        if generate_payload_results['outcome'] == 'failed':
-            message = generate_payload_results['message']
-            output = {'outcome': 'failed', 'message': f'setup_handler failed with error: {message}', 'forward_log': 'False'}
-            return output
-        self.args['payload'] = generate_payload_results['payload']
         output = {'outcome': 'success', 'setup_handler': self.args, 'forward_log': 'False'}
         return output
     
