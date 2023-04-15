@@ -1,5 +1,6 @@
 import re
 import json
+import copy
 import dpath
 import string
 import random
@@ -262,10 +263,13 @@ class Action:
             try:
                 task_name = object_parameters['task_name']
                 instruct_command = object_parameters['command']
+                instruct_instance = None
+                if instruct_instance in object_parameters:
+                    instruct_instance = object_parameters['instruct_instance']
                 instruct_args = {}
                 if instruct_command in object_parameters:
                     instruct_args = object_parameters[instruct_command]
-                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
+                interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_instance=instruct_instance, instruct_args=instruct_args)
             except Exception as e:
                 if essential:
                     return f'action_task_action_create_essential_failed: {e}'
@@ -885,9 +889,13 @@ class Resource:
             if 'startup_actions' in object_parameters:
                 for startup_action in object_parameters['startup_actions']:
                     self.resource_dict['task'][object_name][startup_action] = {}
-                    instruct_args = object_parameters[startup_action]
+                    instruct_instance = None
+                    instruct_args = copy.deepcopy(object_parameters[startup_action])
+                    if 'instruct_instance' in instruct_args:
+                        instruct_instance = instruct_args['instruct_instance']
+                        del instruct_args['instruct_instance']
                     try:
-                        response = self.havoc_client.interact_with_task(task_startup['task_name'], startup_action, instruct_args=instruct_args)
+                        response = self.havoc_client.interact_with_task(task_startup['task_name'], startup_action, instruct_instance=instruct_instance, instruct_args=instruct_args)
                     except Exception as e:
                         self.havoc_client.task_shutdown(task_startup['task_name'])
                         return f'resource_task_{startup_action}_create_failed: {e}'
