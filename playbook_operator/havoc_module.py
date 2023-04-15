@@ -46,7 +46,6 @@ class ExecutionOrder:
         return -1, self.current_rule
     
     def next_exec_rule(self, execution_object):
-        print(f'current rule: {self.current_rule}')
         temp_rule_list = []
         for rule in self.rules:
             if execution_object == rule['rule_name']:
@@ -55,11 +54,9 @@ class ExecutionOrder:
             temp_rule_list.append(rule['exec_order'])
         if temp_rule_list:
             self.current_rule = min(temp_rule_list)
-            print(f'new rule: {self.current_rule}')
         return self.current_rule
     
     def prev_exec_rule(self, execution_object):
-        print(f'current rule: {self.current_rule}')
         temp_rule_list = []
         for rule in self.rules:
             if execution_object == rule['rule_name']:
@@ -68,7 +65,6 @@ class ExecutionOrder:
             temp_rule_list.append(rule['exec_order'])
         if temp_rule_list:
             self.current_rule = max(temp_rule_list)
-            print(f'new rule: {self.current_rule}')
         return self.current_rule
 
 
@@ -1054,7 +1050,6 @@ class call_object():
                     node_path = f'{section}.{dot_path}'
                     if node_path in executed_list:
                         execution_order, current_rule = self.exec_order.get_exec_order(node_path)
-                        print(f'execution_order: {execution_order}, current_rule: {current_rule}')
                         if execution_order == current_rule:
                             executed_list.remove(node_path)
                             method, object_name = self.object_resolver(node_path)
@@ -1065,11 +1060,11 @@ class call_object():
                             operator_command = f'delete {node_path}'
                             method_result = method(object_name, 'delete', **value)
                             if 'failed' not in method_result:
-                                send_response({'outcome': 'success'}, 'True', self.user_id, self.playbook_name,
+                                send_response({'outcome': 'success', 'details': method_result}, 'True', self.user_id, self.playbook_name,
                                               self.playbook_operator_version, operator_command, value, self.end_time)
                                 t.sleep(5)
                             else:
-                                send_response({'outcome': 'failed'}, 'True', self.user_id, self.playbook_name,
+                                send_response({'outcome': 'failed', 'details': method_result}, 'True', self.user_id, self.playbook_name,
                                               self.playbook_operator_version, operator_command, value, self.end_time)
                                 t.sleep(5)
                             self.exec_order.prev_exec_rule(node_path)
