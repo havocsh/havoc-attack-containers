@@ -1051,10 +1051,20 @@ class call_object():
                                 send_response({'outcome': 'failed', 'details': method_result}, 'True', self.user_id, self.playbook_name,
                                               self.playbook_operator_version, operator_command, value, self.end_time)
                                 if 'action' in method_result and 'essential' in method_result:
-                                    self.exec_order.exec_rule_failure(executed_list)
+                                    print(f'executed_list: {executed_list}')
+                                    print(f'pre-failure rules: {self.exec_order.rules}')
+                                    print(f'pre-failure current rule: {self.exec_order.current_rule}')
+                                    exec_rule_failure = self.exec_order.exec_rule_failure(executed_list)
+                                    print(f'post-failure rules: {self.exec_order.rules}')
+                                    print(f'post-failure current rule: {self.exec_order.current_rule}')
                                     return
                                 if 'action' not in method_result:
-                                    self.exec_order.exec_rule_failure(executed_list)
+                                    print(f'executed_list: {executed_list}')
+                                    print(f'pre-failure rules: {self.exec_order.rules}')
+                                    print(f'pre-failure current rule: {self.exec_order.current_rule}')
+                                    exec_rule_failure = self.exec_order.exec_rule_failure(executed_list)
+                                    print(f'post-failure rules: {self.exec_order.rules}')
+                                    print(f'post-failure current rule: {self.exec_order.current_rule}')
                                     return
                                 executed_list.append(node_path)
                                 t.sleep(5)
