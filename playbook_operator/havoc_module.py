@@ -98,15 +98,15 @@ class Action:
                 agent_command_response = method(task_name, agent_name, **command_args)
             except Exception as e:
                 if essential:
-                    return f'action_agent_action_{agent_command}_create_essential_failed: {e}'
+                    return f'action_agent_action_create_essential_failed: {e}'
                 else:
-                    failed = f'action_agent_action_{agent_command}_create_failed: {e}'
+                    failed = f'action_agent_action_create_failed: {e}'
             signal.alarm(0)
             if failed is None and agent_command_response['outcome'] == 'failed':
                 if essential:
-                    return f'action_agent_action_{agent_command}_create_essential_failed: {agent_command_response}'
+                    return f'action_agent_action_create_essential_failed: {agent_command_response}'
                 else:
-                    failed = f'action_agent_action_{agent_command}_create_failed: {agent_command_response}'
+                    failed = f'action_agent_action_create_failed: {agent_command_response}'
             self.action_dict['agent_action'][object_name] = {key: value for key, value in object_parameters.items()}
             if failed is None:
                 self.action_dict['agent_action'][object_name][agent_command] = agent_command_response[agent_command]
@@ -124,9 +124,9 @@ class Action:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
                     if essential:
-                        return f'action_agent_action_{agent_command}_create_essential_failed: {e}'
+                        return f'action_agent_action_create_essential_failed: {e}'
                     else:
-                        failed = f'action_agent_action_{agent_command}_create_failed: {e}'
+                        failed = f'action_agent_action_create_failed: {e}'
                 signal.alarm(0)
                 if failed is None:
                     self.action_dict['agent_action'][object_name]['action_function'][called_action_function] = {key: value for key, value in action_function_response.items()}
@@ -138,9 +138,9 @@ class Action:
             try:
                 agent_command = object_parameters['command']
                 del self.action_dict['agent_action'][object_name]
-                return f'action_agent_action_{agent_command}_delete_completed'
+                return f'action_agent_action_delete_completed'
             except Exception as e:
-                return f'action_agent_action_{agent_command}_delete_failed: {e}'
+                return f'action_agent_action_delete_failed: {e}'
         if action == 'read':
             try:
                 new_path = re.search('action\.agent_action\.(.*)', object_parameters['path'])
@@ -178,15 +178,15 @@ class Action:
                 session_command_response = method(task_name, session_id, **command_args)
             except Exception as e:
                 if essential:
-                    return f'action_session_action_{session_command}_create_essential_failed: {e}'
+                    return f'action_session_action_create_essential_failed: {e}'
                 else:
-                    failed = f'action_session_action_{session_command}_create_failed: {e}'
+                    failed = f'action_session_action_create_failed: {e}'
             signal.alarm(0)
             if failed is None and session_command_response['outcome'] == 'failed':
                 if essential:
-                    return f'action_session_action_{session_command}_create_essential_failed: {session_command_response}'
+                    return f'action_session_action_create_essential_failed: {session_command_response}'
                 else:
-                    failed = f'action_session_action_{session_command}_create_failed: {session_command_response}'
+                    failed = f'action_session_action_create_failed: {session_command_response}'
             self.action_dict['session_action'][object_name] = {key: value for key, value in object_parameters.items()}
             if failed is None:
                 self.action_dict['session_action'][object_name][session_command] = session_command_response[session_command]
@@ -204,9 +204,9 @@ class Action:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
                     if essential:
-                        return f'action_session_action_{session_command}_create_essential_failed: {e}'
+                        return f'action_session_action_create_essential_failed: {e}'
                     else:
-                        failed = f'action_session_action_{session_command}_create_failed: {e}'
+                        failed = f'action_session_action_create_failed: {e}'
                 signal.alarm(0)
                 if failed is None:
                     self.action_dict['session_action'][object_name]['action_function'][called_action_function] = {key: value for key, value in action_function_response.items()}
@@ -218,9 +218,9 @@ class Action:
             try:
                 session_command = object_parameters['command']
                 del self.action_dict['session_action'][object_name]
-                return f'action_session_action_{session_command}_delete_completed'
+                return f'action_session_action_delete_completed'
             except Exception as e:
-                return f'action_session_action_{session_command}_delete_failed: {e}'
+                return f'action_session_action_delete_failed: {e}'
         if action == 'read':
             try:
                 new_path = re.search('action\.session_action\.(.*)', object_parameters['path'])
@@ -257,15 +257,15 @@ class Action:
                 interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_args=instruct_args)
             except Exception as e:
                 if essential:
-                    return f'action_task_action_{instruct_command}_create_essential_failed: {e}'
+                    return f'action_task_action_create_essential_failed: {e}'
                 else:
-                    failed = f'action_task_action_{instruct_command}_create_failed: {e}'
+                    failed = f'action_task_action_create_failed: {e}'
             signal.alarm(0)
             if failed is None and interact_with_task_response['outcome'] == 'failed':
                 if essential:
-                    return f'action_task_action_{instruct_command}_create_essential_failed: {interact_with_task_response}'
+                    return f'action_task_action_create_essential_failed: {interact_with_task_response}'
                 else:
-                    failed = f'action_task_action_{instruct_command}_create_failed: {interact_with_task_response}'
+                    failed = f'action_task_action_create_failed: {interact_with_task_response}'
             self.action_dict['task_action'][object_name] = {key: value for key, value in object_parameters.items()}
             if failed is None:
                 self.action_dict['task_action'][object_name][instruct_command] = interact_with_task_response[instruct_command]
@@ -283,9 +283,9 @@ class Action:
                     action_function_response = havoc_functions.action_function(self.havoc_client, called_action_function, function_parameters)
                 except Exception as e:
                     if essential:
-                        return f'action_task_action_{instruct_command}_create_essential_failed: {e}'
+                        return f'action_task_action_create_essential_failed: {e}'
                     else:
-                        failed = f'action_task_action_{instruct_command}_create_failed: {e}'
+                        failed = f'action_task_action_create_failed: {e}'
                 signal.alarm(0)
                 if failed is None:
                     self.action_dict['task_action'][object_name]['action_function'][called_action_function] = {key: value for key, value in action_function_response.items()}
@@ -297,9 +297,9 @@ class Action:
             try:
                 instruct_command = object_parameters['command']
                 del self.action_dict['task_action'][object_name]
-                return f'action_task_action_{instruct_command}_delete_completed'
+                return f'action_task_action_delete_completed'
             except Exception as e:
-                return f'action_task_action_{instruct_command}_delete_failed: {e}'
+                return f'action_task_action_delete_failed: {e}'
         if action == 'read':
             try:
                 new_path = re.search('action\.task_action\.(.*)', object_parameters['path'])
