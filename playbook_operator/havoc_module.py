@@ -107,9 +107,9 @@ class Action:
                     return f'action_agent_action_{agent_command}_create_essential_failed: {agent_command_response}'
                 else:
                     failed = f'action_agent_action_{agent_command}_create_failed: {agent_command_response}'
-            self.action_dict['task_action'][object_name] = {key: value for key, value in object_parameters.items()}
+            self.action_dict['agent_action'][object_name] = {key: value for key, value in object_parameters.items()}
             if failed is None:
-                self.action_dict['task_action'][object_name][agent_command] = agent_command_response[agent_command]
+                self.action_dict['agent_action'][object_name][agent_command] = agent_command_response[agent_command]
             if 'action_function' in object_parameters and failed is None:
                 for k in object_parameters['action_function'].keys():
                     called_action_function = k
@@ -217,7 +217,7 @@ class Action:
         if action == 'delete':
             try:
                 session_command = object_parameters['command']
-                del self.action_dict['agent_action'][object_name]
+                del self.action_dict['session_action'][object_name]
                 return f'action_session_action_{session_command}_delete_completed'
             except Exception as e:
                 return f'action_session_action_{session_command}_delete_failed: {e}'
