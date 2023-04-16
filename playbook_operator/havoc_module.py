@@ -1191,15 +1191,10 @@ class call_object():
         execution_order = clean_dependencies(get_node_dependencies(DG, tracking_list))
         send_response({'outcome': 'success', 'details': execution_order}, 'True', self.user_id, self.playbook_name, 
                       self.playbook_operator_version, 'delete execution order', {'no_args': 'True'}, self.end_time)
-        print(f'executed_list: {tracking_list}')
-        print(f'pre-failure rules: {self.exec_order.rules}')
-        print(f'pre-failure current rule: {self.exec_order.current_rule}')
         self.exec_order.set_rules(execution_order, tracking_list)
         if creator_result:
             self.exec_order.exec_rule_failure(tracking_list)
         t.sleep(5)
-        print(f'post-failure rules: {self.exec_order.rules}')
-        print(f'post-failure current rule: {self.exec_order.current_rule}')
         self.destroyer(playbook_config, tracking_list)
 
         return {'outcome': 'success', 'message': 'playbook execution completed', 'forward_log': 'True'}
