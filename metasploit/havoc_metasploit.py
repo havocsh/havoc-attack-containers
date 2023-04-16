@@ -728,8 +728,8 @@ class call_msf:
         new_sessions = []
         dead_sessions = []
         list_sessions = self.list_sessions()
-        if 'sessions' in list_sessions:
-            sessions_status = list_sessions['sessions']
+        if 'list_sessions' in list_sessions:
+            sessions_status = list_sessions['list_sessions']
             current_sessions_id = []
             for current in current_sessions:
                 current_sessions_id.append(current['session_id'])
