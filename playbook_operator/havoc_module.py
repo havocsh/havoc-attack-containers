@@ -149,7 +149,6 @@ class Action:
                 return failed
         if action == 'delete':
             try:
-                agent_command = object_parameters['command']
                 del self.action_dict['agent_action'][object_name]
                 return f'action_agent_action_delete_completed'
             except Exception as e:
@@ -230,7 +229,6 @@ class Action:
                 return failed
         if action == 'delete':
             try:
-                session_command = object_parameters['command']
                 del self.action_dict['session_action'][object_name]
                 return f'action_session_action_delete_completed'
             except Exception as e:
@@ -313,7 +311,6 @@ class Action:
                 return failed
         if action == 'delete':
             try:
-                instruct_command = object_parameters['command']
                 del self.action_dict['task_action'][object_name]
                 return f'action_task_action_delete_completed'
             except Exception as e:
