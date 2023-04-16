@@ -1035,7 +1035,6 @@ class call_object():
                                         send_response({'outcome': 'failed', 'details': f'{dep_match} returned {dep_value_type}: must be str or int'},
                                                       'True', self.user_id, self.playbook_name, self.playbook_operator_version, f'configure {node_path}',
                                                       value, self.end_time)
-                                        self.exec_order.exec_rule_failure(executed_list)
                                         return
                                     re_sub = re.compile('\${' + re.escape(dep_match) + '}')
                                     json_value = re.sub(re_sub, str(dep_value), json_value)
@@ -1054,20 +1053,8 @@ class call_object():
                                 send_response({'outcome': 'failed', 'details': method_result}, 'True', self.user_id, self.playbook_name,
                                               self.playbook_operator_version, operator_command, value, self.end_time)
                                 if 'action' in method_result and 'essential' in method_result:
-                                    print(f'executed_list: {executed_list}')
-                                    print(f'pre-failure rules: {self.exec_order.rules}')
-                                    print(f'pre-failure current rule: {self.exec_order.current_rule}')
-                                    exec_rule_failure = self.exec_order.exec_rule_failure(executed_list)
-                                    print(f'post-failure rules: {self.exec_order.rules}')
-                                    print(f'post-failure current rule: {self.exec_order.current_rule}')
                                     return
                                 if 'action' not in method_result:
-                                    print(f'executed_list: {executed_list}')
-                                    print(f'pre-failure rules: {self.exec_order.rules}')
-                                    print(f'pre-failure current rule: {self.exec_order.current_rule}')
-                                    exec_rule_failure = self.exec_order.exec_rule_failure(executed_list)
-                                    print(f'post-failure rules: {self.exec_order.rules}')
-                                    print(f'post-failure current rule: {self.exec_order.current_rule}')
                                     return
                                 executed_list.append(node_path)
                                 t.sleep(5)
@@ -1205,8 +1192,13 @@ class call_object():
         execution_order = clean_dependencies(get_node_dependencies(DG, tracking_list))
         send_response({'outcome': 'success', 'details': execution_order}, 'True', self.user_id, self.playbook_name, 
                       self.playbook_operator_version, 'delete execution order', {'no_args': 'True'}, self.end_time)
+        print(f'executed_list: {tracking_list}')
+        print(f'pre-failure rules: {self.exec_order.rules}')
+        print(f'pre-failure current rule: {self.exec_order.current_rule}')
         self.exec_order.set_rules(execution_order, tracking_list)
         t.sleep(5)
+        print(f'post-failure rules: {self.exec_order.rules}')
+        print(f'post-failure current rule: {self.exec_order.current_rule}')
         self.destroyer(playbook_config, tracking_list)
 
         return {'outcome': 'success', 'message': 'playbook execution completed', 'forward_log': 'True'}
