@@ -128,7 +128,8 @@ class Action:
                 function_parameters = {}
                 if object_parameters['action_function'][called_action_function]:
                     for k, v in object_parameters['action_function'][called_action_function].items():
-                        function_parameters[k] = v
+                        if k != 'timeout':
+                            function_parameters[k] = v
                 if 'timeout' in object_parameters['action_function'][called_action_function]:
                     timeout = object_parameters['action_function'][called_action_function]['timeout']
                     signal.alarm(int(timeout))
@@ -208,7 +209,8 @@ class Action:
                 function_parameters = {}
                 if object_parameters['action_function'][called_action_function]:
                     for k, v in object_parameters['action_function'][called_action_function].items():
-                        function_parameters[k] = v
+                        if k != 'timeout':
+                            function_parameters[k] = v
                 if 'timeout' in object_parameters['action_function'][called_action_function]:
                     timeout = object_parameters['action_function'][called_action_function]['timeout']
                     signal.alarm(int(timeout))
@@ -290,7 +292,8 @@ class Action:
                 function_parameters = {}
                 if object_parameters['action_function'][called_action_function]:
                     for k, v in object_parameters['action_function'][called_action_function].items():
-                        function_parameters[k] = v
+                        if k != 'timeout':
+                            function_parameters[k] = v
                 if 'timeout' in object_parameters['action_function'][called_action_function]:
                     timeout = object_parameters['action_function'][called_action_function]['timeout']
                     signal.alarm(int(timeout))
