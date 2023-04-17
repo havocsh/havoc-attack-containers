@@ -64,26 +64,33 @@ class call_msf:
             output = {'outcome': 'failed', 'message': f'modify_route failed with error: {e}', 'forward_log': 'False'}
         return output
 
-    def setup_handler(self):
+    def run_exploit(self):
         set_exploit_module_results = self.set_exploit_module()
         if set_exploit_module_results['outcome'] == 'failed':
             message = set_exploit_module_results['message']
-            output = {'outcome': 'failed', 'message': f'setup_handler failed with error: {message}', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': f'run_exploit failed with error: {message}', 'forward_log': 'False'}
             return output
+        if 'exploit_options' in self.args:
+            for key, value in self.args['exploit_options'].items():
+                if key == 'RHOSTS':
+                    if value in self.host_info:
+                        output = {'outcome': 'failed', 'message': 'Invalid RHOST value', 'host_info': self.host_info, 'forward_log': 'False'}
+                        return output
+                self.exploit[key] = value
         set_payload_module_results = self.set_payload_module()
         if set_payload_module_results['outcome'] == 'failed':
             message = set_payload_module_results['message']
-            output = {'outcome': 'failed', 'message': f'setup_handler failed with error: {message}', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': f'run_exploit failed with error: {message}', 'forward_log': 'False'}
             return output
-        for key, value in self.args.items():
-            if key != 'exploit_module' and key != 'payload_module' and key != 'file_name':
+        if 'payload_options' in self.args:
+            for key, value in self.args['payload_options'].items():
                 self.payload[key] = value
         execute_exploit_results = self.execute_exploit()
         if execute_exploit_results['outcome'] == 'failed':
             message = execute_exploit_results['message']
-            output = {'outcome': 'failed', 'message': f'setup_handler failed with error: {message}', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': f'run_exploit failed with error: {message}', 'forward_log': 'False'}
             return output
-        output = {'outcome': 'success', 'setup_handler': self.args, 'forward_log': 'False'}
+        output = {'outcome': 'success', 'run_exploit': {'results': execute_exploit_results}, 'forward_log': 'False'}
         return output
     
     def set_exploit_module(self):
