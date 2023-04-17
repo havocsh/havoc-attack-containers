@@ -331,7 +331,7 @@ class call_msf:
 
     def show_session_info(self):
         try:
-            session_id = int(self.args['session_id'])
+            session_id = self.args['session_id']
         except:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify session_id', 'forward_log': 'False'}
             return output
@@ -391,7 +391,7 @@ class call_msf:
             if req_arg not in self.args:
                 output = {'outcome': 'failed', 'message': f'instruct_args must specify {req_arg}', 'forward_log': 'False'}
                 return output    
-        session_id = int(self.args['session_id'])
+        session_id = self.args['session_id']
         session_command = self.args['session_command']
         if 'end_strings' in self.args:
             end_strings = self.args['end_strings']
@@ -422,7 +422,7 @@ class call_msf:
             if req_arg not in self.args:
                 output = {'outcome': 'failed', 'message': f'instruct_args must specify {req_arg}', 'forward_log': 'False'}
                 return output
-        session_id = int(self.args['session_id'])
+        session_id = self.args['session_id']
         session_shell_command = self.args['session_shell_command']
         if 'end_strings' in self.args:
             end_strings = self.args['end_strings']
@@ -445,7 +445,7 @@ class call_msf:
             if req_arg not in self.args:
                 output = {'outcome': 'failed', 'message': f'instruct_args must specify {req_arg}', 'forward_log': 'False'}
                 return output  
-        session_id = int(self.args['session_id'])
+        session_id = self.args['session_id']
         session_command = self.args['session_command']
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
@@ -464,7 +464,7 @@ class call_msf:
             if req_arg not in self.args:
                 output = {'outcome': 'failed', 'message': f'instruct_args must specify {req_arg}', 'forward_log': 'False'}
                 return output  
-        session_id = int(self.args['session_id'])
+        session_id = self.args['session_id']
         plugin_name = self.args['plugin_name']
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
@@ -483,7 +483,7 @@ class call_msf:
             if req_arg not in self.args:
                 output = {'outcome': 'failed', 'message': f'instruct_args must specify {req_arg}', 'forward_log': 'False'}
                 return output 
-        session_id = int(self.args['session_id'])
+        session_id = self.args['session_id']
         script_name = self.args['script_name']
         script = f'/opt/havoc/shared/{script_name}'
         session_list = self.msf_client.sessions.list
@@ -503,7 +503,7 @@ class call_msf:
             if req_arg not in self.args:
                 output = {'outcome': 'failed', 'message': f'instruct_args must specify {req_arg}', 'forward_log': 'False'}
                 return output 
-        session_id = int(self.args['session_id'])
+        session_id = self.args['session_id']
         ps_cmd = self.args['ps_cmd']
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
@@ -522,7 +522,7 @@ class call_msf:
             if req_arg not in self.args:
                 output = {'outcome': 'failed', 'message': f'instruct_args must specify {req_arg}', 'forward_log': 'False'}
                 return output 
-        session_id = int(self.args['session_id'])
+        session_id = self.args['session_id']
         script_name = self.args['script_name']
         script = f'/opt/havoc/shared/{script_name}'
         session_list = self.msf_client.sessions.list
@@ -538,7 +538,7 @@ class call_msf:
 
     def get_session_writeable_dir(self):
         try:
-            session_id = int(self.args['session_id'])
+            session_id = self.args['session_id']
         except:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify session_id', 'forward_log': 'False'}
             return output
@@ -555,7 +555,7 @@ class call_msf:
 
     def session_read(self):
         try:
-            session_id = int(self.args['session_id'])
+            session_id = self.args['session_id']
         except:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify session_id', 'forward_log': 'False'}
             return output
@@ -572,7 +572,7 @@ class call_msf:
 
     def detach_session(self):
         try:
-            session_id = int(self.args['session_id'])
+            session_id = self.args['session_id']
         except:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify session_id', 'forward_log': 'False'}
             return output
@@ -589,7 +589,7 @@ class call_msf:
 
     def kill_session(self):
         try:
-            session_id = int(self.args['session_id'])
+            session_id = self.args['session_id']
         except:
             output = {'outcome': 'failed', 'message': 'instruct_args must specify session_id', 'forward_log': 'False'}
             return output
