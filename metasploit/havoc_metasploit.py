@@ -77,6 +77,11 @@ class call_msf:
                         output = {'outcome': 'failed', 'message': 'Invalid RHOST value', 'host_info': self.host_info, 'forward_log': 'False'}
                         return output
                 self.exploit[key] = value
+        if 'exploit_target' in self.args:
+            try:
+                self.exploit.target = self.args['exploit_target']
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'run_exploit failed while setting exploit target: {e}', 'forward_log': 'False'}
         set_payload_module_results = self.set_payload_module()
         if set_payload_module_results['outcome'] == 'failed':
             message = set_payload_module_results['message']
