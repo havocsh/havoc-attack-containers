@@ -59,9 +59,11 @@ class call_msf:
             for key, value in self.args.items():
                 if key == 'SESSION':
                     autoroute[key] = int(value)
-                autoroute[key] = value
+                else:
+                    autoroute[key] = value
                 output['modify_routes'][key] = value
-            autoroute.execute()
+            autoroute_response = autoroute.execute()
+            output['modify_routes']['result'] = autoroute_response
         except Exception as e:
             output = {'outcome': 'failed', 'message': f'modify_route failed with error: {e}', 'forward_log': 'False'}
         return output
