@@ -3,6 +3,7 @@ import re
 import base64
 import shutil
 import subprocess
+import time as t
 from pymetasploit3.msfrpc import *
 
 
@@ -430,6 +431,7 @@ class call_msf:
                 if not self.shell:
                     self.shell = self.msf_client.sessions.session(session_id)
                 self.shell.write(session_shell_command)
+                t.sleep(5)
                 run_session_shell_command_output = self.shell.read()
                 output = {'outcome': 'success', 'run_session_shell_command': run_session_shell_command_output, 'forward_log': 'True'}
             except Exception as e:
