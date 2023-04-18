@@ -19,6 +19,7 @@ class call_msf:
         self.exploit_results = None
         self.exploit_console_results = None
         self.payload = None
+        self.shell = None
 
     @property
     def msf_client(self):
@@ -392,23 +393,22 @@ class call_msf:
                 output = {'outcome': 'failed', 'message': f'instruct_args must specify {req_arg}', 'forward_log': 'False'}
                 return output    
         session_id = self.args['session_id']
-        session_command = self.args['session_command']
+        session_command_args = []
+        session_command_args.append(self.args['session_command'])
         if 'end_strings' in self.args:
-            end_strings = self.args['end_strings']
-        else:
-            end_strings = None
+            session_command_args.append(self.args['end_strings'])
         if 'timeout' in self.args:
             timeout = self.args['timeout']
         else:
-            timeout = None
+            timeout = 60
         if 'timeout_exception' in self.args:
             timeout_exception = self.args['timeout_exception']
         else:
-            timeout_exception = None
+            timeout_exception = False
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             try:
-                run_session_command_output = self.msf_client.sessions.session(session_id).run_with_output(session_command, end_strings, timeout, timeout_exception)
+                run_session_command_output = self.msf_client.sessions.session(session_id).run_with_output(*session_command_args, timeout=timeout, timeout_exception=timeout_exception)
                 output = {'outcome': 'success', 'run_session_command': run_session_command_output, 'forward_log': 'True'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'run_session_command failed with error: {e}', 'forward_log': 'False'}
@@ -424,14 +424,13 @@ class call_msf:
                 return output
         session_id = self.args['session_id']
         session_shell_command = self.args['session_shell_command']
-        if 'end_strings' in self.args:
-            end_strings = self.args['end_strings']
-        else:
-            end_strings = None
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             try:
-                run_session_shell_command_output = self.msf_client.sessions.session(session_id).run_shell_cmd_with_output(session_shell_command, end_strings)
+                if not self.shell:
+                    self.shell = self.msf_client.sessions.session(session_id)
+                self.shell.write(session_shell_command)
+                run_session_shell_command_output = self.shell.read()
                 output = {'outcome': 'success', 'run_session_shell_command': run_session_shell_command_output, 'forward_log': 'True'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'run_session_shell_command failed with error: {e}', 'forward_log': 'False'}
@@ -596,7 +595,10 @@ class call_msf:
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             try:
-                self.msf_client.sessions.session(session_id).kill()
+                if self.shell:
+                    self.shell.stop()
+                else:
+                    self.msf_client.sessions.session(session_id).kill()
                 output = {'outcome': 'success', 'kill_session': session_id, 'forward_log': 'True'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'kill_session failed with error: {e}', 'forward_log': 'False'}
