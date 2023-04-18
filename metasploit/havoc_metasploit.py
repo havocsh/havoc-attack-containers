@@ -395,18 +395,10 @@ class call_msf:
                 return output    
         session_id = self.args['session_id']
         session_command = self.args['session_command']
-        if 'timeout' in self.args:
-            timeout = self.args['timeout']
-        else:
-            timeout = 60
-        if 'timeout_exception' in self.args:
-            timeout_exception = self.args['timeout_exception']
-        else:
-            timeout_exception = False
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             try:
-                run_session_command_output = self.msf_client.sessions.session(session_id).run_with_output(session_command, timeout=timeout, timeout_exception=timeout_exception)
+                run_session_command_output = self.msf_client.sessions.session(session_id).run_with_output(session_command)
                 output = {'outcome': 'success', 'run_session_command': run_session_command_output, 'forward_log': 'True'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'run_session_command failed with error: {e}', 'forward_log': 'False'}
