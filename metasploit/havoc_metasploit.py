@@ -20,7 +20,6 @@ class call_msf:
         self.exploit_results = None
         self.exploit_console_results = None
         self.payload = None
-        self.shell = None
 
     @property
     def msf_client(self):
@@ -353,7 +352,7 @@ class call_msf:
                 output = {'outcome': 'failed', 'message': f'execute_exploit failed with error: {e}', 'forward_log': 'False'}
                 return output
             if 'job_id' in self.exploit_results:
-                output = {'outcome': 'success', 'execute_exploit': self.exploit_results, 'forward_log': 'True'}
+                output = {'outcome': 'success', 'execute_exploit': {'results': self.exploit_results}, 'forward_log': 'True'}
             else:
                 cid = self.msf_client.consoles.console().cid
                 self.exploit_console_results = self.msf_client.consoles.console(cid).run_module_with_output(self.exploit, payload=self.payload)
@@ -399,7 +398,7 @@ class call_msf:
         if session_id in session_list:
             try:
                 run_session_command_output = self.msf_client.sessions.session(session_id).run_with_output(session_command)
-                output = {'outcome': 'success', 'run_session_command': run_session_command_output, 'forward_log': 'True'}
+                output = {'outcome': 'success', 'run_session_command': {'results': run_session_command_output}, 'forward_log': 'True'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'run_session_command failed with error: {e}', 'forward_log': 'False'}
         else:
@@ -407,6 +406,14 @@ class call_msf:
         return output
 
     def run_session_shell_command(self):
+
+        def send_shell_command(command):
+            shell_read = None
+            shell.write(command)
+            while not shell_read:
+                shell_read = shell.read()
+            return shell_read
+        
         req_args = ['session_id', 'session_shell_command']
         for req_arg in req_args:
             if req_arg not in self.args:
@@ -417,12 +424,14 @@ class call_msf:
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             try:
-                if not self.shell:
-                    self.shell = self.msf_client.sessions.session(session_id)
-                self.shell.write(session_shell_command)
-                t.sleep(5)
-                run_session_shell_command_output = self.shell.read()
-                output = {'outcome': 'success', 'run_session_shell_command': run_session_shell_command_output, 'forward_log': 'True'}
+                shell = self.msf_client.sessions.session(session_id)
+                send_shell_command('shell')
+                run_session_shell_command_output = send_shell_command(session_shell_command)
+                send_shell_command('exit')
+                if '/bin/sh:' in run_session_shell_command_output or 'invalid option' in run_session_shell_command_output:
+                    output = {'outcome': 'failed', 'message': run_session_shell_command_output, 'forward_log': 'False'}
+                else:
+                    output = {'outcome': 'success', 'run_session_shell_command': {'results': run_session_shell_command_output}, 'forward_log': 'True'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'run_session_shell_command failed with error: {e}', 'forward_log': 'False'}
         else:
@@ -441,7 +450,7 @@ class call_msf:
         if session_id in session_list:
             try:
                 session_tabs_output = self.msf_client.sessions.session(session_id).tabs(session_command)
-                output = {'outcome': 'success', 'session_tabs': session_tabs_output, 'forward_log': 'False'}
+                output = {'outcome': 'success', 'session_tabs': {'results': session_tabs_output}, 'forward_log': 'False'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'session_tabs failed with error: {e}', 'forward_log': 'False'}
         else:
@@ -460,7 +469,7 @@ class call_msf:
         if session_id in session_list:
             try:
                 load_session_plugin_output = self.msf_client.sessions.session(session_id).load_plugin(plugin_name)
-                output = {'outcome': 'success', 'load_session_plugin': load_session_plugin_output, 'forward_log': 'False'}
+                output = {'outcome': 'success', 'load_session_plugin': {'results': load_session_plugin_output}, 'forward_log': 'False'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'load_session_plugin failed with error: {e}', 'forward_log': 'False'}
         else:
@@ -480,7 +489,7 @@ class call_msf:
         if session_id in session_list:
             try:
                 session_import_psh_output = self.msf_client.sessions.session(session_id).import_psh(script)
-                output = {'outcome': 'success', 'session_import_psh': session_import_psh_output, 'forward_log': 'True'}
+                output = {'outcome': 'success', 'session_import_psh': {'results': session_import_psh_output}, 'forward_log': 'True'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'session_import_psh failed with error: {e}', 'forward_log': 'False'}
         else:
@@ -499,7 +508,7 @@ class call_msf:
         if session_id in session_list:
             try:
                 session_run_psh_cmd_output = self.msf_client.sessions.session(session_id).run_psh_cmd(ps_cmd)
-                output = {'outcome': 'success', 'session_run_psh_cmd': session_run_psh_cmd_output, 'forward_log': 'True'}
+                output = {'outcome': 'success', 'session_run_psh_cmd': {'results': session_run_psh_cmd_output}, 'forward_log': 'True'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'session_run_psh_cmd failed with error: {e}', 'forward_log': 'False'}
         else:
@@ -519,7 +528,7 @@ class call_msf:
         if session_id in session_list:
             try:
                 run_session_script_output = self.msf_client.sessions.session(session_id).runscript(script)
-                output = {'outcome': 'success', 'run_session_script': run_session_script_output, 'forward_log': 'True'}
+                output = {'outcome': 'success', 'run_session_script': {'results': run_session_script_output}, 'forward_log': 'True'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'run_session_script failed with error: {e}', 'forward_log': 'False'}
         else:
@@ -536,7 +545,7 @@ class call_msf:
         if session_id in session_list:
             try:
                 get_session_writeable_dir_output = self.msf_client.sessions.session(session_id).get_writeable_dir()
-                output = {'outcome': 'success', 'get_session_writeable_dir': get_session_writeable_dir_output, 'forward_log': 'True'}
+                output = {'outcome': 'success', 'get_session_writeable_dir': {'results': get_session_writeable_dir_output}, 'forward_log': 'True'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'get_session_writeable_dir failed with error: {e}', 'forward_log': 'False'}
         else:
@@ -553,7 +562,7 @@ class call_msf:
         if session_id in session_list:
             try:
                 session_read_output = self.msf_client.sessions.session(session_id).read()
-                output = {'outcome': 'success', 'session_read': session_read_output, 'forward_log': 'False'}
+                output = {'outcome': 'success', 'session_read': {'results': session_read_output}, 'forward_log': 'False'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'session_read failed with error: {e}', 'forward_log': 'False'}
         else:
@@ -569,8 +578,8 @@ class call_msf:
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             try:
-                session_detach_output = self.msf_client.sessions.session(session_id).detach()
-                output = {'outcome': 'success', 'detach_session': session_detach_output, 'forward_log': 'True'}
+                self.msf_client.sessions.session(session_id).detach()
+                output = {'outcome': 'success', 'detach_session': {'session_id': session_id}, 'forward_log': 'True'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'detach_session failed with error: {e}', 'forward_log': 'False'}
         else:
@@ -586,11 +595,8 @@ class call_msf:
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             try:
-                if self.shell:
-                    self.shell.stop()
-                else:
-                    self.msf_client.sessions.session(session_id).kill()
-                output = {'outcome': 'success', 'kill_session': session_id, 'forward_log': 'True'}
+                self.msf_client.sessions.session(session_id).stop()
+                output = {'outcome': 'success', 'kill_session': {'session_id': session_id}, 'forward_log': 'True'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'kill_session failed with error: {e}', 'forward_log': 'False'}
         else:
@@ -607,7 +613,7 @@ class call_msf:
         if job_id in job_list:
             try:
                 self.msf_client.jobs.stop(job_id)
-                output = {'outcome': 'success', 'kill_job': job_id, 'forward_log': 'True'}
+                output = {'outcome': 'success', 'kill_job': {'job_id': job_id}, 'forward_log': 'True'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'kill_job failed with error: {e}', 'forward_log': 'False'}
         else:
