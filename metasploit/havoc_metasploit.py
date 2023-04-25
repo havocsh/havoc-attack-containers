@@ -14,8 +14,12 @@ class call_msf:
         self.args = None
         self.host_info = None
         self.__msf_client = None
+        self.auxiliary_module = None
         self.exploit_module = None
         self.payload_module = None
+        self.auxiliary = None
+        self.auxiliary_results = None
+        self.auxiliary_console_results = None
         self.exploit = None
         self.exploit_results = None
         self.exploit_console_results = None
@@ -33,6 +37,11 @@ class call_msf:
         self.host_info = [public_ip, hostname] + local_ip
         return True
 
+    def list_auxiliary(self):
+        auxiliary = self.msf_client.modules.auxiliary
+        output = {'list_auxiliary': auxiliary, 'forward_log': 'False'}
+        return output
+    
     def list_exploits(self):
         exploits = self.msf_client.modules.exploits
         output = {'list_exploits': exploits, 'forward_log': 'False'}
@@ -69,6 +78,27 @@ class call_msf:
             output = {'outcome': 'failed', 'message': f'modify_route failed with error: {e}', 'forward_log': 'False'}
         return output
 
+    def run_auxiliary(self):
+        set_auxiliary_module_results = self.set_auxiliary_module()
+        if set_auxiliary_module_results['outcome'] == 'failed':
+            message = set_auxiliary_module_results['message']
+            output = {'outcome': 'failed', 'message': f'run_auxiliary failed with error: {message}', 'forward_log': 'False'}
+            return output
+        if 'auxiliary_options' in self.args:
+            for key, value in self.args['auxiliary_options'].items():
+                if key == 'RHOSTS':
+                    if value in self.host_info:
+                        output = {'outcome': 'failed', 'message': 'Invalid RHOST value', 'host_info': self.host_info, 'forward_log': 'False'}
+                        return output
+                self.auxiliary[key] = value
+        execute_auxiliary_results = self.execute_auxiliary()
+        if execute_auxiliary_results['outcome'] == 'failed':
+            message = execute_auxiliary_results['message']
+            output = {'outcome': 'failed', 'message': f'run_auxiliary failed with error: {message}', 'forward_log': 'False'}
+            return output
+        output = {'outcome': 'success', 'run_auxiliary': {'results': execute_auxiliary_results}, 'forward_log': 'False'}
+        return output
+    
     def run_exploit(self):
         set_exploit_module_results = self.set_exploit_module()
         if set_exploit_module_results['outcome'] == 'failed':
@@ -101,6 +131,31 @@ class call_msf:
             output = {'outcome': 'failed', 'message': f'run_exploit failed with error: {message}', 'forward_log': 'False'}
             return output
         output = {'outcome': 'success', 'run_exploit': {'results': execute_exploit_results}, 'forward_log': 'False'}
+        return output
+    
+    def set_auxiliary_module(self):
+        try:
+            self.auxiliary_module = self.args['auxiliary_module']
+            self.auxiliary = self.msf_client.modules.use('auxiliary', self.auxiliary_module)
+            output = {'outcome': 'success', 'set_auxiliary_module': self.auxiliary_module, 'forward_log': 'False'}
+        except Exception as e:
+            output = {'outcome': 'failed', 'message': f'set_auxiliary_module failed with error: {e}', 'forward_log': 'False'}
+        return output
+    
+    def set_auxiliary_options(self):
+        if self.auxiliar:
+            try:
+                for key, value in self.args.items():
+                    if key == 'RHOSTS':
+                        if value in self.host_info:
+                            output = {'outcome': 'failed', 'message': 'Invalid RHOST value', 'host_info': self.host_info, 'forward_log': 'False'}
+                            return output
+                    self.auxiliary[key] = value
+                output = {'outcome': 'success', 'set_auxiliary_options': self.args, 'forward_log': 'False'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'set_auxiliary_options failed with error: {e}', 'forward_log': 'False'}
+        else:
+            output = {'outcome': 'failed', 'message': 'auxiliary_module not set', 'forward_log': 'False'}
         return output
     
     def set_exploit_module(self):
@@ -169,6 +224,80 @@ class call_msf:
             output = {'outcome': 'failed', 'message': 'payload_module not set', 'forward_log': 'False'}
         return output
 
+    def show_auxiliary(self):
+        if self.auxiliary:
+            module_name = self.auxiliary.modulname
+            description = f'{self.auxiliary.name} - {self.auxiliary.description}'
+            output = {'outcome': 'success', 'show_auxiliary': {'module_name': module_name, 'description': description}, 'forward_log': 'False'}
+        else:
+            output = {'outcome': 'failed', 'message': 'auxiliary_module not set', 'forward_log': 'False'}
+        return output
+    
+    def show_auxiliary_options(self):
+        if self.auxiliary:
+            options = self.auxiliary.options
+            output = {'outcome': 'success', 'show_auxiliary_options': options, 'forward_log': 'False'}
+        else:
+            output = {'outcome': 'failed', 'message': 'auxiliary_module not set', 'forward_log': 'False'}
+        return output
+
+    def show_auxiliary_option_info(self):
+        if self.auxiliary:
+            try:
+                option = self.args['auxiliary_option']
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': 'instruct_args must specify auxiliary_option', 'forward_log': 'False'}
+                return output
+            try:
+                option_info = self.auxiliary.optioninfo(option)
+                output = {'outcome': 'success', 'show_auxiliary_option_info': option_info, 'forward_log': 'False'}
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'show_auxiliary_option_info failed with error: {e}', 'forward_log': 'False'}
+        else:
+            output = {'outcome': 'failed', 'message': 'auxiliary_module not set', 'forward_log': 'False'}
+        return output
+    
+    def show_auxiliary_evasion(self):
+        if self.auxiliary:
+            evasion = self.auxiliary.evasion
+            output = {'outcome': 'success', 'show_auxiliary_evasion': evasion, 'forward_log': 'False'}
+        else:
+            output = {'outcome': 'failed', 'message': 'auxiliary_module not set', 'forward_log': 'False'}
+        return output
+    
+    def show_configured_auxiliary_options(self):
+        if self.auxiliary:
+            run_options = self.auxiliary.runoptions
+            output = {'outcome': 'success', 'show_configured_auxiliary_options': run_options, 'forward_log': 'False'}
+        else:
+            output = {'outcome': 'failed', 'message': 'auxiliary_module not set', 'forward_log': 'False'}
+        return output
+
+    def show_auxiliary_requirements(self):
+        if self.auxiliary:
+            requirements = self.auxiliary.required
+            output = {'outcome': 'success', 'show_auxiliary_requirements': requirements, 'forward_log': 'False'}
+        else:
+            output = {'outcome': 'failed', 'message': 'auxiliary_module not set', 'forward_log': 'False'}
+        return output
+
+    def show_missing_auxiliary_requirements(self):
+        if self.auxiliary:
+            missing_requirements = self.auxiliary.missing_required
+            output = {'outcome': 'success', 'show_missing_auxiliary_requirements': missing_requirements, 'forward_log': 'False'}
+        else:
+            output = {'outcome': 'failed', 'message': 'auxiliary_module not set', 'forward_log': 'False'}
+        return output
+
+    def show_last_auxiliary_results(self):
+        if self.auxiliary_results:
+            output = {'outcome': 'success', 'show_last_auxiliary_results': self.auxiliary_results, 'forward_log': 'False'}
+        elif self.exploit_console_results:
+            output = {'outcome': 'success', 'show_last_auxiliary_results': self.auxiliary_console_results, 'forward_log': 'False'}
+        else:
+            output = {'outcome': 'success', 'show_last_auxiliary_results': 'No auxiliary results found', 'forward_log': 'False'}
+        return output
+    
     def show_exploit(self):
         if self.exploit:
             module_name = self.exploit.modulname
@@ -344,6 +473,23 @@ class call_msf:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
 
+    def execute_auxiliary(self):
+        if self.auxiliary:
+            try:
+                self.auxiliary_results = self.auxiliary.execute()
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'execute_auxiliary failed with error: {e}', 'forward_log': 'False'}
+                return output
+            if 'job_id' in self.auxiliary_results:
+                output = {'outcome': 'success', 'execute_auxiliary': {'results': self.auxiliary_results}, 'forward_log': 'True'}
+            else:
+                cid = self.msf_client.consoles.console().cid
+                self.auxiliary_console_results = self.msf_client.consoles.console(cid).run_module_with_output(self.auxiliary)
+                output = {'outcome': 'failed', 'message': self.auxiliary_console_results, 'forward_log': 'True'}
+        else:
+            output = {'outcome': 'failed', 'message': 'auxiliary_module not set', 'forward_log': 'False'}
+        return output
+    
     def execute_exploit(self):
         if self.exploit and self.payload:
             try:
