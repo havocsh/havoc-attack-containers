@@ -24,6 +24,7 @@ class call_msf:
         self.exploit_results = None
         self.exploit_console_results = None
         self.payload = None
+        self.shells = {}
 
     @property
     def msf_client(self):
@@ -555,9 +556,9 @@ class call_msf:
 
         def send_shell_command(command):
             shell_read = None
-            shell.write(command)
+            self.shells[session_id].write(command)
             while not shell_read:
-                shell_read = shell.read()
+                shell_read = self.shells[session_id].read()
             return shell_read
         
         req_args = ['session_id', 'session_shell_command']
@@ -570,17 +571,16 @@ class call_msf:
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             try:
-                shell = self.msf_client.sessions.session(session_id)
                 session_type = session_list[session_id]['type']
-                if session_type != 'shell':
-                    send_shell_command('shell')
-                run_session_shell_command_output = send_shell_command(session_shell_command)
-                if session_type != 'shell':
-                    send_shell_command('exit')
-                if '/bin/sh:' in run_session_shell_command_output or 'invalid option' in run_session_shell_command_output:
-                    output = {'outcome': 'failed', 'message': run_session_shell_command_output, 'forward_log': 'False'}
+                if not self.shells[session_id]:
+                    self.shells[session_id] = self.msf_client.sessions.session(session_id)
+                    if session_type != 'shell':
+                        send_shell_command('shell')
+                command_output = send_shell_command(session_shell_command)
+                if '/bin/sh:' in command_output or 'invalid option' in command_output or 'Unknown command:' in command_output:
+                    output = {'outcome': 'failed', 'message': command_output, 'forward_log': 'False'}
                 else:
-                    output = {'outcome': 'success', 'run_session_shell_command': {'results': run_session_shell_command_output}, 'forward_log': 'True'}
+                    output = {'outcome': 'success', 'run_session_shell_command': {'results': command_output}, 'forward_log': 'True'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'run_session_shell_command failed with error: {e}', 'forward_log': 'False'}
         else:
