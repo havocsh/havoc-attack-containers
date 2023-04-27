@@ -571,9 +571,12 @@ class call_msf:
         if session_id in session_list:
             try:
                 shell = self.msf_client.sessions.session(session_id)
-                send_shell_command('shell')
+                session_type = session_list[session_id]['type']
+                if session_type != 'shell':
+                    send_shell_command('shell')
                 run_session_shell_command_output = send_shell_command(session_shell_command)
-                send_shell_command('exit')
+                if session_type != 'shell':
+                    send_shell_command('exit')
                 if '/bin/sh:' in run_session_shell_command_output or 'invalid option' in run_session_shell_command_output:
                     output = {'outcome': 'failed', 'message': run_session_shell_command_output, 'forward_log': 'False'}
                 else:
