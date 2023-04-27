@@ -584,7 +584,7 @@ class call_msf:
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'run_session_shell_command failed with error: {e}', 'forward_log': 'False'}
         else:
-            output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': f'session_id not found: {session_list}', 'forward_log': 'False'}
         return output
 
     def session_tabs(self):
