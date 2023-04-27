@@ -107,6 +107,7 @@ class Action:
                 if agent_command in object_parameters:
                     command_args = object_parameters[agent_command]
                 method = getattr(self.havoc_client, agent_command)
+                self.havoc_client.wait_for_idle_task(task_name)
                 agent_command_response = method(task_name, agent_name, **command_args)
             except Exception as e:
                 if essential:
@@ -187,6 +188,7 @@ class Action:
                 if session_command in object_parameters:
                     command_args = object_parameters[session_command]
                 method = getattr(self.havoc_client, session_command)
+                self.havoc_client.wait_for_idle_task(task_name)
                 session_command_response = method(task_name, session_id, **command_args)
             except Exception as e:
                 if essential:
@@ -269,6 +271,7 @@ class Action:
                 instruct_args = {}
                 if instruct_command in object_parameters:
                     instruct_args = object_parameters[instruct_command]
+                self.havoc_client.wait_for_idle_task(task_name)
                 interact_with_task_response = self.havoc_client.interact_with_task(task_name, instruct_command, instruct_instance=instruct_instance, instruct_args=instruct_args)
             except Exception as e:
                 if essential:
