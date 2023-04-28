@@ -572,7 +572,7 @@ class call_msf:
         if session_id in session_list:
             try:
                 session_type = session_list[session_id]['type']
-                if not self.shells[session_id]:
+                if session_id not in self.shells:
                     self.shells[session_id] = self.msf_client.sessions.session(session_id)
                     if session_type != 'shell':
                         send_shell_command('shell')
