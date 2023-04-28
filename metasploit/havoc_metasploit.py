@@ -744,7 +744,12 @@ class call_msf:
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             try:
-                self.msf_client.sessions.session(session_id).stop()
+                if session_id in self.shells:
+                    self.shells[session_id].write('exit')
+                    self.shells[session_id].stop()
+                    del self.shells[session_id]
+                else:
+                    self.msf_client.sessions.session(session_id).stop()
                 output = {'outcome': 'success', 'kill_session': {'session_id': session_id}, 'forward_log': 'True'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'kill_session failed with error: {e}', 'forward_log': 'False'}
