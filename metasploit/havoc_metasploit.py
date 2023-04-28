@@ -555,11 +555,13 @@ class call_msf:
     def run_session_shell_command(self):
 
         def send_shell_command(command):
-            shell_read = None
+            shell_read = ''
             self.shells[session_id].write(command)
-            while not shell_read:
-                shell_read = self.shells[session_id].read()
-            return shell_read
+            while True:
+                shell_read_tmp = self.shells[session_id].read()
+                shell_read += shell_read_tmp
+                if shell_read_tmp == '':
+                    return shell_read
         
         req_args = ['session_id', 'session_shell_command']
         for req_arg in req_args:
