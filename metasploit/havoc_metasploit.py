@@ -477,16 +477,12 @@ class call_msf:
     def execute_auxiliary(self):
         if self.auxiliary:
             try:
-                self.auxiliary_results = self.auxiliary.execute()
+                cid = self.msf_client.consoles.console().cid
+                self.auxiliary_results = self.msf_client.consoles.console(cid).run_module_with_output(self.auxiliary)
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'execute_auxiliary failed with error: {e}', 'forward_log': 'False'}
                 return output
-            if 'job_id' in self.auxiliary_results:
-                output = {'outcome': 'success', 'execute_auxiliary': {'results': self.auxiliary_results}, 'forward_log': 'True'}
-            else:
-                cid = self.msf_client.consoles.console().cid
-                self.auxiliary_console_results = self.msf_client.consoles.console(cid).run_module_with_output(self.auxiliary)
-                output = {'outcome': 'failed', 'message': self.auxiliary_console_results, 'forward_log': 'True'}
+            output = {'outcome': 'success', 'execute_auxiliary': {'results': self.auxiliary_results}, 'forward_log': 'True'}
         else:
             output = {'outcome': 'failed', 'message': 'auxiliary_module not set', 'forward_log': 'False'}
         return output
