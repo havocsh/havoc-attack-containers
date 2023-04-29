@@ -550,15 +550,16 @@ class call_msf:
 
     def run_session_shell_command(self):
 
-        def send_shell_command(command):
+        def send_shell_command(command, wait):
             shell_read = ''
             self.shells[session_id].write(command)
             count = 0
             while True:
+                t.sleep(1)
                 shell_read_tmp = self.shells[session_id].read()
                 shell_read += shell_read_tmp
                 count += 1
-                if shell_read_tmp == '' and count == 10:
+                if shell_read_tmp == '' and count == wait:
                     return shell_read
         
         req_args = ['session_id', 'session_shell_command']
@@ -568,6 +569,10 @@ class call_msf:
                 return output
         session_id = self.args['session_id']
         session_shell_command = self.args['session_shell_command']
+        if 'wait_time' in self.args:
+            wait_time = int(self.args['wait_time'])
+        else:
+            wait_time = 10
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             try:
@@ -575,8 +580,8 @@ class call_msf:
                 if session_id not in self.shells:
                     self.shells[session_id] = self.msf_client.sessions.session(session_id)
                     if session_type != 'shell':
-                        send_shell_command('shell')
-                command_output = send_shell_command(session_shell_command)
+                        send_shell_command('shell', 5)
+                command_output = send_shell_command(session_shell_command, wait_time)
                 if '/bin/sh:' in command_output or 'invalid option' in command_output or 'Unknown command:' in command_output:
                     output = {'outcome': 'failed', 'message': command_output, 'forward_log': 'False'}
                 else:
