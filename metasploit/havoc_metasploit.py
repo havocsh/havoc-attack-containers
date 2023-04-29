@@ -553,10 +553,12 @@ class call_msf:
         def send_shell_command(command):
             shell_read = ''
             self.shells[session_id].write(command)
+            count = 0
             while True:
                 shell_read_tmp = self.shells[session_id].read()
                 shell_read += shell_read_tmp
-                if shell_read_tmp == '':
+                count += 1
+                if shell_read_tmp == '' and count == 10:
                     return shell_read
         
         req_args = ['session_id', 'session_shell_command']
