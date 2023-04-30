@@ -570,8 +570,12 @@ class call_msf:
                 return output
         session_id = self.args['session_id']
         session_shell_command = self.args['session_shell_command']
-        if 'wait_time' in self.args:
-            wait_time = int(self.args['wait_time'])
+        if 'wait_time' in self.args and self.args['wait_time'] is not None:
+            try:
+                wait_time = int(self.args['wait_time'])
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'run_session_shell_command failed setting wait_time with error: {e}', 'forward_log': 'False'}
+                return output
         else:
             wait_time = 10
         session_list = self.msf_client.sessions.list
