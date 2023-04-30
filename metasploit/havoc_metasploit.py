@@ -552,6 +552,7 @@ class call_msf:
 
         def send_shell_command(command, wait):
             shell_read = ''
+            self.shells[session_id].read()
             self.shells[session_id].write(command)
             count = 0
             while True:
