@@ -560,7 +560,7 @@ class call_msf:
                 shell_read_tmp = self.shells[session_id].read()
                 shell_read += shell_read_tmp
                 count += 1
-                if shell_read_tmp == '' and count == wait:
+                if shell_read_tmp == '' and count >= wait:
                     return shell_read
         
         req_args = ['session_id', 'session_shell_command']
