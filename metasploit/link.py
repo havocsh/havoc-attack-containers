@@ -324,7 +324,8 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
                                   task_context, task_type, task_version, instruct_user_id, instruct_id, instruct_instance, instruct_command,
                                   instruct_args, public_ip, local_ip, end_time)
             elif instruct_command == 'session_status_monitor':
-                metasploit[instruct_instance] = havoc_metasploit.call_msf(deployment_name)
+                if instruct_instance not in metasploit:
+                    metasploit[instruct_instance] = havoc_metasploit.call_msf(deployment_name)
                 instruct_args = {'current_sessions': current_sessions}
                 metasploit[instruct_instance].set_args(instruct_args, public_ip, hostname, local_ip)
                 call_session_status_monitor = metasploit[instruct_instance].session_status_monitor()
