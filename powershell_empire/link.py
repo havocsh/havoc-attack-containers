@@ -324,7 +324,8 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
                                   task_context, task_type, task_version, instruct_user_id, instruct_id, instruct_instance, instruct_command,
                                   instruct_args, public_ip, local_ip, end_time)
             elif instruct_command == 'agent_status_monitor':
-                powershell_empire[instruct_instance] = havoc_powershell_empire.call_powershell_empire()
+                if instruct_instance not in powershell_empire:
+                    powershell_empire[instruct_instance] = havoc_powershell_empire.call_powershell_empire()
                 instruct_args = {'current_agents': current_agents}
                 powershell_empire[instruct_instance].set_args(instruct_args, public_ip, hostname, local_ip)
                 call_agent_status_monitor = powershell_empire[instruct_instance].agent_status_monitor()
