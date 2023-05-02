@@ -91,7 +91,11 @@ class call_msf:
                     if value in self.host_info:
                         output = {'outcome': 'failed', 'message': 'Invalid RHOST value', 'host_info': self.host_info, 'forward_log': 'False'}
                         return output
-                self.auxiliary[key] = value
+                try: 
+                    self.auxiliary[key] = value
+                except Exception as e:
+                    output = {'outcome': 'failed', 'message': f'run_auxiliary failed while setting auxiliary_options: {e}', 'forward_log': 'False'}
+                    return output
         execute_auxiliary_results = self.execute_auxiliary()
         if execute_auxiliary_results['outcome'] == 'failed':
             message = execute_auxiliary_results['message']
@@ -112,12 +116,17 @@ class call_msf:
                     if value in self.host_info:
                         output = {'outcome': 'failed', 'message': 'Invalid RHOST value', 'host_info': self.host_info, 'forward_log': 'False'}
                         return output
-                self.exploit[key] = value
+                try:
+                    self.exploit[key] = value
+                except Exception as e:
+                    output = {'outcome': 'failed', 'message': f'run_exploit failed while setting exploit_options: {e}', 'forward_log': 'False'}
+                    return output
         if 'exploit_target' in self.args:
             try:
                 self.exploit.target = self.args['exploit_target']
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'run_exploit failed while setting exploit target: {e}', 'forward_log': 'False'}
+                return output
         set_payload_module_results = self.set_payload_module()
         if set_payload_module_results['outcome'] == 'failed':
             message = set_payload_module_results['message']
@@ -125,7 +134,11 @@ class call_msf:
             return output
         if 'payload_options' in self.args:
             for key, value in self.args['payload_options'].items():
-                self.payload[key] = value
+                try:
+                    self.payload[key] = value
+                except Exception as e:
+                    output = {'outcome': 'failed', 'message': f'run_exploit failed while setting payload_options: {e}', 'forward_log': 'False'}
+                    return output
         execute_exploit_results = self.execute_exploit()
         if execute_exploit_results['outcome'] == 'failed':
             message = execute_exploit_results['message']
