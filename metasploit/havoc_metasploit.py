@@ -537,7 +537,8 @@ class call_msf:
                 except Exception as e:
                     output = {'outcome': 'failed', 'message': f'generate_payload failed with error: {e}', 'forward_log': 'False'}
             else:
-                output = {'outcome': 'success', 'generate_payload': {'payload': base64.b64encode(data.decode())}, 'forward_log': 'True'}
+                payload = base64.b64encode(data).decode()
+                output = {'outcome': 'success', 'generate_payload': {'payload': payload}, 'forward_log': 'True'}
         else:
             output = {'outcome': 'failed', 'message': 'payload_module not set', 'forward_log': 'False'}
         return output
