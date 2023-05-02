@@ -382,7 +382,7 @@ def action(deployment_name, user_id, task_type, task_version, task_commands, tas
                               instruct_user_id, instruct_id, instruct_instance, instruct_command, instruct_args, public_ip, local_ip,
                               end_time)
             command_list.remove(c)
-        yield sleep(1)
+        yield sleep(3)
 
 
 @inlineCallbacks
