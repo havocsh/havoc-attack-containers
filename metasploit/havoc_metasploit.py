@@ -594,12 +594,15 @@ class call_msf:
             wait_time = 10
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
+            session_type = session_list[session_id]['type']
             try:
-                session_type = session_list[session_id]['type']
                 if session_id not in self.shells:
                     self.shells[session_id] = self.msf_client.sessions.session(session_id)
                     if session_type != 'shell':
-                        send_shell_command('shell', 5)
+                        call_shell = send_shell_command('shell', 5)
+                        if 'created' not in call_shell:
+                            output = {'outcome': 'failed', 'message': f'calling shell failed with error: {call_shell}', 'forward_log': 'False'}
+                            return output
                 command_output = send_shell_command(session_shell_command, wait_time)
                 if '/bin/sh:' in command_output or 'invalid option' in command_output or 'Unknown command:' in command_output:
                     output = {'outcome': 'failed', 'message': command_output, 'forward_log': 'False'}
