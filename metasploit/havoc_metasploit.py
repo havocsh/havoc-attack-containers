@@ -87,10 +87,6 @@ class call_msf:
             return output
         if 'auxiliary_options' in self.args:
             for key, value in self.args['auxiliary_options'].items():
-                if key == 'RHOSTS':
-                    if value in self.host_info:
-                        output = {'outcome': 'failed', 'message': 'Invalid RHOST value', 'host_info': self.host_info, 'forward_log': 'False'}
-                        return output
                 try: 
                     self.auxiliary[key] = value
                 except Exception as e:
@@ -112,10 +108,6 @@ class call_msf:
             return output
         if 'exploit_options' in self.args:
             for key, value in self.args['exploit_options'].items():
-                if key == 'RHOSTS':
-                    if value in self.host_info:
-                        output = {'outcome': 'failed', 'message': 'Invalid RHOST value', 'host_info': self.host_info, 'forward_log': 'False'}
-                        return output
                 try:
                     self.exploit[key] = value
                 except Exception as e:
@@ -160,10 +152,6 @@ class call_msf:
         if self.auxiliar:
             try:
                 for key, value in self.args.items():
-                    if key == 'RHOSTS':
-                        if value in self.host_info:
-                            output = {'outcome': 'failed', 'message': 'Invalid RHOST value', 'host_info': self.host_info, 'forward_log': 'False'}
-                            return output
                     self.auxiliary[key] = value
                 output = {'outcome': 'success', 'set_auxiliary_options': self.args, 'forward_log': 'False'}
             except Exception as e:
@@ -185,10 +173,6 @@ class call_msf:
         if self.exploit:
             try:
                 for key, value in self.args.items():
-                    if key == 'RHOSTS':
-                        if value in self.host_info:
-                            output = {'outcome': 'failed', 'message': 'Invalid RHOST value', 'host_info': self.host_info, 'forward_log': 'False'}
-                            return output
                     self.exploit[key] = value
                 output = {'outcome': 'success', 'set_exploit_options': self.args, 'forward_log': 'False'}
             except Exception as e:
@@ -544,6 +528,19 @@ class call_msf:
         return output
 
     def run_session_command(self):
+
+        def send_command(sid, command, wait):
+            session_read = ''
+            self.msf_client.sessions.session(sid).write(command)
+            count = 0
+            while True:
+                t.sleep(1)
+                session_read_tmp = self.msf_client.sessions.session(sid).read()
+                session_read += session_read_tmp
+                count += 1
+                if session_read_tmp == '' and count >= wait:
+                    return session_read
+
         req_args = ['session_id', 'session_command']
         for req_arg in req_args:
             if req_arg not in self.args:
@@ -551,11 +548,19 @@ class call_msf:
                 return output    
         session_id = self.args['session_id']
         session_command = self.args['session_command']
+        if 'wait_time' in self.args and self.args['wait_time'] is not None:
+            try:
+                wait_time = int(self.args['wait_time'])
+            except Exception as e:
+                output = {'outcome': 'failed', 'message': f'run_session_command failed setting wait_time with error: {e}', 'forward_log': 'False'}
+                return output
+        else:
+            wait_time = 10
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             try:
-                run_session_command_output = self.msf_client.sessions.session(session_id).run_with_output(session_command)
-                output = {'outcome': 'success', 'run_session_command': {'results': run_session_command_output}, 'forward_log': 'True'}
+                command_output = send_command(session_id, session_command, wait_time)
+                output = {'outcome': 'success', 'run_session_command': {'results': command_output}, 'forward_log': 'True'}
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'run_session_command failed with error: {e}', 'forward_log': 'False'}
         else:
