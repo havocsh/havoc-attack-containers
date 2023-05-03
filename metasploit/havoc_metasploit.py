@@ -24,7 +24,7 @@ class call_msf:
         self.exploit_results = None
         self.exploit_console_results = None
         self.payload = None
-        self.shells = {}
+        self.shells = []
 
     @property
     def msf_client(self):
@@ -564,14 +564,13 @@ class call_msf:
 
     def run_session_shell_command(self):
 
-        def send_shell_command(command, wait):
+        def send_shell_command(sid, command, wait):
             shell_read = ''
-            self.shells[session_id].read()
-            self.shells[session_id].write(command)
+            self.msf_client.sessions.session(sid).write(command)
             count = 0
             while True:
                 t.sleep(1)
-                shell_read_tmp = self.shells[session_id].read()
+                shell_read_tmp = self.msf_client.sessions.session(sid).read()
                 shell_read += shell_read_tmp
                 count += 1
                 if shell_read_tmp == '' and count >= wait:
@@ -597,13 +596,13 @@ class call_msf:
             session_type = session_list[session_id]['type']
             try:
                 if session_id not in self.shells:
-                    self.shells[session_id] = self.msf_client.sessions.session(session_id)
+                    self.shells.append(session_id)
                     if session_type != 'shell':
-                        call_shell = send_shell_command('shell', 5)
+                        call_shell = send_shell_command(session_id, 'shell', 5)
                         if 'created' not in call_shell:
                             output = {'outcome': 'failed', 'message': f'calling shell failed with error: {call_shell}', 'forward_log': 'False'}
                             return output
-                command_output = send_shell_command(session_shell_command, wait_time)
+                command_output = send_shell_command(session_id, session_shell_command, wait_time)
                 if '/bin/sh:' in command_output or 'invalid option' in command_output or 'Unknown command:' in command_output:
                     output = {'outcome': 'failed', 'message': command_output, 'forward_log': 'False'}
                 else:
