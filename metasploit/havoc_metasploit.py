@@ -558,7 +558,14 @@ class call_msf:
             wait_time = 10
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
+            session_type = session_list[session_id]['type']
             try:
+                if session_type != 'shell' and session_id in self.shells:
+                    send_command(session_id, 'exit', 5)
+                    self.shells.remove(session_id)
+                if session_type == 'shell':
+                    output = {'outcome': 'failed', 'message': f'run_session_command is not supported on shell session type', 'forward_log': 'False'}
+                    return output
                 command_output = send_command(session_id, session_command, wait_time)
                 output = {'outcome': 'success', 'run_session_command': {'results': command_output}, 'forward_log': 'True'}
             except Exception as e:
@@ -776,9 +783,9 @@ class call_msf:
         if session_id in session_list:
             try:
                 if session_id in self.shells:
-                    self.shells[session_id].write('exit')
-                    self.shells[session_id].stop()
-                    del self.shells[session_id]
+                    self.msf_client.sessions.session(session_id).write('exit')
+                    self.msf_client.sessions.session(session_id).stop()
+                    self.shells.remove(session_id)
                 else:
                     self.msf_client.sessions.session(session_id).stop()
                 output = {'outcome': 'success', 'kill_session': {'session_id': session_id}, 'forward_log': 'True'}
