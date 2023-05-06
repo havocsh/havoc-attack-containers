@@ -561,7 +561,8 @@ class call_msf:
             session_type = session_list[session_id]['type']
             try:
                 if session_type != 'shell' and session_id in self.shells:
-                    send_command(session_id, 'exit', 5)
+                    print('Exiting shell')
+                    send_command(session_id, 'exit', 10)
                     self.shells.remove(session_id)
                 if session_type == 'shell':
                     output = {'outcome': 'failed', 'message': f'run_session_command is not supported on shell session type', 'forward_log': 'False'}
@@ -610,10 +611,8 @@ class call_msf:
                 if session_id not in self.shells:
                     self.shells.append(session_id)
                     if session_type != 'shell':
-                        call_shell = send_shell_command(session_id, 'shell', 5)
-                        if 'created' not in call_shell:
-                            output = {'outcome': 'failed', 'message': f'calling shell failed with error: {call_shell}', 'forward_log': 'False'}
-                            return output
+                        print('Creating shell')
+                        send_shell_command(session_id, 'shell', 10)
                 command_output = send_shell_command(session_id, session_shell_command, wait_time)
                 if '/bin/sh:' in command_output or 'invalid option' in command_output or 'Unknown command:' in command_output:
                     output = {'outcome': 'failed', 'message': command_output, 'forward_log': 'False'}
