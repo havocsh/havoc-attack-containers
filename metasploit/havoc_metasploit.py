@@ -487,16 +487,12 @@ class call_msf:
     def execute_exploit(self):
         if self.exploit and self.payload:
             try:
-                self.exploit_results = self.exploit.execute(payload=self.payload)
+                cid = self.msf_client.consoles.console().cid
+                self.exploit_results = self.msf_client.consoles.console(cid).run_module_with_output(self.exploit, payload=self.payload)
             except Exception as e:
                 output = {'outcome': 'failed', 'message': f'execute_exploit failed with error: {e}', 'forward_log': 'False'}
                 return output
-            if 'job_id' in self.exploit_results:
-                output = {'outcome': 'success', 'execute_exploit': {'results': self.exploit_results}, 'forward_log': 'True'}
-            else:
-                cid = self.msf_client.consoles.console().cid
-                self.exploit_console_results = self.msf_client.consoles.console(cid).run_module_with_output(self.exploit, payload=self.payload)
-                output = {'outcome': 'failed', 'message': self.exploit_console_results, 'forward_log': 'True'}
+            output = {'outcome': 'success', 'execute_exploit': {'results': self.exploit_results}, 'forward_log': 'True'}
         else:
             output = {'outcome': 'failed', 'message': 'exploit_module or payload_module not set', 'forward_log': 'False'}
         return output
