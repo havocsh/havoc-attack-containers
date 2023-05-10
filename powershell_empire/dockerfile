@@ -9,7 +9,7 @@ RUN pip3 install boto3
 RUN pip3 install pyOpenSSL
 RUN pip3 install service_identity
 RUN pip3 install Twisted
-RUN pip3 install requests==2.25.0
+RUN pip3 install requests==2.29.0
 RUN pip3 install urllib3
 RUN pip3 install awscli
 
