@@ -634,14 +634,12 @@ class Resource:
                 domain_name = object_parameters['domain_name']
             try:
                 listener_name = object_parameters['listener_name']
-                listener_type = object_parameters['listener_type']
-                listener_port = object_parameters['listener_port']
+                listener_config = object_parameters['listener_config']
                 task_name = object_parameters['task_name']
                 portgroups = object_parameters['portgroups']
                 create_listener_response = self.havoc_client.create_listener(
                     listener_name=listener_name,
-                    listener_type=listener_type,
-                    listener_port=listener_port,
+                    listener_config=listener_config,
                     task_name=task_name,
                     portgroups=portgroups,
                     host_name=host_name,
