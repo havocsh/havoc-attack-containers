@@ -3,6 +3,7 @@ import json
 import copy
 import base64
 import shutil
+import pathlib
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import subprocess
@@ -144,6 +145,12 @@ class call_powershell_empire:
                     stager[k] = v['Value']
                 else:
                     stager[k] = v
+            file_name = self.args['OutFile']
+            output = stager_details['Output']
+            decoded_output = base64.b64decode(output)
+            path = pathlib.Path('/opt/havoc/shared', file_name)
+            with open(path, 'wb+') as f:
+                f.write(decoded_output)
             output = {'outcome': 'success', 'create_stager': stager, 'forward_log': 'True'}
         else:
             output = {'outcome': 'failed', 'message': create_stager_response.json(), 'forward_log': 'False'}
