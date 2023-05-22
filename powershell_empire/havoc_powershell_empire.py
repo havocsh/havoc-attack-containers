@@ -145,12 +145,21 @@ class call_powershell_empire:
                     stager[k] = v['Value']
                 else:
                     stager[k] = v
-            file_name = self.args['OutFile']
-            output = stager_details['Output']
-            decoded_output = base64.b64decode(output)
-            path = pathlib.Path('/opt/havoc/shared', file_name)
-            with open(path, 'wb+') as f:
-                f.write(decoded_output)
+            if 'OutFile' in self.args and 'Output' in stager_details:
+                file_name = self.args['OutFile']
+                output = stager_details['Output']
+                decoded_output = base64.b64decode(output)
+                path = pathlib.Path('/opt/havoc/shared', file_name)
+                with open(path, 'wb+') as f:
+                    f.write(decoded_output)
+            elif 'BinaryFile' in self.args:
+                try:
+                    out_file = pathlib.Path(self.args['BinaryFile']).name
+                    stager['OutFile'] = out_file
+                except Exception as e:
+                    output = {'outcome': 'failed', 'message': f'create_stager failed with error: {e}', 'forward_log': 'False'}
+            else:
+                output = {'outcome': 'failed', 'message': 'instruct_args must contain one of OutFile or BinaryFile', 'forward_log': 'False'}
             output = {'outcome': 'success', 'create_stager': stager, 'forward_log': 'True'}
         else:
             output = {'outcome': 'failed', 'message': create_stager_response.json(), 'forward_log': 'False'}
