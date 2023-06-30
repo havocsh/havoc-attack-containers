@@ -73,7 +73,7 @@ def send_response(playbook_operator_response, forward_log, user_id, playbook_nam
 
 
 @inlineCallbacks
-def action(region, deployment_name, user_id, playbook_operator_version, commands, playbook_name, command_list, end_time):
+def action(region, deployment_name, user_id, playbook_operator_version, commands, playbook_name, playbook_type, command_list, end_time):
     playbook_execution = havoc_module.call_object()
 
     while True:
@@ -94,7 +94,7 @@ def action(region, deployment_name, user_id, playbook_operator_version, commands
                 subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
             else:
                 if operator_command in commands:
-                    playbook_execution.set_args(region, deployment_name, user_id, playbook_name, playbook_operator_version, command_args, end_time)
+                    playbook_execution.set_args(region, deployment_name, user_id, playbook_name, playbook_type, playbook_operator_version, command_args, end_time)
                     method = getattr(playbook_execution, operator_command)
                     call_method = method()
                 else:
@@ -141,6 +141,7 @@ def main():
     deployment_name = os.environ['DEPLOYMENT_NAME']
     user_id = os.environ['USER_ID']
     playbook_name = os.environ['PLAYBOOK_NAME']
+    playbook_type = os.environ['PLAYBOOK_TYPE']
     region = os.environ['REGION']
     end_time = os.environ['END_TIME']
 
@@ -149,7 +150,7 @@ def main():
 
     # Setup coroutines
     get_command_obj(region, deployment_name, playbook_name, command_list)
-    action(region, deployment_name, user_id, playbook_operator_version, commands, playbook_name, command_list, end_time)
+    action(region, deployment_name, user_id, playbook_operator_version, commands, playbook_name, playbook_type, command_list, end_time)
 
 
 if __name__ == "__main__":

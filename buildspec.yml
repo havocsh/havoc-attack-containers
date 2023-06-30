@@ -3,7 +3,6 @@ version: 0.2
 phases:
   build:
     commands:
-      - echo Building with version 0.3.2 havoc library...
       - cd $TASK_TYPE
       - zip -r $TASK_TYPE.zip *
       - aws s3 cp ./$TASK_TYPE.zip s3://$BUCKET/$TASK_TYPE/$TASK_TYPE.zip

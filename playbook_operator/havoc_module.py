@@ -941,6 +941,7 @@ class call_object():
         self.deployment_name = None
         self.user_id = None
         self.playbook_name = None
+        self.playbook_type = None
         self.playbook_operator_version = None
         self.args = None
         self.end_time = None
@@ -964,11 +965,12 @@ class call_object():
             self.__aws_s3_client = boto3.client('s3', region_name=self.region)
         return self.__aws_s3_client
 
-    def set_args(self, region, deployment_name, user_id, playbook_name, playbook_operator_version, command_args, end_time):
+    def set_args(self, region, deployment_name, user_id, playbook_name, playbook_type, playbook_operator_version, command_args, end_time):
         self.region = region
         self.deployment_name = deployment_name
         self.user_id = user_id
         self.playbook_name = playbook_name
+        self.playbook_type = playbook_type
         self.playbook_operator_version = playbook_operator_version
         self.args = command_args
         self.end_time = end_time
@@ -1097,18 +1099,17 @@ class call_object():
         self.resource.havoc_client = self.havoc_client
 
         def download_playbook():
-            config_pointer = self.args['config_pointer']
             try:
                 get_object_response = self.aws_s3_client.get_object(
-                    Bucket=f'{self.deployment_name}-playbooks',
-                    Key=config_pointer
+                    Bucket=f'{self.deployment_name}-playbook-types',
+                    Key=f'{self.playbook_type}.template'
                 )
-                playbook_config = get_object_response['Body'].read()
+                playbook_template = get_object_response['Body'].read()
             except botocore.exceptions.ClientError as error:
                 return error
             except botocore.exceptions.ParamValidationError as error:
                 return error
-            return playbook_config
+            return playbook_template
 
         # Add nodes to graph
         def afilter(x):
@@ -1145,13 +1146,44 @@ class call_object():
             dep_depth_map = sorted(dep_depth_map.items(), key=lambda x: min(x[1]))
             return [{"rule_name": node, "exec_order": min(depth) + abs(max_depth)} for node, depth in dep_depth_map]
 
-        playbook_config_source = download_playbook()
+        playbook_template_source = download_playbook()
         try:
-            playbook_config = json.loads(playbook_config_source)
+            playbook_template = json.loads(playbook_template_source)
         except:
             pass
-        if not playbook_config:
-            playbook_config = hcl2.load(playbook_config_source)
+        if not playbook_template:
+            playbook_template = hcl2.load(playbook_template_source)
+
+        playbook_config_source = self.args['playbook_config']
+        if 'variable' in playbook_template:
+            playbook_vars = playbook_template['variable']
+            for playbook_var in playbook_vars:
+                for k in playbook_var.keys():
+                    if k in playbook_config_source:
+                        playbook_var[k]['value'] = playbook_config_source[k]
+                    elif 'default' in playbook_var[k]:
+                        playbook_var[k]['value'] = playbook_var[k]['default']
+                    else:
+                        return {'outcome': 'failed', 'message': f'no value or default found for playbook variable {k}', 'forward_log': 'True'}
+            for section in playbook_template:
+                if section != 'variable':
+                    json_section = json.dumps(playbook_template[section])
+                    dep_matches = re.findall('\${(variable\.[^}]+)}', json_section)
+                    if dep_matches:
+                        dep_value = None
+                        for dep_match in dep_matches:
+                            dep_match_list = dep_match.split('.')
+                            var_name = dep_match_list[1]
+                            for variable in playbook_template['variable']:
+                                for k in variable.keys():
+                                    if k == var_name:
+                                        dep_value = variable[k]['value']
+                            re_sub = re.compile('\${' + dep_match + '}')
+                            json_section = re.sub(re_sub, dep_value, json_section)
+                            new_section = json.loads(json_section)
+                            playbook_template[section] = new_section
+            del playbook_template['variable']
+            playbook_config = playbook_template
 
         DG = nx.DiGraph()
         action_blocks = None
