@@ -10,44 +10,42 @@ class HttpServer:
         self.args = None
         self.host_info = None
         self.results = None
-        self.twisted_process = None
+        self.server_process = None
 
-    def set_args(self, args, attack_ip, hostname, local_ip):
+    def set_args(self, args, public_ip, hostname, local_ip):
         self.args = args
-        self.host_info = [attack_ip, hostname] + local_ip
+        self.host_info = [public_ip, hostname] + local_ip
         return True
-
-    def start_server(self):
-        if 'listen_port' not in self.args:
-            output = {'outcome': 'failed', 'message': 'instruct_args must specify listen_port', 'forward_log': 'False'}
+    
+    def create_listener(self):
+        if 'listener_type' not in self.args:
+            output = {'outcome': 'failed', 'message': 'instruct_args must specify listener_type', 'forward_log': 'False'}
             return output
-        listen_port = self.args['listen_port']
-        if not isinstance(listen_port, int):
-            output = {'outcome': 'failed', 'message': 'listen_port must be type int', 'forward_log': 'False'}
+        listener_type = self.args['listener_type'].lower()
+        if 'Port' not in self.args:
+            output = {'outcome': 'failed', 'message': 'instruct_args must specify Port', 'forward_log': 'False'}
             return output
+        port = self.args['Port']
+        if not isinstance(port, int):
+            try:
+                int(port)
+            except:
+                output = {'outcome': 'failed', 'message': 'Port must be a number', 'forward_log': 'False'}
+                return output
 
-        if 'ssl' not in self.args:
-            output = {'outcome': 'failed', 'message': 'instruct_args must specify ssl', 'forward_log': 'False'}
-            return output
-        ssl = self.args['ssl']
-        if isinstance(ssl, bool):
-            if ssl:
-                ssl = 'true'
-            else:
-                ssl = 'false'
-
-        if ssl.lower() == 'true':
-            ssl_cert = Path('/opt/havoc/server-priv.key')
+        if listener_type == 'https':
+            ssl_cert = Path('/opt/havoc/server.pem')
             if ssl_cert.is_file():
-                self.twisted_process = subprocess.Popen(
+                self.server_process = subprocess.Popen(
                     [
-                        '/usr/local/bin/twistd',
-                        '-no',
-                        'web',
-                        f'--listen=ssl:{listen_port}'
-                        ':privateKey=/opt/havoc/server-priv.key'
-                        ':certKey=/opt/havoc/server-chain.pem',
-                        '--path=/opt/havoc/shared/'
+                        '/usr/bin/python3',
+                        '-m',
+                        'uploadserver',
+                        str(port),
+                        '--server-certificate',
+                        '/opt/havoc/server.pem',
+                        '--directory',
+                        '/opt/havoc/shared/'
                     ],
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
@@ -57,43 +55,59 @@ class HttpServer:
                 output = {'outcome': 'failed', 'message': 'missing certificate: run cert_gen first',
                           'forward_log': 'False'}
                 return output
-        else:
-            self.twisted_process = subprocess.Popen(
-                ['/usr/local/bin/twistd', '-no', 'web', f'--listen=tcp:{listen_port}', '--path=/opt/havoc/shared/'],
+        elif listener_type == 'http':
+            self.server_process = subprocess.Popen(
+                ['/usr/bin/python3', '-m', 'uploadserver', str(port), '--directory', '/opt/havoc/shared/'],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
+        else:
+            output = {'outcome': 'failed', 'message': 'listener_type must be http or https', 'forward_log': 'False'}
+            return output
         time.sleep(3)
-        if self.twisted_process.poll():
-            twisted_process_out = self.twisted_process.communicate()
-            twisted_message = twisted_process_out[0].decode('utf-8')
-            output = {'outcome': 'failed', 'message': twisted_message, 'forward_log': 'False'}
+        if self.server_process.poll():
+            server_process_out = self.server_process.communicate()
+            server_message = server_process_out[0].decode('utf-8')
+            output = {'outcome': 'failed', 'message': server_message, 'forward_log': 'False'}
             return output
         else:
-            output = {'outcome': 'success', 'message': 'HTTP server started', 'forward_log': 'True'}
+            output = {'outcome': 'success', 'create_listener': {'listener_type': listener_type, 'Port': port}, 'forward_log': 'True'}
             return output
 
-    def stop_server(self):
-        if not self.twisted_process:
-            output = {'outcome': 'failed', 'message': 'no server is running', 'forward_log': 'False'}
+    def kill_listener(self):
+        if not self.server_process:
+            output = {'outcome': 'failed', 'message': 'no listener is running', 'forward_log': 'False'}
             return output
-        self.twisted_process.terminate()
-        output = {'outcome': 'success', 'message': 'HTTP server stopped', 'forward_log': 'True'}
+        self.server_process.terminate()
+        output = {'outcome': 'success', 'kill_listener': 'listener stopped', 'forward_log': 'True'}
         return output
 
     def cert_gen(self):
-        if 'subj' not in self.args and 'domain' not in self.args:
-            output = {'outcome': 'failed', 'message': 'Missing subj or domain', 'forward_log': 'False'}
+        if 'cert_type' not in self.args:
+            output = {'outcome': 'failed', 'message': 'Missing cert_type', 'forward_log': 'False'}
             return output
-        if 'subj' in self.args and 'domain' in self.args:
-            output = {'outcome': 'failed', 'message': 'Specify subj or domain but not both', 'forward_log': 'False'}
-            return output
-        if 'subj' in self.args:
-            subj = self.args['subj']
+        cert_type = self.args['cert_type']
+        if cert_type == 'self-signed':
+            required_params = ['cert_country', 'cert_state', 'cert_locale', 'cert_org', 'cert_org_unit', 'cert_host']
+            for param in required_params:
+                if param not in self.args:
+                    output = {'outcome': 'failed', 'message': f'Missing {param}', 'forward_log': 'False'}
+                    return output
+            cert_country = self.args['cert_country']
+            cert_state = self.args['cert_state']
+            cert_locale = self.args['cert_locale']
+            cert_org = self.args['cert_org']
+            cert_org_unit = self.args['cert_org_unit']
+            cert_host = self.args['cert_host']
+            if cert_host == 'public_ip':
+                host = self.host_info[0]
+            if cert_host == 'local_ip':
+                host = self.host_info[2]
+            subj = f'/C={cert_country}/ST={cert_state}/L={cert_locale}/O={cert_org}/OU={cert_org_unit}/CN={host}'
             p = subprocess.Popen(
-                ['/usr/bin/openssl', 'req', '-new', '-x509', '-keyout', '/opt/havoc/server-priv.key',
-                 '-out', '/opt/havoc/server-chain.pem', '-days', '365', '-nodes', '-subj', f'{subj}'],
+                ['/usr/bin/openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', '/opt/havoc/server.pem',
+                 '-out', '/opt/havoc/server.pem', '-days', '365', '-nodes', '-sha256', '-subj', subj],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
@@ -101,11 +115,14 @@ class HttpServer:
             openssl_out = p.communicate()
             openssl_message = openssl_out[1].decode('utf-8')
             if 'problems making Certificate Request' not in openssl_message:
-                output = {'outcome': 'success', 'message': openssl_message, 'forward_log': 'True'}
+                output = {'outcome': 'success', 'cert_gen': {'host': host, 'subj': subj}, 'forward_log': 'True'}
             else:
                 output = {'outcome': 'failed', 'message': openssl_message, 'forward_log': 'True'}
             return output
-        if 'domain' in self.args:
+        if cert_type == 'ca-signed':
+            if 'domain' not in self.args:
+                output = {'outcome': 'failed', 'message': 'Missing domain for certificate registration', 'forward_log': 'False'}
+                return output
             if 'email' not in self.args:
                 output = {'outcome': 'failed', 'message': 'Missing email for certificate registration', 'forward_log': 'False'}
                 return output
@@ -127,17 +144,25 @@ class HttpServer:
                 output = {'outcome': 'failed', 'message': certbot_message, 'forward_log': 'False'}
                 return output
             try:
-                shutil.copyfile(f'/etc/letsencrypt/live/{domain}/fullchain.pem', '/opt/havoc/server-chain.pem')
+                with open(f'/etc/letsencrypt/live/{domain}/privkey.pem', 'r') as privkey_f:
+                    privkey = privkey_f.read()
             except Exception as e:
                 output = {'outcome': 'failed', 'message': e, 'forward_log': 'False'}
                 return output
             try:
-                shutil.copyfile(f'/etc/letsencrypt/live/{domain}/privkey.pem', '/opt/havoc/server-priv.key')
+                with open(f'/etc/letsencrypt/live/{domain}/fullchain.pem', 'r') as fullchain_f:
+                    fullchain = fullchain_f.read()
             except Exception as e:
                 output = {'outcome': 'failed', 'message': e, 'forward_log': 'False'}
                 return output
-            output = {'outcome': 'success', 'message': 'Certificate files written to /opt/havoc/', 'forward_log': 'True'}
+            
+            with open('/opt/havoc/server.pem', 'w+') as server_f:
+                server_f.write(privkey)
+                server_f.write(fullchain)
+            output = {'outcome': 'success', 'cert_gen': {'domain': domain, 'email': email}, 'forward_log': 'True'}
             return output
+        output = {'outcome': 'failed', 'message': 'cert_type must be self-signed or ca-signed', 'forward_log': 'False'}
+        return output
 
     def echo(self):
         match = {

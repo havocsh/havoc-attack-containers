@@ -1,22 +1,23 @@
-FROM ubuntu:latest
+FROM ubuntu:20.04
+ARG VERSION
 
 # Install basic utils
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update
-RUN apt -y install apt-utils curl python3 python3-dev python3-pip python3-setuptools supervisor
+RUN apt -y install apt-utils curl python3 python3-dev python3-pip python3-venv supervisor git tzdata
 RUN pip3 install boto3
 RUN pip3 install pyOpenSSL
 RUN pip3 install service_identity
 RUN pip3 install Twisted
 RUN pip3 install requests==2.29.0
+RUN pip3 install urllib3
 RUN pip3 install awscli
+RUN pip3 install python-hcl2
+RUN pip3 install dpath
+RUN pip3 install networkx[default]
 
 # Install havoc library
-RUN pip3 install havoc
-
-# Install custom dependencies and modules
-RUN apt install -y <package-name>
-RUN pip3 install <module-name>
+RUN pip3 install git+https://github.com/havocsh/havoc-pkg.git@$VERSION
 
 # Setup supervisord
 COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
@@ -25,8 +26,9 @@ COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 RUN mkdir /opt/havoc
 RUN mkdir /opt/havoc/shared
 
-# Copy repo version of havoc_object.py into build
-COPY ./havoc_object.py /opt/havoc/havoc_object.py
+# Copy repo versions of havoc_*.py files
+COPY ./havoc_module.py /opt/havoc/havoc_module.py
+COPY ./havoc_functions.py /opt/havoc/havoc_functions.py
 
 # Copy repo version of link.py and link.ini into build
 COPY ./link.py /opt/havoc/link.py

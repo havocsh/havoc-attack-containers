@@ -9,6 +9,7 @@ import socket
 import pathlib
 import requests
 import subprocess
+from configparser import ConfigParser
 from datetime import datetime, timezone
 from twisted.python import log
 from twisted.internet import reactor
@@ -59,11 +60,11 @@ def get_ip():
     return IP
 
 
-def get_commands_s3(client, campaign_id, task_name, command_list, user_id):
+def get_commands_s3(client, deployment_name, task_name, command_list, user_id):
     list_objects_response = None
     try:
         list_objects_response = client.list_objects_v2(
-            Bucket=f'{campaign_id}-workspace',
+            Bucket=f'{deployment_name}-workspace',
             Prefix=task_name + '/'
         )
     except Exception as err:
@@ -79,7 +80,7 @@ def get_commands_s3(client, campaign_id, task_name, command_list, user_id):
             get_object_response = None
             try:
                 get_object_response = client.get_object(
-                    Bucket=f'{campaign_id}-workspace',
+                    Bucket=f'{deployment_name}-workspace',
                     Key=file_entry
                 )
             except Exception as err:
@@ -89,7 +90,7 @@ def get_commands_s3(client, campaign_id, task_name, command_list, user_id):
                 command_list.append(interaction)
                 try:
                     client.delete_object(
-                        Bucket=f'{campaign_id}-workspace',
+                        Bucket=f'{deployment_name}-workspace',
                         Key=file_entry
                     )
                 except Exception as err:
@@ -100,6 +101,7 @@ def get_commands_s3(client, campaign_id, task_name, command_list, user_id):
             {
                 'timestamp': timestamp,
                 'instruct_user_id': user_id,
+                'instruct_id': 'session_status_monitor',
                 'instruct_instance': 'session_status_monitor',
                 'instruct_command': 'session_status_monitor',
                 'instruct_args': None,
@@ -125,6 +127,7 @@ def get_commands_http(rt, task_name, command_list, user_id):
             {
                 'timestamp': timestamp,
                 'instruct_user_id': user_id,
+                'instruct_id': 'session_status_monitor',
                 'instruct_instance': 'session_status_monitor',
                 'instruct_command': 'session_status_monitor',
                 'instruct_args': None,
@@ -161,7 +164,7 @@ def file_transfer_http(rt, sync_direction, file_name):
         except Exception as err:
             print(f'file_transfer_http failed for direction {sync_direction}, file_name {file_name} with error {err}')
         if file_transfer_response and 'file_contents' in file_transfer_response:
-            with open(f'/opt/havoc/share/{file_name}', 'wb') as w:
+            with open(f'/opt/havoc/shared/{file_name}', 'wb') as w:
                 w.write(file_transfer_response['file_contents'])
             success = True
         else:
@@ -177,15 +180,16 @@ def file_transfer_http(rt, sync_direction, file_name):
     return success
 
 
-def send_response(rt, task_response, forward_log, user_id, task_name, task_context, task_type, instruct_user_id,
-                   instruct_instance, instruct_command, instruct_args, attack_ip, local_ip, end_time):
+def send_response(rt, task_response, forward_log, user_id, task_name, task_context, task_type, task_version, 
+                  instruct_user_id, instruct_id, instruct_instance, instruct_command, instruct_args, public_ip, local_ip,
+                  end_time):
     stime = datetime.now(timezone.utc).strftime('%s')
     output = {
         'instruct_command_output': task_response, 'user_id': user_id, 'task_name': task_name,
-        'task_context': task_context, 'task_type': task_type, 'instruct_user_id': instruct_user_id,
-        'instruct_instance': instruct_instance, 'instruct_command': instruct_command, 'instruct_args': instruct_args,
-        'attack_ip': attack_ip, 'local_ip': local_ip, 'end_time': end_time, 'forward_log': forward_log,
-        'timestamp': stime
+        'task_context': task_context, 'task_type': task_type, 'task_version': task_version,
+        'instruct_user_id': instruct_user_id, 'instruct_id': instruct_id, 'instruct_instance': instruct_instance,
+        'instruct_command': instruct_command, 'instruct_args': instruct_args, 'public_ip': public_ip, 'local_ip': local_ip,
+        'end_time': end_time, 'forward_log': forward_log, 'timestamp': stime
     }
     if rt.check:
         post_response_http(rt, output)
@@ -194,9 +198,8 @@ def send_response(rt, task_response, forward_log, user_id, task_name, task_conte
 
 
 @inlineCallbacks
-def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_time, command_list, attack_ip, hostname,
-           local_ip):
-    call_function = None
+def action(deployment_name, user_id, task_type, task_version, task_commands, task_name, task_context, rt, end_time, command_list,
+           public_ip, hostname, local_ip):
     metasploit = {}
     current_sessions = []
 
@@ -208,6 +211,7 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
         command_list.sort(key=sortFunc)
         for c in command_list:
             instruct_user_id = c['instruct_user_id']
+            instruct_id = c['instruct_id']
             instruct_instance = c['instruct_instance']
             instruct_command = c['instruct_command']
             instruct_args = c['instruct_args']
@@ -221,57 +225,56 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                 if not rt.check:
                     file_list = []
                     subprocess.call(["aws", "--quiet", "--no-paginate", "--no-progress", "--no-guess-mime-type", "s3",
-                                     "sync", f"s3://{campaign_id}-workspace/shared", "/opt/havoc/shared/"])
+                                     "sync", f"s3://{deployment_name}-workspace/shared", "/opt/havoc/shared/"])
                     for root, subdirs, files in os.walk('/opt/havoc/shared'):
                         for filename in files:
                             file_list.append(filename)
                 else:
                     file_list = sync_workspace_http(rt, 'sync_from_workspace')
                 if instruct_command == 'Initialize':
-                    response_kv = ['status', 'ready']
+                    command_response = {'status': 'ready', 'Initialize': {'file_list': file_list}}
                 else:
-                    response_kv = ['outcome', 'success']
-                send_response(rt, {response_kv[0]: response_kv[1], 'local_directory_contents': file_list},
-                              'True', user_id, task_name, task_context, task_type, instruct_user_id, instruct_instance,
-                              instruct_command, instruct_args, attack_ip, local_ip, end_time)
+                    command_response = {'outcome': 'success', 'sync_from_workspace': {'file_list': file_list}}
+                send_response(rt, command_response, 'True', user_id, task_name, task_context, task_type, task_version,
+                              instruct_user_id, instruct_id, instruct_instance, instruct_command, instruct_args, public_ip, local_ip, end_time)
             elif instruct_command == 'ls':
                 file_list = []
                 for root, subdirs, files in os.walk('/opt/havoc/shared'):
                     for filename in files:
                         file_list.append(filename)
-                send_response(rt, {'outcome': 'success', 'local_directory_contents': file_list}, 'False',
-                              user_id, task_name, task_context, task_type, instruct_user_id, instruct_instance,
-                              instruct_command, instruct_args, attack_ip, local_ip, end_time)
+                send_response(rt, {'outcome': 'success', 'ls': {'file_list': file_list}}, 'False', user_id, task_name, task_context, task_type,
+                              task_version, instruct_user_id, instruct_id, instruct_instance, instruct_command, instruct_args, public_ip,
+                              local_ip, end_time)
             elif instruct_command == 'del':
                 if 'file_name' in instruct_args:
                     file_name = instruct_args['file_name']
                     path = pathlib.Path(f'/opt/havoc/shared/{file_name}')
                     if path.is_file():
                         os.remove(path)
-                        send_response(rt, {'outcome': 'success'}, 'True', user_id, task_name, task_context, task_type,
-                                      instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip,
-                                      local_ip, end_time)
+                        send_response(rt, {'outcome': 'success', 'del': {'file_name': file_name}}, 'True', user_id, task_name, task_context, task_type,
+                                      task_version, instruct_user_id, instruct_id, instruct_instance, instruct_command, instruct_args,
+                                      public_ip, local_ip, end_time)
                     else:
                         send_response(rt, {'outcome': 'failed', 'message': 'File not found'}, 'False', user_id,
-                                      task_name, task_context, task_type, instruct_user_id, instruct_instance,
-                                      instruct_command, instruct_args, attack_ip, local_ip, end_time)
+                                      task_name, task_context, task_type, task_version, instruct_user_id, instruct_id, instruct_instance,
+                                      instruct_command, instruct_args, public_ip, local_ip, end_time)
                 else:
                     send_response(rt, {'outcome': 'failed', 'message': 'Missing file_name'}, 'False',
-                                  user_id, task_name, task_context, task_type, instruct_user_id, instruct_instance,
-                                  instruct_command, instruct_args, attack_ip, local_ip, end_time)
+                                  user_id, task_name, task_context, task_type, task_version, instruct_user_id, instruct_id, instruct_instance,
+                                  instruct_command, instruct_args, public_ip, local_ip, end_time)
             elif instruct_command == 'sync_to_workspace':
                 if not rt.check:
                     file_list = []
                     subprocess.call(["aws", "--quiet", "--no-paginate", "--no-progress", "--no-guess-mime-type", "s3",
-                                     "sync", "/opt/havoc/shared/", f"s3://{campaign_id}-workspace/shared"])
+                                     "sync", "/opt/havoc/shared/", f"s3://{deployment_name}-workspace/shared"])
                     for root, subdirs, files in os.walk('/opt/havoc/shared'):
                         for filename in files:
                             file_list.append(filename)
                 else:
                     file_list = sync_workspace_http(rt, 'sync_to_workspace')
-                send_response(rt, {'outcome': 'success', 'local_directory_contents': file_list}, 'False', user_id,
-                              task_name, task_context, task_type, instruct_user_id, instruct_instance, instruct_command,
-                              instruct_args, attack_ip, local_ip, end_time)
+                send_response(rt, {'outcome': 'success', 'sync_to_workspace': {'file_list': file_list}}, 'False', user_id,
+                              task_name, task_context, task_type, task_version, instruct_user_id, instruct_id, instruct_instance,
+                              instruct_command, instruct_args, public_ip, local_ip, end_time)
             elif instruct_command == 'upload_to_workspace':
                 if 'file_name' in instruct_args:
                     file_name = instruct_args['file_name']
@@ -280,27 +283,27 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                         if not rt.check:
                             subprocess.call(["aws", "--quiet", "--no-paginate", "--no-progress", "--no-guess-mime-type",
                                              "s3", "cp", f"/opt/havoc/shared/{file_name}",
-                                             f"s3://{campaign_id}-workspace/shared/{file_name}"])
+                                             f"s3://{deployment_name}-workspace/shared/{file_name}"])
                         else:
                             file_transfer_http(rt, 'upload_to_workspace', file_name)
-                        send_response(rt, {'outcome': 'success'}, 'True', user_id, task_name, task_context, task_type,
-                                      instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip,
-                                      local_ip, end_time)
+                        send_response(rt, {'outcome': 'success', 'upload_to_workspace': {'file_name': file_name}}, 'True', user_id, task_name, 
+                                      task_context, task_type, task_version, instruct_user_id, instruct_id, instruct_instance, instruct_command,
+                                      instruct_args, public_ip, local_ip, end_time)
                     else:
                         send_response(rt, {'outcome': 'failed', 'message': 'File not found'}, 'False', user_id,
-                                      task_name, task_context, task_type, instruct_user_id, instruct_instance,
-                                      instruct_command, instruct_args, attack_ip, local_ip, end_time)
+                                      task_name, task_context, task_type, task_version, instruct_user_id, instruct_id, instruct_instance,
+                                      instruct_command, instruct_args, public_ip, local_ip, end_time)
                 else:
                     send_response(rt, {'outcome': 'failed', 'message': 'Missing file_name'}, 'False',
-                                  user_id, task_name, task_context, task_type, instruct_user_id, instruct_instance,
-                                  instruct_command, instruct_args, attack_ip, local_ip, end_time)
+                                  user_id, task_name, task_context, task_type, task_version, instruct_user_id, instruct_id, instruct_instance,
+                                  instruct_command, instruct_args, public_ip, local_ip, end_time)
             elif instruct_command == 'download_from_workspace':
                 if 'file_name' in instruct_args:
                     file_name = instruct_args['file_name']
                     file_not_found = False
                     if not rt.check:
                         s = subprocess.call(["aws", "--quiet", "--no-paginate", "--no-progress", "--no-guess-mime-type",
-                                         "s3", "cp", f"s3://{campaign_id}-workspace/shared/{file_name}",
+                                         "s3", "cp", f"s3://{deployment_name}-workspace/shared/{file_name}",
                                          f"/opt/havoc/shared/{file_name}"])
                         if s == 1:
                             file_not_found = True
@@ -310,20 +313,21 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                             file_not_found = True
                     if file_not_found:
                         send_response(rt, {'outcome': 'failed', 'message': 'File not found'}, 'False', user_id,
-                                      task_name, task_context, task_type, instruct_user_id, instruct_instance,
-                                      instruct_command, instruct_args, attack_ip, local_ip, end_time)
+                                      task_name, task_context, task_type, task_version, instruct_user_id, instruct_id, instruct_instance,
+                                      instruct_command, instruct_args, public_ip, local_ip, end_time)
                     else:
-                        send_response(rt, {'outcome': 'success'}, 'True', user_id, task_name, task_context, task_type,
-                                      instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip,
-                                      local_ip, end_time)
+                        send_response(rt, {'outcome': 'success', 'download_from_workspace': {'file_name': file_name}}, 'True', user_id, task_name,
+                                      task_context, task_type, task_version, instruct_user_id, instruct_id, instruct_instance, instruct_command,
+                                      instruct_args, public_ip, local_ip, end_time)
                 else:
                     send_response(rt, {'outcome': 'failed', 'message': 'Missing file_name'}, 'False', user_id, task_name,
-                                  task_context, task_type, instruct_user_id, instruct_instance, instruct_command,
-                                  instruct_args, attack_ip, local_ip, end_time)
+                                  task_context, task_type, task_version, instruct_user_id, instruct_id, instruct_instance, instruct_command,
+                                  instruct_args, public_ip, local_ip, end_time)
             elif instruct_command == 'session_status_monitor':
-                metasploit[instruct_instance] = havoc_metasploit.call_msf(campaign_id)
+                if instruct_instance not in metasploit:
+                    metasploit[instruct_instance] = havoc_metasploit.call_msf(deployment_name)
                 instruct_args = {'current_sessions': current_sessions}
-                metasploit[instruct_instance].set_args(instruct_args, attack_ip, hostname, local_ip)
+                metasploit[instruct_instance].set_args(instruct_args, public_ip, hostname, local_ip)
                 call_session_status_monitor = metasploit[instruct_instance].session_status_monitor()
                 new_sessions = call_session_status_monitor['new_sessions']
                 dead_sessions = call_session_status_monitor['dead_sessions']
@@ -335,8 +339,8 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                     for k, v in new_session_parsed.items():
                         new_session_response[k] = v
                     send_response(rt, new_session_response, 'True', user_id, task_name, task_context, task_type,
-                                  instruct_user_id, instruct_instance, instruct_command, {'no_args': 'True'}, attack_ip,
-                                  local_ip, end_time)
+                                  task_version, instruct_user_id, instruct_id, instruct_instance, instruct_command, {'no_args': 'True'},
+                                  public_ip, local_ip, end_time)
                 for dead_session in dead_sessions:
                     m = havoc_metasploit.MetasploitParser(dead_session)
                     dead_session_parsed = m.metasploit_parser()
@@ -344,8 +348,8 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                     for k, v in dead_session_parsed.items():
                         dead_session_response[k] = v
                     send_response(rt, dead_session_response, 'True', user_id, task_name, task_context, task_type,
-                                  instruct_user_id, instruct_instance, instruct_command, {'no_args': 'True'}, attack_ip,
-                                  local_ip, end_time)
+                                  task_version, instruct_user_id, instruct_id, instruct_instance, instruct_command, {'no_args': 'True'},
+                                  public_ip, local_ip, end_time)
                     new_current_sessions = []
                     for session in current_sessions:
                         if dead_session['session_id'] != session['session_id']:
@@ -353,80 +357,36 @@ def action(campaign_id, user_id, task_type, task_name, task_context, rt, end_tim
                     current_sessions = new_current_sessions
             elif instruct_command == 'terminate' or shutdown:
                 send_response(rt, {'outcome': 'success', 'status': 'terminating'}, 'True', user_id, task_name,
-                              task_context, task_type, instruct_user_id, instruct_instance, instruct_command,
-                              instruct_args, attack_ip, local_ip, end_time)
+                              task_context, task_type, task_version, instruct_user_id, instruct_id, instruct_instance, instruct_command,
+                              instruct_args, public_ip, local_ip, end_time)
                 subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
             else:
                 if instruct_instance not in metasploit:
-                    metasploit[instruct_instance] = havoc_metasploit.call_msf(campaign_id)
-                if instruct_instance in metasploit:
-                    metasploit_functions = {
-                        'list_exploits': metasploit[instruct_instance].list_exploits,
-                        'list_payloads': metasploit[instruct_instance].list_payloads,
-                        'list_jobs': metasploit[instruct_instance].list_jobs,
-                        'list_sessions': metasploit[instruct_instance].list_sessions,
-                        'set_exploit_module': metasploit[instruct_instance].set_exploit_module,
-                        'set_exploit_options': metasploit[instruct_instance].set_exploit_options,
-                        'set_exploit_target': metasploit[instruct_instance].set_exploit_target,
-                        'set_payload_module': metasploit[instruct_instance].set_payload_module,
-                        'set_payload_options': metasploit[instruct_instance].set_payload_options,
-                        'show_exploit': metasploit[instruct_instance].show_exploit,
-                        'show_exploit_options': metasploit[instruct_instance].show_exploit_options,
-                        'show_exploit_option_info': metasploit[instruct_instance].show_exploit_option_info,
-                        'show_exploit_targets': metasploit[instruct_instance].show_exploit_targets,
-                        'show_exploit_evasion': metasploit[instruct_instance].show_exploit_evasion,
-                        'show_exploit_payloads': metasploit[instruct_instance].show_exploit_payloads,
-                        'show_configured_exploit_options': metasploit[instruct_instance].show_configured_exploit_options,
-                        'show_exploit_requirements': metasploit[instruct_instance].show_exploit_requirements,
-                        'show_missing_exploit_requirements': metasploit[instruct_instance].show_missing_exploit_requirements,
-                        'show_last_exploit_results': metasploit[instruct_instance].show_last_exploit_results,
-                        'show_payload': metasploit[instruct_instance].show_payload,
-                        'show_payload_options': metasploit[instruct_instance].show_payload_options,
-                        'show_payload_option_info': metasploit[instruct_instance].show_payload_option_info,
-                        'show_configured_payload_options': metasploit[instruct_instance].show_configured_payload_options,
-                        'show_payload_requirements': metasploit[instruct_instance].show_payload_requirements,
-                        'show_missing_payload_requirements': metasploit[instruct_instance].show_missing_payload_requirements,
-                        'show_job_info': metasploit[instruct_instance].show_job_info,
-                        'show_session_info': metasploit[instruct_instance].show_session_info,
-                        'execute_exploit': metasploit[instruct_instance].execute_exploit,
-                        'generate_payload': metasploit[instruct_instance].generate_payload,
-                        'run_session_command': metasploit[instruct_instance].run_session_command,
-                        'run_session_shell_command': metasploit[instruct_instance].run_session_shell_command,
-                        'session_tabs': metasploit[instruct_instance].session_tabs,
-                        'load_session_plugin': metasploit[instruct_instance].load_session_plugin,
-                        'session_import_psh': metasploit[instruct_instance].session_import_psh,
-                        'session_run_psh_cmd': metasploit[instruct_instance].session_run_psh_cmd,
-                        'run_session_script': metasploit[instruct_instance].run_session_script,
-                        'get_session_writeable_dir': metasploit[instruct_instance].get_session_writeable_dir,
-                        'session_read': metasploit[instruct_instance].session_read,
-                        'detach_session': metasploit[instruct_instance].detach_session,
-                        'kill_session': metasploit[instruct_instance].kill_session,
-                        'kill_job': metasploit[instruct_instance].kill_job,
-                        'echo': metasploit[instruct_instance].echo
+                    metasploit[instruct_instance] = havoc_metasploit.call_msf(deployment_name)
+                if instruct_command in task_commands:
+                    metasploit[instruct_instance].set_args(instruct_args, public_ip, hostname, local_ip)
+                    method = getattr(metasploit[instruct_instance], instruct_command)
+                    call_method = method()
+                else:
+                    call_method = {
+                        'outcome': 'failed',
+                        'message': f'Invalid instruct_command: {instruct_command}',
+                        'forward_log': 'False'
                     }
-                    if instruct_command in metasploit_functions:
-                        metasploit[instruct_instance].set_args(instruct_args, attack_ip, hostname, local_ip)
-                        call_function = metasploit_functions[instruct_command]()
-                    else:
-                        call_function = {
-                            'outcome': 'failed',
-                            'message': f'Invalid instruct_command: {instruct_command}',
-                            'forward_log': 'False'
-                        }
 
-                forward_log = call_function['forward_log']
-                del call_function['forward_log']
-                m = havoc_metasploit.MetasploitParser(call_function)
+                forward_log = call_method['forward_log']
+                del call_method['forward_log']
+                m = havoc_metasploit.MetasploitParser(call_method)
                 task_response = m.metasploit_parser()
-                send_response(rt, task_response, forward_log, user_id, task_name, task_context, task_type,
-                              instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip, local_ip,
+                send_response(rt, task_response, forward_log, user_id, task_name, task_context, task_type, task_version,
+                              instruct_user_id, instruct_id, instruct_instance, instruct_command, instruct_args, public_ip, local_ip,
                               end_time)
             command_list.remove(c)
         yield sleep(1)
 
 
 @inlineCallbacks
-def get_command_obj(region, campaign_id, task_name, rt, command_list, user_id):
+def get_command_obj(region, deployment_name, task_name, rt, command_list, user_id):
     if not rt.check:
         client = boto3.client('s3', region_name=region)
     else:
@@ -436,21 +396,27 @@ def get_command_obj(region, campaign_id, task_name, rt, command_list, user_id):
         if rt.check:
             get_commands_http(rt, task_name, command_list, user_id)
         else:
-            get_commands_s3(client, campaign_id, task_name, command_list, user_id)
+            get_commands_s3(client, deployment_name, task_name, command_list, user_id)
 
 
 def main():
+
+    config = ConfigParser()
+    config.read('link.ini')
+    task_type = config.get('task', 'task_type')
+    task_version = config.get('task', 'task_version')
+    task_commands = config.get('task', 'task_commands').split(',')
+
     log.startLogging(sys.stdout)
-    task_type = 'metasploit'
     region = None
     api_key = None
     secret = None
     api_domain_name = None
     api_region = None
-    attack_ip = None
+    public_ip = None
 
     # Setup vars
-    campaign_id = os.environ['CAMPAIGN_ID']
+    deployment_name = os.environ['DEPLOYMENT_NAME']
     user_id = os.environ['USER_ID']
     task_name = os.environ['TASK_NAME']
     task_context = os.environ['TASK_CONTEXT']
@@ -489,7 +455,7 @@ def main():
     # Get public IP
     try:
         r = requests.get('http://checkip.amazonaws.com/', timeout=10)
-        attack_ip = r.text.rstrip()
+        public_ip = r.text.rstrip()
     except requests.ConnectionError:
         print('Public IP check failed. Exiting...')
         subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
@@ -497,19 +463,20 @@ def main():
 
     # If this is a remote task, register it as such
     if rt.check:
-        h = havoc.Connect(rt.api_region, rt.api_domain_name, rt.api_key, rt.secret)
-        task_registration = h.register_task(task_name, task_context, task_type, attack_ip, local_ip)
-        if not task_registration:
-            print('Remote task registration failed. Exiting...')
+        try:
+            h = havoc.Connect(rt.api_region, rt.api_domain_name, rt.api_key, rt.secret)
+            h.register_task(task_name, task_context, task_type, task_version, public_ip, local_ip)
+        except Exception as e:
+            print(f'Remote task registration failed with error:\n{e}\nExiting...')
             subprocess.call(["/bin/kill", "-15", "1"], stdout=sys.stderr)
 
     # Setup coroutine resources
     command_list = []
 
     # Setup coroutines
-    get_command_obj(region, campaign_id, task_name, rt, command_list, user_id)
-    action(campaign_id, user_id, task_type, task_name, task_context, rt, end_time, command_list, attack_ip, hostname,
-           local_ip)
+    get_command_obj(region, deployment_name, task_name, rt, command_list, user_id)
+    action(deployment_name, user_id, task_type, task_version, task_commands, task_name, task_context, rt, end_time, command_list,
+           public_ip, hostname, local_ip)
 
 
 if __name__ == "__main__":
