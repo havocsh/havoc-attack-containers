@@ -1153,7 +1153,7 @@ class call_object():
         except:
             pass
         if not playbook_template:
-            playbook_template = hcl2.load(playbook_template_source)
+            playbook_template = hcl2.loads(playbook_template_source)
 
         playbook_config_source = self.args['playbook_config']
         if 'variable' in playbook_template:
