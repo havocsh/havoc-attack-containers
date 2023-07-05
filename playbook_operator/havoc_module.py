@@ -1147,6 +1147,7 @@ class call_object():
             return [{"rule_name": node, "exec_order": min(depth) + abs(max_depth)} for node, depth in dep_depth_map]
 
         playbook_template_source = download_playbook()
+        playbook_template = None
         try:
             playbook_template = json.loads(playbook_template_source)
         except:
