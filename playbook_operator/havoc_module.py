@@ -1209,6 +1209,10 @@ class call_object():
         if 'resource' in playbook_config:
             resource_blocks = playbook_config['resource']
             add_dependency_edges(resource_blocks, 'resource')
+        
+        if 'playbook' in playbook_config:
+            playbook_blocks = playbook_config['playbook']
+            add_dependency_edges(playbook_blocks, 'playbook')
 
         node_list = []
         tracking_list = []
