@@ -1116,6 +1116,11 @@ class call_object():
             if re.match('{([^}]+)}', str(x)):
                     return True
             return False
+        
+        def xfilter(x):
+            if re.match('{([^}]+)}', str(x)):
+                    return False
+            return True
 
         def add_dependency_edges(block, parent):
             for (path, value) in dpath.search(block, '*/*/*', afilter=afilter, yielded=True):
@@ -1127,6 +1132,13 @@ class call_object():
                         dot_path = re.sub('/', '.', new_path)
                         node_path = f'{parent}.{dot_path}'
                         DG.add_edge(dep.group(1), node_path)
+        
+        def add_standalone_nodes(block, parent):
+            for (path, value) in dpath.search(block, '*/*/*', afilter=xfilter, yielded=True):
+                new_path = re.search('\d+/(.*)', path).group(1)
+                dot_path = re.sub('/', '.', new_path)
+                node_path = f'{parent}.{dot_path}'
+                DG.add_node(node_path)
 
         def get_node_dependencies(graph, start_nodes):
             nodes = [(x, 0) for x in start_nodes]
@@ -1197,22 +1209,22 @@ class call_object():
         if 'action' in playbook_config:
             action_blocks = playbook_config['action']
             add_dependency_edges(action_blocks, 'action')
+            add_standalone_nodes(action_blocks, 'action')
 
         if 'data' in playbook_config:
             data_blocks = playbook_config['data']
             add_dependency_edges(data_blocks, 'data')
+            add_standalone_nodes(data_blocks, 'data')
 
         if 'local' in playbook_config:
             local_blocks = playbook_config['local']
             add_dependency_edges(local_blocks, 'local')
+            add_standalone_nodes(local_blocks, 'local')
 
         if 'resource' in playbook_config:
             resource_blocks = playbook_config['resource']
             add_dependency_edges(resource_blocks, 'resource')
-        
-        if 'playbook' in playbook_config:
-            playbook_blocks = playbook_config['playbook']
-            add_dependency_edges(playbook_blocks, 'playbook')
+            add_standalone_nodes(resource_blocks, 'resource')
 
         node_list = []
         tracking_list = []
