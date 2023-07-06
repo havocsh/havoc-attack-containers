@@ -1162,8 +1162,8 @@ class call_object():
             playbook_vars = playbook_template['variable']
             for playbook_var in playbook_vars:
                 for k in playbook_var.keys():
-                    if k in playbook_config_source:
-                        playbook_var[k]['value'] = playbook_config_source[k]
+                    if 'variable' in playbook_config_source and k in playbook_config_source['variable']:
+                        playbook_var[k]['value'] = playbook_config_source['variable'][k]
                     elif 'default' in playbook_var[k]:
                         playbook_var[k]['value'] = playbook_var[k]['default']
                     else:
