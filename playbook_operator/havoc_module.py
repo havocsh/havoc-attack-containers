@@ -1104,11 +1104,11 @@ class call_object():
                     Bucket=f'{self.deployment_name}-playbook-types',
                     Key=f'{self.playbook_type}.template'
                 )
-                playbook_template = get_object_response['Body'].read()
+                playbook_template = get_object_response['Body'].read().decode()
             except botocore.exceptions.ClientError as error:
-                return error
+                return f'download_failed: {error}'
             except botocore.exceptions.ParamValidationError as error:
-                return error
+                return f'download_failed: {error}'
             return playbook_template
 
         # Add nodes to graph
@@ -1147,6 +1147,8 @@ class call_object():
             return [{"rule_name": node, "exec_order": min(depth) + abs(max_depth)} for node, depth in dep_depth_map]
 
         playbook_template_source = download_playbook()
+        if 'download_failed' in playbook_template_source:
+            return {'outcome': 'failed', 'message': f'playbook execution failed with error {playbook_template_source}', 'forward_log': 'True'}
         playbook_template = None
         try:
             playbook_template = json.loads(playbook_template_source)
