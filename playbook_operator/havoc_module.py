@@ -344,7 +344,9 @@ class Data:
             'nodes': {},
             'portgroups': {},
             'tasks': {},
-            'task_types': {}
+            'task_types': {},
+            'workspace_get_urls': {},
+            'workspace_post_urls': {}
         }
     
     def agents(self, object_name, action, **object_parameters):
@@ -495,12 +497,30 @@ class Data:
     def tasks(self, object_name, action, **object_parameters):
         if action == 'create':
             try:
-                get_task_response = self.havoc_client.get_task(**object_parameters)
+                task_name = object_parameters['task_name']
+                get_task_response = self.havoc_client.get_task(task_name)
             except Exception as e:
                 return f'data_tasks_create_failed: {e}'
             if get_task_response['outcome'] == 'failed':
                 return f'data_tasks_create_failed: {get_task_response}'
             self.data_dict['tasks'][object_name] = {key: value for key, value in get_task_response.items()}
+            if 'data_actions' in object_parameters:
+                for data_action in object_parameters['data_actions']:
+                    self.resource_dict['tasks'][object_name][data_action] = {}
+                    instruct_instance = None
+                    instruct_args = None
+                    if data_action in object_parameters:
+                        instruct_args = copy.deepcopy(object_parameters[data_action])
+                        if 'instruct_instance' in instruct_args:
+                            instruct_instance = instruct_args['instruct_instance']
+                            del instruct_args['instruct_instance']
+                    try:
+                        response = self.havoc_client.interact_with_task(task_name, data_action, instruct_instance=instruct_instance, instruct_args=instruct_args)
+                    except Exception as e:
+                        return f'data_tasks_{data_action}_create_failed: {e}'
+                    if response['outcome'] == 'failed':
+                        return f'data_tasks_{data_action}_create_failed: {response}'
+                    self.resource_dict['tasks'][object_name][data_action] = response[data_action]
             return self.data_dict['tasks'][object_name]
         if action == 'delete':
             del self.data_dict['tasks'][object_name]
@@ -546,6 +566,65 @@ class Data:
                 return dpath.get(self.data_dict['task_types'], path)
             except Exception as e:
                 return f'data_task_types_read_failed: {e}'
+    
+    def workspace_get_urls(self, object_name, action, **object_parameters):
+        if action == 'create':
+            try:
+                get_workspace_get_url_response = self.havoc_client.get_workspace_get_url(**object_parameters)
+            except Exception as e:
+                return f'data_workspace_get_urls_create_failed: {e}'
+            if get_workspace_get_url_response['outcome'] == 'failed':
+                return f'data_workspace_get_urls_create_failed: {get_workspace_get_url_response}'
+            self.data_dict['workspace_get_urls'][object_name] = {key: value for key, value in get_workspace_get_url_response.items()}
+            return self.data_dict['workspace_get_urls'][object_name]
+        if action == 'delete':
+            try:
+                del self.data_dict['workspace_get_urls'][object_name]
+                return 'data_workspace_get_urls_deleted'
+            except Exception as e:
+                return f'data_workspace_get_urls_delete_failed: {e}'
+        if action == 'read':
+            try:
+                new_path = re.search('data.workspace_get_urls.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
+                return dpath.get(self.data_dict['workspace_get_urls'], path)
+            except Exception as e:
+                return f'data_workspace_get_urls_read_failed: {e}'
+    
+    def workspace_post_urls(self, object_name, action, **object_parameters):
+        if action == 'create':
+            try:
+                get_workspace_post_url_response = self.havoc_client.get_workspace_post_url(**object_parameters)
+            except Exception as e:
+                return f'data_workspace_post_urls_create_failed: {e}'
+            if get_workspace_post_url_response['outcome'] == 'failed':
+                return f'data_workspace_post_urls_create_failed: {get_workspace_post_url_response}'
+            self.data_dict['workspace_post_urls'][object_name] = {key: value for key, value in get_workspace_post_url_response.items()}
+            return self.data_dict['workspace_post_urls'][object_name]
+        if action == 'delete':
+            try:
+                del self.data_dict['workspace_post_urls'][object_name]
+                return 'data_workspace_post_urls_deleted'
+            except Exception as e:
+                return f'data_workspace_post_urls_delete_failed: {e}'
+        if action == 'read':
+            try:
+                new_path = re.search('data.workspace_post_urls.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
+                return dpath.get(self.data_dict['workspace_post_urls'], path)
+            except Exception as e:
+                return f'data_workspace_post_urls_read_failed: {e}'
+
 
 class Local:
     
@@ -588,7 +667,17 @@ class Resource:
     
     def __init__(self):
         self.havoc_client = None
-        self.resource_dict = {'file': {}, 'listener': {}, 'portgroup': {}, 'portgroup_rule': {}, 'random_integer': {}, 'random_string': {}, 'task': {}}
+        self.resource_dict = {
+            'file': {},
+            'listener': {},
+            'portgroup': {},
+            'portgroup_rule': {},
+            'random_integer': {},
+            'random_string': {},
+            'task': {},
+            'workspace_get_url': {},
+            'workspace_post_url': {}
+        }
     
     def file(self, object_name, action, **object_parameters):
         if action == 'create':
@@ -927,6 +1016,67 @@ class Resource:
                 return dpath.get(self.resource_dict['task'], path)
             except Exception as e:
                 return f'resource_task_read_failed: {e}'
+            
+    def workspace_get_url(self, object_name, action, **object_parameters):
+        if action == 'create':
+            try:
+                filename = object_parameters['filename']
+                create_workspace_get_url_response = self.havoc_client.create_workspace_get_url(filename=filename)
+            except Exception as e:
+                return f'resource_workspace_get_url_create_failed: {e}'
+            if create_workspace_get_url_response['outcome'] == 'failed':
+                return f'resource_workspace_get_url_create_failed: {create_workspace_get_url_response}'
+            self.resource_dict['workspace_get_url'][object_name] = {}
+            self.resource_dict['workspace_get_url'][object_name]['filename'] = filename
+            self.resource_dict['workspace_get_url'][object_name]['workspace_get_url'] = create_workspace_get_url_response['workspace_get_url']
+            return self.resource_dict['workspace_get_url'][object_name]
+        if action == 'delete':
+            del self.resource_dict['workspace_get_url'][object_name]
+            return 'resource_workspace_get_url_deleted'
+        if action == 'read':
+            try:
+                new_path = re.search('resource.workspace_get_url.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
+                return dpath.get(self.resource_dict['workspace_get_url'], path)
+            except Exception as e:
+                return f'resource_workspace_get_url_read_failed: {e}'
+    
+    def workspace_post_url(self, object_name, action, **object_parameters):
+        if action == 'create':
+            try:
+                path = object_parameters['path']
+                filename = object_parameters['filename']
+                create_workspace_post_url_response = self.havoc_client.create_workspace_post_url(path=path, filename=filename)
+            except Exception as e:
+                return f'resource_workspace_post_url_create_failed: {e}'
+            if create_workspace_post_url_response['outcome'] == 'failed':
+                return f'resource_workspace_post_url_create_failed: {create_workspace_post_url_response}'
+            self.resource_dict['workspace_post_url'][object_name] = {}
+            self.resource_dict['workspace_post_url'][object_name]['path'] = path
+            self.resource_dict['workspace_post_url'][object_name]['filename'] = filename
+            self.resource_dict['workspace_post_url'][object_name]['workspace_post_url'] = create_workspace_post_url_response['workspace_post_url']
+            self.resource_dict['workspace_post_url'][object_name]['fields'] = create_workspace_post_url_response['fields']
+            return self.resource_dict['workspace_post_url'][object_name]
+        if action == 'delete':
+            del self.resource_dict['workspace_post_url'][object_name]
+            return 'resource_workspace_post_url_deleted'
+        if action == 'read':
+            try:
+                new_path = re.search('resource.workspace_post_url.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
+                return dpath.get(self.resource_dict['workspace_post_url'], path)
+            except Exception as e:
+                return f'resource_workspace_post_url_read_failed: {e}'
 
 
 class call_object():
@@ -988,6 +1138,8 @@ class call_object():
             'portgroups': self.data.portgroups,
             'tasks': self.data.tasks,
             'task_types': self.data.task_types,
+            'workspace_get_urls': self.data.workspace_get_urls,
+            'workspace_post_urls': self.data.workspace_post_urls,
             'function': self.local.function,
             'file': self.resource.file,
             'listener': self.resource.listener,
@@ -995,7 +1147,9 @@ class call_object():
             'random_string': self.resource.random_string,
             'portgroup': self.resource.portgroup,
             'portgroup_rule': self.resource.portgroup_rule,
-            'task': self.resource.task
+            'task': self.resource.task,
+            'workspace_get_url': self.resource.workspace_get_url,
+            'workspace_post_url': self.resource.workspace_post_url
         }
         object_def = object.split('.')
         method_name=object_def[1]
