@@ -1060,7 +1060,6 @@ class Resource:
             self.resource_dict['workspace_put_url'][object_name]['path'] = path
             self.resource_dict['workspace_put_url'][object_name]['filename'] = filename
             self.resource_dict['workspace_put_url'][object_name]['workspace_put_url'] = create_workspace_put_url_response['workspace_put_url']
-            self.resource_dict['workspace_put_url'][object_name]['fields'] = create_workspace_put_url_response['fields']
             return self.resource_dict['workspace_put_url'][object_name]
         if action == 'delete':
             del self.resource_dict['workspace_put_url'][object_name]
