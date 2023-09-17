@@ -682,9 +682,10 @@ class Resource:
     def file(self, object_name, action, **object_parameters):
         if action == 'create':
             try:
+                path = object_parameters['path']
                 file_name = object_parameters['file_name']
                 file_contents = object_parameters['file_contents'].encode()
-                create_file_response = self.havoc_client.create_file(file_name, file_contents)
+                create_file_response = self.havoc_client.create_file(path, file_name, file_contents)
             except Exception as e:
                 return f'resource_file_create_failed: {e}'
             if create_file_response['outcome'] == 'failed':
@@ -693,8 +694,9 @@ class Resource:
             return self.resource_dict['file'][object_name]
         if action == 'delete':
             try:
+                path = self.resource_dict['file'][object_name]['path']
                 file_name = self.resource_dict['file'][object_name]['file_name']
-                delete_file_response = self.havoc_client.delete_file(file_name=file_name)
+                delete_file_response = self.havoc_client.delete_file(path, file_name)
             except Exception as e:
                 return f'resource_file_delete_failed: {e}'
             if delete_file_response['outcome'] == 'failed':
