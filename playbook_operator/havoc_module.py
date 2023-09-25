@@ -344,7 +344,9 @@ class Data:
             'nodes': {},
             'portgroups': {},
             'tasks': {},
-            'task_types': {}
+            'task_types': {},
+            'workspace_get_urls': {},
+            'workspace_put_urls': {}
         }
     
     def agents(self, object_name, action, **object_parameters):
@@ -495,12 +497,30 @@ class Data:
     def tasks(self, object_name, action, **object_parameters):
         if action == 'create':
             try:
-                get_task_response = self.havoc_client.get_task(**object_parameters)
+                task_name = object_parameters['task_name']
+                get_task_response = self.havoc_client.get_task(task_name)
             except Exception as e:
                 return f'data_tasks_create_failed: {e}'
             if get_task_response['outcome'] == 'failed':
                 return f'data_tasks_create_failed: {get_task_response}'
             self.data_dict['tasks'][object_name] = {key: value for key, value in get_task_response.items()}
+            if 'data_actions' in object_parameters:
+                for data_action in object_parameters['data_actions']:
+                    self.resource_dict['tasks'][object_name][data_action] = {}
+                    instruct_instance = None
+                    instruct_args = None
+                    if data_action in object_parameters:
+                        instruct_args = copy.deepcopy(object_parameters[data_action])
+                        if 'instruct_instance' in instruct_args:
+                            instruct_instance = instruct_args['instruct_instance']
+                            del instruct_args['instruct_instance']
+                    try:
+                        response = self.havoc_client.interact_with_task(task_name, data_action, instruct_instance=instruct_instance, instruct_args=instruct_args)
+                    except Exception as e:
+                        return f'data_tasks_{data_action}_create_failed: {e}'
+                    if response['outcome'] == 'failed':
+                        return f'data_tasks_{data_action}_create_failed: {response}'
+                    self.resource_dict['tasks'][object_name][data_action] = response[data_action]
             return self.data_dict['tasks'][object_name]
         if action == 'delete':
             del self.data_dict['tasks'][object_name]
@@ -546,6 +566,65 @@ class Data:
                 return dpath.get(self.data_dict['task_types'], path)
             except Exception as e:
                 return f'data_task_types_read_failed: {e}'
+    
+    def workspace_get_urls(self, object_name, action, **object_parameters):
+        if action == 'create':
+            try:
+                get_workspace_get_url_response = self.havoc_client.get_workspace_get_url(**object_parameters)
+            except Exception as e:
+                return f'data_workspace_get_urls_create_failed: {e}'
+            if get_workspace_get_url_response['outcome'] == 'failed':
+                return f'data_workspace_get_urls_create_failed: {get_workspace_get_url_response}'
+            self.data_dict['workspace_get_urls'][object_name] = {key: value for key, value in get_workspace_get_url_response.items()}
+            return self.data_dict['workspace_get_urls'][object_name]
+        if action == 'delete':
+            try:
+                del self.data_dict['workspace_get_urls'][object_name]
+                return 'data_workspace_get_urls_deleted'
+            except Exception as e:
+                return f'data_workspace_get_urls_delete_failed: {e}'
+        if action == 'read':
+            try:
+                new_path = re.search('data.workspace_get_urls.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
+                return dpath.get(self.data_dict['workspace_get_urls'], path)
+            except Exception as e:
+                return f'data_workspace_get_urls_read_failed: {e}'
+    
+    def workspace_put_urls(self, object_name, action, **object_parameters):
+        if action == 'create':
+            try:
+                get_workspace_put_url_response = self.havoc_client.get_workspace_put_url(**object_parameters)
+            except Exception as e:
+                return f'data_workspace_put_urls_create_failed: {e}'
+            if get_workspace_put_url_response['outcome'] == 'failed':
+                return f'data_workspace_put_urls_create_failed: {get_workspace_put_url_response}'
+            self.data_dict['workspace_put_urls'][object_name] = {key: value for key, value in get_workspace_put_url_response.items()}
+            return self.data_dict['workspace_put_urls'][object_name]
+        if action == 'delete':
+            try:
+                del self.data_dict['workspace_put_urls'][object_name]
+                return 'data_workspace_put_urls_deleted'
+            except Exception as e:
+                return f'data_workspace_put_urls_delete_failed: {e}'
+        if action == 'read':
+            try:
+                new_path = re.search('data.workspace_put_urls.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
+                return dpath.get(self.data_dict['workspace_put_urls'], path)
+            except Exception as e:
+                return f'data_workspace_put_urls_read_failed: {e}'
+
 
 class Local:
     
@@ -588,14 +667,25 @@ class Resource:
     
     def __init__(self):
         self.havoc_client = None
-        self.resource_dict = {'file': {}, 'listener': {}, 'portgroup': {}, 'portgroup_rule': {}, 'random_integer': {}, 'random_string': {}, 'task': {}}
+        self.resource_dict = {
+            'file': {},
+            'listener': {},
+            'portgroup': {},
+            'portgroup_rule': {},
+            'random_integer': {},
+            'random_string': {},
+            'task': {},
+            'workspace_get_url': {},
+            'workspace_put_url': {}
+        }
     
     def file(self, object_name, action, **object_parameters):
         if action == 'create':
             try:
+                path = object_parameters['path']
                 file_name = object_parameters['file_name']
                 file_contents = object_parameters['file_contents'].encode()
-                create_file_response = self.havoc_client.create_file(file_name, file_contents)
+                create_file_response = self.havoc_client.create_file(path, file_name, file_contents)
             except Exception as e:
                 return f'resource_file_create_failed: {e}'
             if create_file_response['outcome'] == 'failed':
@@ -604,8 +694,9 @@ class Resource:
             return self.resource_dict['file'][object_name]
         if action == 'delete':
             try:
+                path = self.resource_dict['file'][object_name]['path']
                 file_name = self.resource_dict['file'][object_name]['file_name']
-                delete_file_response = self.havoc_client.delete_file(file_name=file_name)
+                delete_file_response = self.havoc_client.delete_file(path, file_name)
             except Exception as e:
                 return f'resource_file_delete_failed: {e}'
             if delete_file_response['outcome'] == 'failed':
@@ -927,6 +1018,66 @@ class Resource:
                 return dpath.get(self.resource_dict['task'], path)
             except Exception as e:
                 return f'resource_task_read_failed: {e}'
+            
+    def workspace_get_url(self, object_name, action, **object_parameters):
+        if action == 'create':
+            try:
+                filename = object_parameters['filename']
+                create_workspace_get_url_response = self.havoc_client.create_workspace_get_url(filename=filename)
+            except Exception as e:
+                return f'resource_workspace_get_url_create_failed: {e}'
+            if create_workspace_get_url_response['outcome'] == 'failed':
+                return f'resource_workspace_get_url_create_failed: {create_workspace_get_url_response}'
+            self.resource_dict['workspace_get_url'][object_name] = {}
+            self.resource_dict['workspace_get_url'][object_name]['filename'] = filename
+            self.resource_dict['workspace_get_url'][object_name]['workspace_get_url'] = create_workspace_get_url_response['workspace_get_url']
+            return self.resource_dict['workspace_get_url'][object_name]
+        if action == 'delete':
+            del self.resource_dict['workspace_get_url'][object_name]
+            return 'resource_workspace_get_url_deleted'
+        if action == 'read':
+            try:
+                new_path = re.search('resource.workspace_get_url.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
+                return dpath.get(self.resource_dict['workspace_get_url'], path)
+            except Exception as e:
+                return f'resource_workspace_get_url_read_failed: {e}'
+    
+    def workspace_put_url(self, object_name, action, **object_parameters):
+        if action == 'create':
+            try:
+                path = object_parameters['path']
+                filename = object_parameters['filename']
+                create_workspace_put_url_response = self.havoc_client.create_workspace_put_url(path=path, filename=filename)
+            except Exception as e:
+                return f'resource_workspace_put_url_create_failed: {e}'
+            if create_workspace_put_url_response['outcome'] == 'failed':
+                return f'resource_workspace_put_url_create_failed: {create_workspace_put_url_response}'
+            self.resource_dict['workspace_put_url'][object_name] = {}
+            self.resource_dict['workspace_put_url'][object_name]['path'] = path
+            self.resource_dict['workspace_put_url'][object_name]['filename'] = filename
+            self.resource_dict['workspace_put_url'][object_name]['workspace_put_url'] = create_workspace_put_url_response['workspace_put_url']
+            return self.resource_dict['workspace_put_url'][object_name]
+        if action == 'delete':
+            del self.resource_dict['workspace_put_url'][object_name]
+            return 'resource_workspace_put_url_deleted'
+        if action == 'read':
+            try:
+                new_path = re.search('resource.workspace_put_url.(.*)', object_parameters['path'])
+                count_check = re.search('\[(\d+)\]', new_path.group(1))
+                if count_check:
+                    new_path = re.sub('\[\d+\]', '.' + count_check.group(1), new_path.group(1))
+                else:
+                    new_path = new_path.group(1)
+                path = re.sub('\.', '/', new_path)
+                return dpath.get(self.resource_dict['workspace_put_url'], path)
+            except Exception as e:
+                return f'resource_workspace_put_url_read_failed: {e}'
 
 
 class call_object():
@@ -941,6 +1092,7 @@ class call_object():
         self.deployment_name = None
         self.user_id = None
         self.playbook_name = None
+        self.playbook_type = None
         self.playbook_operator_version = None
         self.args = None
         self.end_time = None
@@ -964,11 +1116,12 @@ class call_object():
             self.__aws_s3_client = boto3.client('s3', region_name=self.region)
         return self.__aws_s3_client
 
-    def set_args(self, region, deployment_name, user_id, playbook_name, playbook_operator_version, command_args, end_time):
+    def set_args(self, region, deployment_name, user_id, playbook_name, playbook_type, playbook_operator_version, command_args, end_time):
         self.region = region
         self.deployment_name = deployment_name
         self.user_id = user_id
         self.playbook_name = playbook_name
+        self.playbook_type = playbook_type
         self.playbook_operator_version = playbook_operator_version
         self.args = command_args
         self.end_time = end_time
@@ -986,6 +1139,8 @@ class call_object():
             'portgroups': self.data.portgroups,
             'tasks': self.data.tasks,
             'task_types': self.data.task_types,
+            'workspace_get_urls': self.data.workspace_get_urls,
+            'workspace_put_urls': self.data.workspace_put_urls,
             'function': self.local.function,
             'file': self.resource.file,
             'listener': self.resource.listener,
@@ -993,7 +1148,9 @@ class call_object():
             'random_string': self.resource.random_string,
             'portgroup': self.resource.portgroup,
             'portgroup_rule': self.resource.portgroup_rule,
-            'task': self.resource.task
+            'task': self.resource.task,
+            'workspace_get_url': self.resource.workspace_get_url,
+            'workspace_put_url': self.resource.workspace_put_url
         }
         object_def = object.split('.')
         method_name=object_def[1]
@@ -1097,18 +1254,17 @@ class call_object():
         self.resource.havoc_client = self.havoc_client
 
         def download_playbook():
-            config_pointer = self.args['config_pointer']
             try:
                 get_object_response = self.aws_s3_client.get_object(
-                    Bucket=f'{self.deployment_name}-playbooks',
-                    Key=config_pointer
+                    Bucket=f'{self.deployment_name}-playbook-types',
+                    Key=f'{self.playbook_type}.template'
                 )
-                playbook_config = get_object_response['Body'].read()
+                playbook_template = get_object_response['Body'].read().decode()
             except botocore.exceptions.ClientError as error:
-                return error
+                return f'download_failed: {error}'
             except botocore.exceptions.ParamValidationError as error:
-                return error
-            return playbook_config
+                return f'download_failed: {error}'
+            return playbook_template
 
         # Add nodes to graph
         def afilter(x):
@@ -1145,13 +1301,47 @@ class call_object():
             dep_depth_map = sorted(dep_depth_map.items(), key=lambda x: min(x[1]))
             return [{"rule_name": node, "exec_order": min(depth) + abs(max_depth)} for node, depth in dep_depth_map]
 
-        playbook_config_source = download_playbook()
+        playbook_template_source = download_playbook()
+        if 'download_failed' in playbook_template_source:
+            return {'outcome': 'failed', 'message': f'playbook execution failed with error {playbook_template_source}', 'forward_log': 'True'}
+        playbook_template = None
         try:
-            playbook_config = json.loads(playbook_config_source)
+            playbook_template = json.loads(playbook_template_source)
         except:
             pass
-        if not playbook_config:
-            playbook_config = hcl2.load(playbook_config_source)
+        if not playbook_template:
+            playbook_template = hcl2.loads(playbook_template_source)
+
+        playbook_config_source = self.args['playbook_config']
+        if 'variable' in playbook_template:
+            playbook_vars = playbook_template['variable']
+            for playbook_var in playbook_vars:
+                for k in playbook_var.keys():
+                    if 'variable' in playbook_config_source and k in playbook_config_source['variable']:
+                        playbook_var[k]['value'] = playbook_config_source['variable'][k]
+                    elif 'default' in playbook_var[k]:
+                        playbook_var[k]['value'] = playbook_var[k]['default']
+                    else:
+                        return {'outcome': 'failed', 'message': f'no value or default found for playbook variable {k}', 'forward_log': 'True'}
+            for section in playbook_template:
+                if section != 'variable':
+                    json_section = json.dumps(playbook_template[section])
+                    dep_matches = re.findall('\${(variable\.[^}]+)}', json_section)
+                    if dep_matches:
+                        dep_value = None
+                        for dep_match in dep_matches:
+                            dep_match_list = dep_match.split('.')
+                            var_name = dep_match_list[1]
+                            for variable in playbook_template['variable']:
+                                for k in variable.keys():
+                                    if k == var_name:
+                                        dep_value = variable[k]['value']
+                            re_sub = re.compile('\${' + dep_match + '}')
+                            json_section = re.sub(re_sub, dep_value, json_section)
+                            new_section = json.loads(json_section)
+                            playbook_template[section] = new_section
+            del playbook_template['variable']
+            playbook_config = playbook_template
 
         DG = nx.DiGraph()
         action_blocks = None

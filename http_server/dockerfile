@@ -9,7 +9,7 @@ RUN pip3 install pyOpenSSL
 RUN pip3 install service_identity
 RUN pip3 install twisted
 RUN pip3 install uploadserver
-RUN pip3 install requests==2.29.0
+RUN pip3 install requests
 RUN pip3 install awscli
 
 # Install havoc library
