@@ -58,9 +58,9 @@ class call_msf:
         output = {'list_jobs': jobs, 'forward_log': 'False'}
         return output
 
-    def list_sessions(self):
+    def list_metasploit_sessions(self):
         sessions = self.msf_client.sessions.list
-        output = {'list_sessions': sessions, 'forward_log': 'False'}
+        output = {'list_metasploit_sessions': sessions, 'forward_log': 'False'}
         return output
 
     def modify_routes(self):
@@ -457,7 +457,7 @@ class call_msf:
             output = {'outcome': 'failed', 'message': 'job_id not found', 'forward_log': 'False'}
         return output
 
-    def show_session_info(self):
+    def show_metasploit_session_info(self):
         try:
             session_id = self.args['session_id']
         except:
@@ -466,7 +466,7 @@ class call_msf:
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             session_info = self.msf_client.sessions.session(session_id).info
-            output = {'outcome': 'success', 'show_session_info': session_info, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'show_metasploit_session_info': session_info, 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
@@ -530,7 +530,7 @@ class call_msf:
             output = {'outcome': 'failed', 'message': 'payload_module not set', 'forward_log': 'False'}
         return output
 
-    def run_session_command(self):
+    def run_metasploit_session_command(self):
 
         def send_command(sid, command, wait):
             session_read = ''
@@ -544,18 +544,18 @@ class call_msf:
                 if session_read_tmp == '' and count >= wait:
                     return session_read
 
-        req_args = ['session_id', 'session_command']
+        req_args = ['session_id', 'metasploit_session_command']
         for req_arg in req_args:
             if req_arg not in self.args:
                 output = {'outcome': 'failed', 'message': f'instruct_args must specify {req_arg}', 'forward_log': 'False'}
                 return output    
         session_id = self.args['session_id']
-        session_command = self.args['session_command']
+        session_command = self.args['metasploit_session_command']
         if 'wait_time' in self.args and self.args['wait_time'] is not None:
             try:
                 wait_time = int(self.args['wait_time'])
             except Exception as e:
-                output = {'outcome': 'failed', 'message': f'run_session_command failed setting wait_time with error: {e}', 'forward_log': 'False'}
+                output = {'outcome': 'failed', 'message': f'run_metasploit_session_command failed setting wait_time with error: {e}', 'forward_log': 'False'}
                 return output
         else:
             wait_time = 10
@@ -567,17 +567,17 @@ class call_msf:
                     send_command(session_id, 'exit', 10)
                     self.shells.remove(session_id)
                 if session_type == 'shell':
-                    output = {'outcome': 'failed', 'message': f'run_session_command is not supported on shell session type', 'forward_log': 'False'}
+                    output = {'outcome': 'failed', 'message': f'run_metasploit_session_command is not supported on shell session type', 'forward_log': 'False'}
                     return output
                 command_output = send_command(session_id, session_command, wait_time)
-                output = {'outcome': 'success', 'run_session_command': {'results': command_output}, 'forward_log': 'True'}
+                output = {'outcome': 'success', 'run_metasploit_session_command': {'results': command_output}, 'forward_log': 'True'}
             except Exception as e:
-                output = {'outcome': 'failed', 'message': f'run_session_command failed with error: {e}', 'forward_log': 'False'}
+                output = {'outcome': 'failed', 'message': f'run_metasploit_session_command failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
 
-    def run_session_shell_command(self):
+    def run_metasploit_session_shell_command(self):
 
         def send_shell_command(sid, command, wait):
             shell_read = ''
@@ -591,18 +591,18 @@ class call_msf:
                 if shell_read_tmp == '' and count >= wait:
                     return shell_read
         
-        req_args = ['session_id', 'session_shell_command']
+        req_args = ['session_id', 'metasploit_session_shell_command']
         for req_arg in req_args:
             if req_arg not in self.args:
                 output = {'outcome': 'failed', 'message': f'instruct_args must specify {req_arg}', 'forward_log': 'False'}
                 return output
         session_id = self.args['session_id']
-        session_shell_command = self.args['session_shell_command']
+        session_shell_command = self.args['metasploit_session_shell_command']
         if 'wait_time' in self.args and self.args['wait_time'] is not None:
             try:
                 wait_time = int(self.args['wait_time'])
             except Exception as e:
-                output = {'outcome': 'failed', 'message': f'run_session_shell_command failed setting wait_time with error: {e}', 'forward_log': 'False'}
+                output = {'outcome': 'failed', 'message': f'run_metasploit_session_shell_command failed setting wait_time with error: {e}', 'forward_log': 'False'}
                 return output
         else:
             wait_time = 10
@@ -618,33 +618,33 @@ class call_msf:
                 if '/bin/sh:' in command_output or 'invalid option' in command_output or 'Unknown command:' in command_output:
                     output = {'outcome': 'failed', 'message': command_output, 'forward_log': 'False'}
                 else:
-                    output = {'outcome': 'success', 'run_session_shell_command': {'results': command_output}, 'forward_log': 'True'}
+                    output = {'outcome': 'success', 'run_metasploit_session_shell_command': {'results': command_output}, 'forward_log': 'True'}
             except Exception as e:
-                output = {'outcome': 'failed', 'message': f'run_session_shell_command failed with error: {e}', 'forward_log': 'False'}
+                output = {'outcome': 'failed', 'message': f'run_metasploit_session_shell_command failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': f'session_id not found: {session_list}', 'forward_log': 'False'}
         return output
 
-    def session_tabs(self):
-        req_args = ['session_id', 'session_command']
+    def metasploit_session_tabs(self):
+        req_args = ['session_id', 'metasploit_session_command']
         for req_arg in req_args:
             if req_arg not in self.args:
                 output = {'outcome': 'failed', 'message': f'instruct_args must specify {req_arg}', 'forward_log': 'False'}
                 return output  
         session_id = self.args['session_id']
-        session_command = self.args['session_command']
+        session_command = self.args['metasploit_session_command']
         session_list = self.msf_client.sessions.list
         if session_id in session_list:
             try:
-                session_tabs_output = self.msf_client.sessions.session(session_id).tabs(session_command)
-                output = {'outcome': 'success', 'session_tabs': {'results': session_tabs_output}, 'forward_log': 'False'}
+                metasploit_session_tabs_output = self.msf_client.sessions.session(session_id).tabs(session_command)
+                output = {'outcome': 'success', 'metasploit_session_tabs': {'results': metasploit_session_tabs_output}, 'forward_log': 'False'}
             except Exception as e:
-                output = {'outcome': 'failed', 'message': f'session_tabs failed with error: {e}', 'forward_log': 'False'}
+                output = {'outcome': 'failed', 'message': f'metasploit_session_tabs failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
 
-    def load_session_plugin(self):
+    def load_metasploit_session_plugin(self):
         req_args = ['session_id', 'plugin_name']
         for req_arg in req_args:
             if req_arg not in self.args:
@@ -656,14 +656,14 @@ class call_msf:
         if session_id in session_list:
             try:
                 load_session_plugin_output = self.msf_client.sessions.session(session_id).load_plugin(plugin_name)
-                output = {'outcome': 'success', 'load_session_plugin': {'results': load_session_plugin_output}, 'forward_log': 'False'}
+                output = {'outcome': 'success', 'load_metasploit_session_plugin': {'results': load_session_plugin_output}, 'forward_log': 'False'}
             except Exception as e:
-                output = {'outcome': 'failed', 'message': f'load_session_plugin failed with error: {e}', 'forward_log': 'False'}
+                output = {'outcome': 'failed', 'message': f'load_metasploit_session_plugin failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
 
-    def session_import_psh(self):
+    def metasploit_session_import_psh(self):
         req_args = ['session_id', 'script_name']
         for req_arg in req_args:
             if req_arg not in self.args:
@@ -676,14 +676,14 @@ class call_msf:
         if session_id in session_list:
             try:
                 session_import_psh_output = self.msf_client.sessions.session(session_id).import_psh(script)
-                output = {'outcome': 'success', 'session_import_psh': {'results': session_import_psh_output}, 'forward_log': 'True'}
+                output = {'outcome': 'success', 'metasploit_session_import_psh': {'results': session_import_psh_output}, 'forward_log': 'True'}
             except Exception as e:
-                output = {'outcome': 'failed', 'message': f'session_import_psh failed with error: {e}', 'forward_log': 'False'}
+                output = {'outcome': 'failed', 'message': f'metasploit_session_import_psh failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
 
-    def session_run_psh_cmd(self):
+    def metasploit_session_run_psh_cmd(self):
         req_args = ['session_id', 'ps_cmd']
         for req_arg in req_args:
             if req_arg not in self.args:
@@ -695,14 +695,14 @@ class call_msf:
         if session_id in session_list:
             try:
                 session_run_psh_cmd_output = self.msf_client.sessions.session(session_id).run_psh_cmd(ps_cmd)
-                output = {'outcome': 'success', 'session_run_psh_cmd': {'results': session_run_psh_cmd_output}, 'forward_log': 'True'}
+                output = {'outcome': 'success', 'metasploit_session_run_psh_cmd': {'results': session_run_psh_cmd_output}, 'forward_log': 'True'}
             except Exception as e:
-                output = {'outcome': 'failed', 'message': f'session_run_psh_cmd failed with error: {e}', 'forward_log': 'False'}
+                output = {'outcome': 'failed', 'message': f'metasploit_session_run_psh_cmd failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
 
-    def run_session_script(self):
+    def run_metasploit_session_script(self):
         req_args = ['session_id', 'script_name']
         for req_arg in req_args:
             if req_arg not in self.args:
@@ -715,14 +715,14 @@ class call_msf:
         if session_id in session_list:
             try:
                 run_session_script_output = self.msf_client.sessions.session(session_id).runscript(script)
-                output = {'outcome': 'success', 'run_session_script': {'results': run_session_script_output}, 'forward_log': 'True'}
+                output = {'outcome': 'success', 'run_metasploit_session_script': {'results': run_session_script_output}, 'forward_log': 'True'}
             except Exception as e:
-                output = {'outcome': 'failed', 'message': f'run_session_script failed with error: {e}', 'forward_log': 'False'}
+                output = {'outcome': 'failed', 'message': f'run_metasploit_session_script failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
 
-    def get_session_writeable_dir(self):
+    def get_metasploit_session_writeable_dir(self):
         try:
             session_id = self.args['session_id']
         except:
@@ -732,14 +732,14 @@ class call_msf:
         if session_id in session_list:
             try:
                 get_session_writeable_dir_output = self.msf_client.sessions.session(session_id).get_writeable_dir()
-                output = {'outcome': 'success', 'get_session_writeable_dir': {'results': get_session_writeable_dir_output}, 'forward_log': 'True'}
+                output = {'outcome': 'success', 'get_metasploit_session_writeable_dir': {'results': get_session_writeable_dir_output}, 'forward_log': 'True'}
             except Exception as e:
-                output = {'outcome': 'failed', 'message': f'get_session_writeable_dir failed with error: {e}', 'forward_log': 'False'}
+                output = {'outcome': 'failed', 'message': f'get_metasploit_session_writeable_dir failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
 
-    def session_read(self):
+    def metasploit_session_read(self):
         try:
             session_id = self.args['session_id']
         except:
@@ -749,14 +749,14 @@ class call_msf:
         if session_id in session_list:
             try:
                 session_read_output = self.msf_client.sessions.session(session_id).read()
-                output = {'outcome': 'success', 'session_read': {'results': session_read_output}, 'forward_log': 'False'}
+                output = {'outcome': 'success', 'metasploit_session_read': {'results': session_read_output}, 'forward_log': 'False'}
             except Exception as e:
-                output = {'outcome': 'failed', 'message': f'session_read failed with error: {e}', 'forward_log': 'False'}
+                output = {'outcome': 'failed', 'message': f'metasploit_session_read failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
 
-    def detach_session(self):
+    def detach_metasploit_session(self):
         try:
             session_id = self.args['session_id']
         except:
@@ -766,14 +766,14 @@ class call_msf:
         if session_id in session_list:
             try:
                 self.msf_client.sessions.session(session_id).detach()
-                output = {'outcome': 'success', 'detach_session': {'session_id': session_id}, 'forward_log': 'True'}
+                output = {'outcome': 'success', 'detach_metasploit_session': {'session_id': session_id}, 'forward_log': 'True'}
             except Exception as e:
-                output = {'outcome': 'failed', 'message': f'detach_session failed with error: {e}', 'forward_log': 'False'}
+                output = {'outcome': 'failed', 'message': f'detach_metasploit_session failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
 
-    def kill_session(self):
+    def kill_metasploit_session(self):
         try:
             session_id = self.args['session_id']
         except:
@@ -788,9 +788,9 @@ class call_msf:
                     self.shells.remove(session_id)
                 else:
                     self.msf_client.sessions.session(session_id).stop()
-                output = {'outcome': 'success', 'kill_session': {'session_id': session_id}, 'forward_log': 'True'}
+                output = {'outcome': 'success', 'kill_metasploit_session': {'session_id': session_id}, 'forward_log': 'True'}
             except Exception as e:
-                output = {'outcome': 'failed', 'message': f'kill_session failed with error: {e}', 'forward_log': 'False'}
+                output = {'outcome': 'failed', 'message': f'kill_metasploit_session failed with error: {e}', 'forward_log': 'False'}
         else:
             output = {'outcome': 'failed', 'message': 'session_id not found', 'forward_log': 'False'}
         return output
@@ -934,9 +934,9 @@ class call_msf:
         current_sessions = self.args['current_sessions']
         new_sessions = []
         dead_sessions = []
-        list_sessions = self.list_sessions()
-        if 'list_sessions' in list_sessions:
-            sessions_status = list_sessions['list_sessions']
+        list_metasploit_sessions = self.list_metasploit_sessions()
+        if 'list_metasploit_sessions' in list_metasploit_sessions:
+            sessions_status = list_metasploit_sessions['list_metasploit_sessions']
             current_sessions_id = []
             for current in current_sessions:
                 current_sessions_id.append(current['session_id'])
