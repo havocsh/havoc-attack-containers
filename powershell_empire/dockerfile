@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:20.04
 
 # Install basic utils
 ENV DEBIAN_FRONTEND=noninteractive
@@ -40,9 +40,6 @@ RUN chmod +x /opt/havoc/link.py
 
 # Install custom dependencies and modules
 WORKDIR /opt
-RUN echo 'Cython < 3.0' > /tmp/constraint.txt
-ENV PIP_CONSTRAINT=/tmp/constraint.txt pip wheel PyYAML==5.4.1
-RUN pip3 install 'PyYAML==5.4.1'
 RUN git clone --recursive -b v4.10.0 https://github.com/BC-SECURITY/Empire.git
 WORKDIR Empire
 RUN printf "n\nn\nn\n" | ./setup/install.sh
