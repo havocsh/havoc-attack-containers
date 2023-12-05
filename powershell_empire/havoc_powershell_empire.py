@@ -3,6 +3,7 @@ import json
 import copy
 import base64
 import shutil
+import os.path
 import pathlib
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -165,51 +166,51 @@ class call_powershell_empire:
             output = {'outcome': 'failed', 'message': create_stager_response.json(), 'forward_log': 'False'}
         return output
 
-    def get_agents(self):
+    def list_empire_agents(self):
         if 'Name' in self.args:
             agent_name = self.args['Name']
-            get_agents_uri = f'{self.server_uri}api/agents/{agent_name}?token={self.token}'
-            get_agents_response = requests.get(get_agents_uri, verify=False)
-            if get_agents_response.status_code == 200:
-                agents = get_agents_response.json()['agents']
-                output = {'outcome': 'success', 'get_agents': agents, 'forward_log': 'False'}
+            list_empire_agents_uri = f'{self.server_uri}api/agents/{agent_name}?token={self.token}'
+            list_empire_agents_response = requests.get(list_empire_agents_uri, verify=False)
+            if list_empire_agents_response.status_code == 200:
+                agents = list_empire_agents_response.json()['agents']
+                output = {'outcome': 'success', 'list_empire_agents': agents, 'forward_log': 'False'}
             else:
-                output = {'outcome': 'failed', 'message': get_agents_response.json(), 'forward_log': 'False'}
+                output = {'outcome': 'failed', 'message': list_empire_agents_response.json(), 'forward_log': 'False'}
         else:
-            get_agents_uri = f'{self.server_uri}api/agents?token={self.token}'
-            get_agents_response = requests.get(get_agents_uri, verify=False)
-            agents = get_agents_response.json()['agents']
-            output = {'outcome': 'success', 'get_agents': agents, 'forward_log': 'False'}
+            list_empire_agents_uri = f'{self.server_uri}api/agents?token={self.token}'
+            list_empire_agents_response = requests.get(list_empire_agents_uri, verify=False)
+            agents = list_empire_agents_response.json()['agents']
+            output = {'outcome': 'success', 'list_empire_agents': agents, 'forward_log': 'False'}
         return output
 
-    def get_stale_agents(self):
-        get_stale_agents_uri = f'{self.server_uri}api/agents/stale?token={self.token}'
-        get_stale_agents_response = requests.get(get_stale_agents_uri, verify=False)
-        stale_agents = get_stale_agents_response.json()['agents']
-        output = {'outcome': 'success', 'get_stale_agents': stale_agents, 'forward_log': 'False'}
+    def list_stale_empire_agents(self):
+        list_stale_empire_agents_uri = f'{self.server_uri}api/agents/stale?token={self.token}'
+        list_stale_empire_agents_response = requests.get(list_stale_empire_agents_uri, verify=False)
+        stale_agents = list_stale_empire_agents_response.json()['agents']
+        output = {'outcome': 'success', 'list_stale_empire_agents': stale_agents, 'forward_log': 'False'}
         return output
 
-    def remove_agent(self):
+    def remove_empire_agent(self):
         if 'Name' in self.args:
             agent_name = self.args['Name']
         else:
             output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
-        remove_agent_uri = f'{self.server_uri}api/agents/{agent_name}?token={self.token}'
-        remove_agent_response = requests.delete(remove_agent_uri, verify=False)
-        if remove_agent_response.status_code == 200:
-            output = {'outcome': 'success', 'remove_agent': remove_agent_response.json(), 'forward_log': 'True'}
+        remove_empire_agent_uri = f'{self.server_uri}api/agents/{agent_name}?token={self.token}'
+        remove_empire_agent_response = requests.delete(remove_empire_agent_uri, verify=False)
+        if remove_empire_agent_response.status_code == 200:
+            output = {'outcome': 'success', 'remove_empire_agent': remove_empire_agent_response.json(), 'forward_log': 'True'}
         else:
-            output = {'outcome': 'failed', 'message': remove_agent_response.json(), 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': remove_empire_agent_response.json(), 'forward_log': 'False'}
         return output
 
-    def remove_stale_agents(self):
-        remove_stale_agents_uri = f'{self.server_uri}api/agents/stale?token={self.token}'
-        remove_stale_agents_response = requests.delete(remove_stale_agents_uri, verify=False)
-        output = {'outcome': 'success', 'remove_stale_agents': remove_stale_agents_response.json(), 'forward_log': 'True'}
+    def remove_stale_empire_agents(self):
+        remove_stale_empire_agents_uri = f'{self.server_uri}api/agents/stale?token={self.token}'
+        remove_stale_empire_agents_response = requests.delete(remove_stale_empire_agents_uri, verify=False)
+        output = {'outcome': 'success', 'remove_stale_empire_agents': remove_stale_empire_agents_response.json(), 'forward_log': 'True'}
         return output
 
-    def execute_agent_shell_command(self):
+    def execute_empire_agent_shell_command(self):
         if 'Name' in self.args:
             agent_name = self.args['Name']
         else:
@@ -223,13 +224,13 @@ class call_powershell_empire:
         agent_shell_uri = f'{self.server_uri}api/agents/{agent_name}/shell?token={self.token}'
         agent_shell_response = requests.post(agent_shell_uri, json=shell_command_args, verify=False)
         if agent_shell_response.status_code == 200:
-            output = {'outcome': 'success', 'execute_agent_shell_command': agent_shell_response.json(), 'forward_log': 'True'}
+            output = {'outcome': 'success', 'execute_empire_agent_shell_command': agent_shell_response.json(), 'forward_log': 'True'}
             return output
         else:
             output = {'outcome': 'failed', 'message': agent_shell_response.json(), 'forward_log': 'False'}
             return output
 
-    def get_shell_command_results(self):
+    def get_empire_agent_results(self):
         if 'Name' in self.args:
             agent_name = self.args['Name']
         else:
@@ -252,13 +253,13 @@ class call_powershell_empire:
             for tmp_result in tmp_results:
                 if 'taskID' in tmp_result and tmp_result['taskID'] == task_id:
                     results = base64.b64encode(zlib.compress(json.dumps(tmp_result).encode())).decode()
-            output = {'outcome': 'success', 'get_shell_command_results': results, 'forward_log': 'True'}
+            output = {'outcome': 'success', 'get_empire_agent_results': results, 'forward_log': 'True'}
             return output
         else:
             output = {'outcome': 'failed', 'message': agent_results_response.json(), 'forward_log': 'False'}
             return output
     
-    def get_task_id_list(self):
+    def list_empire_agent_task_ids(self):
         if 'Name' in self.args:
             agent_name = self.args['Name']
         else:
@@ -272,44 +273,13 @@ class call_powershell_empire:
             for tmp_result in tmp_results:
                 if 'taskID' in tmp_result:
                     task_id_list.append(tmp_result['taskID'])
-            output = {'outcome': 'success', 'get_task_id_list': task_id_list, 'forward_log': 'False'}
+            output = {'outcome': 'success', 'list_empire_agent_task_ids': task_id_list, 'forward_log': 'False'}
             return output
         else:
             output = {'outcome': 'failed', 'message': agent_results_response.json(), 'forward_log': 'False'}
             return output
 
-    def delete_shell_command_results(self):
-        if 'Name' in self.args:
-            agent_name = self.args['Name']
-        else:
-            output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
-            return output
-        delete_results_uri = f'{self.server_uri}api/agents/{agent_name}/results?token={self.token}'
-        delete_results_response = requests.delete(delete_results_uri, verify=False)
-        if delete_results_response.status_code == 200:
-            output = {'outcome': 'success', 'delete_shell_command_results': delete_results_response.json(), 'forward_log': 'False'}
-            return output
-        else:
-            output = {'outcome': 'failed', 'message': delete_results_response.json(), 'forward_log': 'False'}
-            return output
-
-    def clear_queued_shell_commands(self):
-        if 'Name' in self.args:
-            agent_name = self.args['Name']
-        else:
-            output = {'outcome': 'failed', 'message': 'Missing agent_name', 'forward_log': 'False'}
-            return output
-        clear_queued_shell_commands_uri = f'{self.server_uri}api/agents/{agent_name}/clear?token={self.token}'
-        clear_queued_shell_commands_response = requests.get(clear_queued_shell_commands_uri, verify=False)
-        if clear_queued_shell_commands_response.status_code == 200:
-            output = {'outcome': 'success', 'clear_queued_shell_commands': clear_queued_shell_commands_response.json(), 'forward_log': 'True'}
-            return output
-        else:
-            message = clear_queued_shell_commands_response.json()
-            output = {'outcome': 'failed', 'message': message, 'forward_log': 'False'}
-            return output
-
-    def rename_agent(self):
+    def rename_empire_agent(self):
         if 'Name' in self.args:
             agent_name = self.args['Name']
         else:
@@ -320,66 +290,66 @@ class call_powershell_empire:
             return output
         rename_args = copy.deepcopy(self.args)
         del rename_args['Name']
-        rename_agent_uri = f'{self.server_uri}api/agents/{agent_name}/rename?token={self.token}'
-        rename_agent_response = requests.post(rename_agent_uri, json=rename_args, verify=False)
-        if rename_agent_response.status_code == 200:
-            output = {'outcome': 'success', 'rename_agent': rename_agent_response.json(), 'forward_log': 'True'}
+        rename_empire_agent_uri = f'{self.server_uri}api/agents/{agent_name}/rename?token={self.token}'
+        rename_empire_agent_response = requests.post(rename_empire_agent_uri, json=rename_args, verify=False)
+        if rename_empire_agent_response.status_code == 200:
+            output = {'outcome': 'success', 'rename_empire_agent': rename_empire_agent_response.json(), 'forward_log': 'True'}
             return output
         else:
-            output = {'outcome': 'failed', 'message': rename_agent_response.json(), 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': rename_empire_agent_response.json(), 'forward_log': 'False'}
             return output
 
-    def kill_agent(self):
+    def kill_empire_agent(self):
         if 'Name' in self.args:
             agent_name = self.args['Name']
         else:
             output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
-        kill_agent_uri = f'{self.server_uri}api/agents/{agent_name}/kill?token={self.token}'
-        kill_agent_response = requests.get(kill_agent_uri, verify=False)
-        if kill_agent_response.status_code == 200:
-            output = {'outcome': 'success', 'kill_agent': kill_agent_response.json(), 'forward_log': 'True'}
+        kill_empire_agent_uri = f'{self.server_uri}api/agents/{agent_name}/kill?token={self.token}'
+        kill_empire_agent_response = requests.get(kill_empire_agent_uri, verify=False)
+        if kill_empire_agent_response.status_code == 200:
+            output = {'outcome': 'success', 'kill_empire_agent': kill_empire_agent_response.json(), 'forward_log': 'True'}
             return output
         else:
-            output = {'outcome': 'failed', 'message': kill_agent_response.json(), 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': kill_empire_agent_response.json(), 'forward_log': 'False'}
             return output
 
-    def kill_all_agents(self):
-        kill_all_agents_uri = f'{self.server_uri}api/agents/all/kill?token={self.token}'
-        kill_all_agents_response = requests.get(kill_all_agents_uri, verify=False)
-        output = {'outcome': 'success', 'kill_all_agents': kill_all_agents_response.json(), 'forward_log': 'True'}
+    def kill_all_empire_agents(self):
+        kill_all_empire_agents_uri = f'{self.server_uri}api/agents/all/kill?token={self.token}'
+        kill_all_empire_agents_response = requests.get(kill_all_empire_agents_uri, verify=False)
+        output = {'outcome': 'success', 'kill_all_empire_agents': kill_all_empire_agents_response.json(), 'forward_log': 'True'}
         return output
 
-    def get_modules(self):
+    def list_empire_modules(self):
         if 'Name' in self.args:
             module_name = self.args['Name']
         else:
             output = {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
             return output
-        get_modules_uri = f'{self.server_uri}api/modules/{module_name}?token={self.token}'
-        get_modules_response = requests.get(get_modules_uri, verify=False)
-        if get_modules_response.status_code == 200:
-            modules = get_modules_response.json()['modules']
-            output = {'outcome': 'success', 'get_modules': modules, 'forward_log': 'False'}
+        list_empire_modules_uri = f'{self.server_uri}api/modules/{module_name}?token={self.token}'
+        list_empire_modules_response = requests.get(list_empire_modules_uri, verify=False)
+        if list_empire_modules_response.status_code == 200:
+            modules = list_empire_modules_response.json()['modules']
+            output = {'outcome': 'success', 'list_empire_modules': modules, 'forward_log': 'False'}
         else:
-            output = {'outcome': 'failed', 'message': get_modules_response.json(), 'forward_log': 'False'}
+            output = {'outcome': 'failed', 'message': list_empire_modules_response.json(), 'forward_log': 'False'}
         return output
 
-    def search_modules(self):
+    def search_empire_modules(self):
         if 'term' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing term', 'forward_log': 'False'}
             return output
-        search_modules_uri = f'{self.server_uri}api/modules/search?token={self.token}'
-        search_modules_response = requests.post(search_modules_uri, json=self.args, verify=False)
-        if 'modules' in search_modules_response.json():
-            modules = search_modules_response.json()['modules']
-            output = {'outcome': 'success', 'search_modules': modules, 'forward_log': 'False'}
+        search_empire_modules_uri = f'{self.server_uri}api/modules/search?token={self.token}'
+        search_empire_modules_response = requests.post(search_empire_modules_uri, json=self.args, verify=False)
+        if 'modules' in search_empire_modules_response.json():
+            modules = search_empire_modules_response.json()['modules']
+            output = {'outcome': 'success', 'search_empire_modules': modules, 'forward_log': 'False'}
             return output
         else:
-            output = {'outcome': 'success', 'search_modules': 'No modules found', 'forward_log': 'False'}
+            output = {'outcome': 'success', 'search_empire_modules': 'No modules found', 'forward_log': 'False'}
             return output
 
-    def execute_agent_module(self):
+    def execute_empire_agent_module(self):
         if 'Agent' not in self.args:
             output = {'outcome': 'failed', 'message': 'Missing Agent', 'forward_log': 'False'}
             return output
@@ -393,9 +363,57 @@ class call_powershell_empire:
         execute_module_uri = f'{self.server_uri}api/modules/{module_name}?token={self.token}'
         execute_module_response = requests.post(execute_module_uri, json=module_args, verify=False)
         if execute_module_response.status_code == 200:
-            output = {'outcome': 'success', 'execute_agent_module': execute_module_response.json(), 'forward_log': 'True'}
+            output = {'outcome': 'success', 'execute_empire_agent_module': execute_module_response.json(), 'forward_log': 'True'}
         else:
             output = {'outcome': 'failed', 'message': execute_module_response.json(), 'forward_log': 'False'}
+        return output
+    
+    def download_file_from_empire_agent(self):
+        if 'Name' not in self.args:
+            return {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
+        agent_name = self.args['Name']
+        if 'file_name' not in self.args:
+            return {'outcome': 'failed', 'message': 'Missing file_name', 'forward_log': 'False'}
+        file_name = self.args['file_name']
+        download_file_from_empire_agent_uri = f'{self.server_uri}api/agents/{agent_name}/download?token={self.token}'
+        download_file_from_empire_agent_response = requests.post(download_file_from_empire_agent_uri, json={'filename': file_name}, verify=False)
+        if download_file_from_empire_agent_response.status_code == 200:
+            output = {'outcome': 'success', 'download_file_from_empire_agent': download_file_from_empire_agent_response.json(), 'forward_log': 'True'}
+        else:
+            output = {'outcome': 'failed', 'message': download_file_from_empire_agent_response.json(), 'forward_log': 'False'}
+        return output
+    
+    def upload_file_to_empire_agent(self):
+        if 'Name' not in self.args:
+            return {'outcome': 'failed', 'message': 'Missing Name', 'forward_log': 'False'}
+        agent_name = self.args['Name']
+        if 'file_name' not in self.args:
+            return {'outcome': 'failed', 'message': 'Missing file_name', 'forward_log': 'False'}
+        file_name = self.args['file_name']
+        file_path = pathlib.Path('/opt/havoc/shared', file_name)
+        if os.path.isfile(file_path):
+            with open(file_path, 'r') as f:
+                raw_file = f.read()
+        else:
+            return {'outcome': 'failed', 'message': f'File {file_name} not found', 'forward_log': 'False'}
+        encoded_file = base64.b64encode(raw_file)
+        upload_file_to_empire_agent_uri = f'{self.server_uri}api/agents/{agent_name}/upload?token={self.token}'
+        upload_file_to_empire_agent_response = requests.post(upload_file_to_empire_agent_uri, json={'filename': file_name, 'data': encoded_file}, verify=False)
+        if upload_file_to_empire_agent_response.status_code == 200:
+            output = {'outcome': 'success', 'upload_file_to_empire_agent': upload_file_to_empire_agent_response.json(), 'forward_log': 'True'}
+        else:
+            output = {'outcome': 'failed', 'message': upload_file_to_empire_agent_response.json(), 'forward_log': 'False'}
+        return output
+
+    def sync_downloads(self):
+        file_list = []
+        for root, subdirs, files in os.walk('/opt/empire/server/downloads'):
+            for filename in files:
+                file_list.append(filename)
+                src_file_path = str(f'{root}/{filename}')
+                dst_file_path = str(f'/opt/havoc/shared/{filename}')
+                shutil.copy(src_file_path, dst_file_path)
+        output = {'outcome': 'success', 'sync_downloads': file_list, 'forward_log': 'True'}
         return output
 
     def get_stored_credentials(self):
