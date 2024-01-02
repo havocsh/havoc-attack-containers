@@ -1022,13 +1022,15 @@ class Resource:
     def workspace_get_url(self, object_name, action, **object_parameters):
         if action == 'create':
             try:
+                path = object_parameters['path']
                 file_name = object_parameters['file_name']
-                create_workspace_get_url_response = self.havoc_client.create_workspace_get_url(file_name=file_name)
+                create_workspace_get_url_response = self.havoc_client.create_workspace_get_url(path=path,file_name=file_name)
             except Exception as e:
                 return f'resource_workspace_get_url_create_failed: {e}'
             if create_workspace_get_url_response['outcome'] == 'failed':
                 return f'resource_workspace_get_url_create_failed: {create_workspace_get_url_response}'
             self.resource_dict['workspace_get_url'][object_name] = {}
+            self.resource_dict['workspace_get_url'][object_name]['path'] = path
             self.resource_dict['workspace_get_url'][object_name]['file_name'] = file_name
             self.resource_dict['workspace_get_url'][object_name]['workspace_get_url'] = create_workspace_get_url_response['workspace_get_url']
             return self.resource_dict['workspace_get_url'][object_name]
